@@ -1,0 +1,635 @@
+{
+  "name": "Nodo Cero · Clasificar mensajes con IA",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## Clasificar mensajes con IA\n\nLlega un mensaje (de un formulario, un correo o un chat) y la IA decide si es una **consulta**, un **reclamo** o una **idea**. Cada tipo sale por su propio camino, con su prioridad y su próximo paso. Sirve para ordenar lo que le escriben a tu organización, a tu emprendimiento o a tu comunidad.\n\n### Qué hace\n1. **Al tocar Execute** prueba con 6 mensajes de ejemplo. **Formulario de mensajes** recibe uno de verdad.\n2. **Clasificar el mensaje** (Text Classifier + Gemini) elige la categoría.\n3. Cada categoría tiene su salida: **Es una consulta**, **Es un reclamo**, **Es una idea** o **No encaja**.\n4. **Juntar los resultados** vuelve a unir los caminos y, si vino del formulario, la persona ve una respuesta.\n\n### Qué necesitás\n- La credencial **Google Gemini(PaLM) Api** (`googlePalmApi`): una clave gratis de Google AI Studio (aistudio.google.com → **Get API key**).\n\n### Cómo probarlo\n1. Abrí **Modelo Gemini** y elegí o creá la credencial con tu clave.\n2. Tocá **Execute workflow** y mirá los números sobre cada salida del clasificador: cuántos mensajes fueron por cada camino.\n3. Abrí **Resultado de la prueba**: cada mensaje con su categoría y su prioridad.\n4. Para el formulario: **Publish** y abrí la **Production URL** de **Formulario de mensajes**.",
+        "height": 1060,
+        "width": 640,
+        "color": 4
+      },
+      "id": "1593f95c-01bc-40a3-a2f7-f76d8c1457b3",
+      "name": "Nota de inicio",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -760,
+        -640
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "6721f9e3-899c-4090-9c5a-7cf88040ce8c",
+      "name": "Al tocar Execute",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        -140
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "// Seis mensajes inventados, como los que podría recibir una organización de Santa Cruz.\nconst mensajes = [\n  '¿A qué hora abren el punto de reciclaje del barrio el sábado?',\n  'Hace dos semanas que no pasa el camión de la basura por mi calle y nadie responde.',\n  'Propongo que hagamos una feria de trueque de ropa en la plaza una vez por mes.',\n  '¿Cómo me inscribo al taller de compostaje?',\n  'Me cobraron dos veces la inscripción al taller y todavía no me devolvieron la plata.',\n  'Sería bueno tener un mapa con los puntos de agua potable de la zona.',\n];\nreturn mensajes.map((mensaje) => ({ json: { mensaje, origen: 'ejemplo' } }));"
+      },
+      "id": "73d1bae2-8a9a-4890-a39d-6da7f0a4a3a4",
+      "name": "Mensajes de ejemplo",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        260,
+        -140
+      ]
+    },
+    {
+      "parameters": {
+        "formTitle": "Escribinos",
+        "formDescription": "Contanos tu consulta, reclamo o idea. No pongas datos personales.",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "Tu mensaje",
+              "fieldName": "mensaje",
+              "fieldType": "textarea",
+              "placeholder": "¿A qué hora abre el punto de reciclaje?",
+              "requiredField": true
+            }
+          ]
+        },
+        "responseMode": "lastNode",
+        "options": {
+          "path": "nodo-cero-mensajes",
+          "buttonLabel": "Enviar",
+          "customCss": ":root {\n  --font-family: 'Inter Tight', 'Inter', system-ui, sans-serif;\n  --color-background: #191919;\n  --color-card-bg: #242424;\n  --color-card-border: #5A0026;\n  --color-card-shadow: rgba(255, 145, 172, 0.12);\n  --color-header: #FAFAFA;\n  --color-header-subtext: #FFD0D9;\n  --color-label: #FAFAFA;\n  --color-link: #FFD0D9;\n  --color-input-bg: #191919;\n  --color-input-border: #5A0026;\n  --color-input-text: #FAFAFA;\n  --color-focus-border: #FF91AC;\n  --color-submit-btn-bg: #FF91AC;\n  --color-submit-btn-text: #191919;\n  --color-required: #FF91AC;\n  --color-html-text: #FAFAFA;\n  --color-html-link: #FF91AC;\n  --color-test-notice-bg: #242424;\n  --color-test-notice-border: #FF91AC;\n  --color-test-notice-text: #FFD0D9;\n  --border-radius-card: 12px;\n  --card-border-radius: 12px;\n  --border-radius-input: 8px;\n}\n/* Enlaces en rosa y el logo de n8n del pie en blanco, sobre el fondo oscuro */\na { color: #FF91AC; }\n.n8n-link svg path[fill='#101330'] { fill: #FAFAFA; }"
+        }
+      },
+      "id": "c2aa0da3-2e81-4c7a-bbbc-5479fa2d40e6",
+      "name": "Formulario de mensajes",
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.6,
+      "position": [
+        0,
+        220
+      ],
+      "webhookId": "bf64f3d5-13d5-4a95-82c5-8e1d2c51ffbe"
+    },
+    {
+      "parameters": {
+        "mode": "manual",
+        "assignments": {
+          "assignments": [
+            {
+              "id": "86a339e7-e072-441c-ba2e-ea8b2911f4a7",
+              "name": "mensaje",
+              "value": "={{ String($json.mensaje ?? \"\").trim() }}",
+              "type": "string"
+            },
+            {
+              "id": "87cc931f-518b-4a1d-9193-ae9352ced468",
+              "name": "origen",
+              "value": "formulario",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "e496a30f-d426-4edc-8bd3-02f4d4ff1497",
+      "name": "Preparar el mensaje",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        260,
+        220
+      ]
+    },
+    {
+      "parameters": {
+        "content": "### 1. Dos formas de que llegue un mensaje\nLas dos ramas dejan el ítem con la misma forma: `mensaje` y `origen`. Así el resto del workflow no necesita saber de dónde vino.\n\nCambiá el formulario por un Webhook, un correo (Gmail Trigger) o un chat: mientras llegue `mensaje`, todo lo demás funciona igual.",
+        "height": 320,
+        "width": 460,
+        "color": 7
+      },
+      "id": "c4b00330-bdda-494f-a994-be5b409a56f2",
+      "name": "Nota: dos entradas",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -100,
+        400
+      ]
+    },
+    {
+      "parameters": {
+        "content": "### 2. El clasificador\n**Text Classifier** le pasa el texto a la IA con la lista de categorías y su descripción, y le pide que elija una. Tiene **una salida por categoría**: es como un Switch, pero que entiende el texto.\n\n- La **descripción** de cada categoría es lo que más importa: cuanto más clara, mejor clasifica.\n- **When No Clear Match → Output on Extra, 'Other' Branch** suma la salida **No encaja**, para lo que no es ninguna de las tres.\n- La temperatura del modelo está en 0: la misma pregunta, la misma respuesta.",
+        "height": 440,
+        "width": 480,
+        "color": 7
+      },
+      "id": "4786e8d8-3fd3-483b-a1c1-254b607a7191",
+      "name": "Nota: el clasificador",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        380,
+        -640
+      ]
+    },
+    {
+      "parameters": {
+        "inputText": "={{ $json.mensaje }}",
+        "categories": {
+          "categories": [
+            {
+              "category": "consulta",
+              "description": "Una pregunta o un pedido de información: horarios, lugares, cómo inscribirse, cómo funciona algo."
+            },
+            {
+              "category": "reclamo",
+              "description": "Una queja por algo que salió mal o no se cumplió: un servicio que no llega, un cobro mal hecho, algo roto o una espera sin respuesta."
+            },
+            {
+              "category": "idea",
+              "description": "Una propuesta o sugerencia para hacer algo nuevo o mejorar algo que ya existe."
+            }
+          ]
+        },
+        "options": {
+          "fallback": "other"
+        }
+      },
+      "id": "988880e0-c8af-4538-af9a-648510c9070d",
+      "name": "Clasificar el mensaje",
+      "type": "@n8n/n8n-nodes-langchain.textClassifier",
+      "typeVersion": 1.1,
+      "position": [
+        560,
+        40
+      ]
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-3.5-flash-lite",
+        "options": {
+          "temperature": 0
+        }
+      },
+      "id": "d5a051c3-4be6-44e1-9225-12d834803648",
+      "name": "Modelo Gemini",
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1.2,
+      "position": [
+        580,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "content": "### El modelo\n**Google Gemini Chat Model** es el que piensa. Se conecta abajo del clasificador (conexión **Model**).\n\nCredencial: **Google Gemini(PaLM) Api**, con tu clave de Google AI Studio. ¿Preferís OpenAI? Cambiá este nodo por **OpenAI Chat Model** y el resto queda igual.",
+        "height": 280,
+        "width": 400,
+        "color": 5
+      },
+      "id": "f39ca716-be01-4770-bb14-cd781127caad",
+      "name": "Nota: el modelo",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        380,
+        460
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "manual",
+        "assignments": {
+          "assignments": [
+            {
+              "id": "93291440-2ef2-457e-a04b-f8c4b75fd970",
+              "name": "categoria",
+              "value": "consulta",
+              "type": "string"
+            },
+            {
+              "id": "1a258636-c5c0-4779-a0bd-2c52180e070a",
+              "name": "prioridad",
+              "value": "normal",
+              "type": "string"
+            },
+            {
+              "id": "a60e983f-3af4-4951-b212-113437d75ff0",
+              "name": "respuesta",
+              "value": "Gracias por tu consulta. Te respondemos en cuanto podamos.",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "id": "29cf87cd-5b56-4f3c-add0-4bc355670b89",
+      "name": "Es una consulta",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        900,
+        -240
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "manual",
+        "assignments": {
+          "assignments": [
+            {
+              "id": "61611d89-fdc5-4087-a0df-04298cdbadf1",
+              "name": "categoria",
+              "value": "reclamo",
+              "type": "string"
+            },
+            {
+              "id": "594f81c8-7cfd-4f7a-a890-34fd2e388caf",
+              "name": "prioridad",
+              "value": "alta",
+              "type": "string"
+            },
+            {
+              "id": "2738c3a2-fe7d-4675-8bb9-ef9b1d7cf9a5",
+              "name": "respuesta",
+              "value": "Lamentamos lo que pasó. Tu reclamo quedó registrado y alguien del equipo lo va a revisar.",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "id": "32c984ac-2da6-4e21-b80d-5d21a2100c78",
+      "name": "Es un reclamo",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        900,
+        -60
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "manual",
+        "assignments": {
+          "assignments": [
+            {
+              "id": "d960b178-4b06-493a-b4aa-b6f18a849414",
+              "name": "categoria",
+              "value": "idea",
+              "type": "string"
+            },
+            {
+              "id": "5fbff977-a2ed-46c1-bf79-21a1fa01048c",
+              "name": "prioridad",
+              "value": "baja",
+              "type": "string"
+            },
+            {
+              "id": "f8dc52f1-f553-451e-80bf-d0e2fde96158",
+              "name": "respuesta",
+              "value": "Gracias por la idea. La sumamos a la lista para pensarla juntas.",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "id": "d7c123ed-49b9-48ca-b508-fa1e8c2b80f5",
+      "name": "Es una idea",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        900,
+        120
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "manual",
+        "assignments": {
+          "assignments": [
+            {
+              "id": "5dc6d342-9a87-4438-b95a-f9d17f512055",
+              "name": "categoria",
+              "value": "otro",
+              "type": "string"
+            },
+            {
+              "id": "6e913eaa-edfd-45b0-ba52-e1a2e7575254",
+              "name": "prioridad",
+              "value": "normal",
+              "type": "string"
+            },
+            {
+              "id": "f226c988-df73-488d-b156-fe4868225f48",
+              "name": "respuesta",
+              "value": "Gracias por escribirnos. Alguien del equipo va a leer tu mensaje.",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "id": "bd4778d0-cd80-4ed2-b544-5e51bffab30c",
+      "name": "No encaja",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        900,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "content": "### 3. Un camino por categoría\nCada **Edit Fields** suma `categoria`, `prioridad` y la `respuesta` que va a ver la persona. Acá es donde cada camino puede hacer algo distinto: los reclamos, avisar por Telegram; las ideas, guardarse en Supabase (workflow 30); las consultas, contestarse con un agente (workflow 05).\n\n**Merge** (modo **Append**, 4 entradas) vuelve a juntar todo en una lista.",
+        "height": 400,
+        "width": 440,
+        "color": 7
+      },
+      "id": "5ce0a2b3-1c22-4bfb-aeaf-66276f97e746",
+      "name": "Nota: cada camino",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        900,
+        -640
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "append",
+        "numberInputs": 4
+      },
+      "id": "063fd316-f132-43f1-bd50-1d2edaf92d46",
+      "name": "Juntar los resultados",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        1180,
+        20
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 4
+          },
+          "conditions": [
+            {
+              "id": "bc234c69-56e0-4017-a465-fe7cb826666d",
+              "leftValue": "={{ $json.origen === 'formulario' }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": false,
+        "options": {}
+      },
+      "id": "7c988d9d-885d-48a1-b95d-ff027ac683f1",
+      "name": "¿Vino del formulario?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.4,
+      "position": [
+        1440,
+        20
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "completion",
+        "respondWith": "text",
+        "completionTitle": "Gracias por escribirnos",
+        "completionMessage": "={{ $json.respuesta }}\n\nTu mensaje quedó como: {{ $json.categoria }}.",
+        "options": {
+          "formTitle": "Escribinos",
+          "customCss": ":root {\n  --font-family: 'Inter Tight', 'Inter', system-ui, sans-serif;\n  --color-background: #191919;\n  --color-card-bg: #242424;\n  --color-card-border: #5A0026;\n  --color-card-shadow: rgba(255, 145, 172, 0.12);\n  --color-header: #FAFAFA;\n  --color-header-subtext: #FFD0D9;\n  --color-label: #FAFAFA;\n  --color-link: #FFD0D9;\n  --color-input-bg: #191919;\n  --color-input-border: #5A0026;\n  --color-input-text: #FAFAFA;\n  --color-focus-border: #FF91AC;\n  --color-submit-btn-bg: #FF91AC;\n  --color-submit-btn-text: #191919;\n  --color-required: #FF91AC;\n  --color-html-text: #FAFAFA;\n  --color-html-link: #FF91AC;\n  --color-test-notice-bg: #242424;\n  --color-test-notice-border: #FF91AC;\n  --color-test-notice-text: #FFD0D9;\n  --border-radius-card: 12px;\n  --card-border-radius: 12px;\n  --border-radius-input: 8px;\n}\n/* Enlaces en rosa y el logo de n8n del pie en blanco, sobre el fondo oscuro */\na { color: #FF91AC; }\n.n8n-link svg path[fill='#101330'] { fill: #FAFAFA; }"
+        }
+      },
+      "id": "049289bd-e9ee-42bf-a3ad-0c894810d7b2",
+      "name": "Página de respuesta",
+      "type": "n8n-nodes-base.form",
+      "typeVersion": 2.5,
+      "position": [
+        1700,
+        -100
+      ],
+      "webhookId": "87decd28-43c1-4e63-b8bd-e4368e2d2d57"
+    },
+    {
+      "parameters": {},
+      "id": "7c26cc39-513e-4db5-b1be-df356582ac47",
+      "name": "Resultado de la prueba",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        1700,
+        140
+      ]
+    },
+    {
+      "parameters": {
+        "content": "### 4. La respuesta\nSi el mensaje vino del formulario, **Página de respuesta** le muestra a la persona el texto de su camino. Si vino de los ejemplos, termina en **Resultado de la prueba**: abrilo y mirá los 6 mensajes con su categoría.\n\n¿Por qué el IF? Un nodo **n8n Form** espera que alguien tenga el formulario abierto. En una prueba con **Execute workflow** no hay nadie esperando.",
+        "height": 340,
+        "width": 460,
+        "color": 7
+      },
+      "id": "9571f6b9-5184-4949-a3ea-4d123b9bfb92",
+      "name": "Nota: la respuesta",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1380,
+        300
+      ]
+    }
+  ],
+  "connections": {
+    "Al tocar Execute": {
+      "main": [
+        [
+          {
+            "node": "Mensajes de ejemplo",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mensajes de ejemplo": {
+      "main": [
+        [
+          {
+            "node": "Clasificar el mensaje",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Formulario de mensajes": {
+      "main": [
+        [
+          {
+            "node": "Preparar el mensaje",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Preparar el mensaje": {
+      "main": [
+        [
+          {
+            "node": "Clasificar el mensaje",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Modelo Gemini": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Clasificar el mensaje",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Clasificar el mensaje": {
+      "main": [
+        [
+          {
+            "node": "Es una consulta",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Es un reclamo",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Es una idea",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "No encaja",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Es una consulta": {
+      "main": [
+        [
+          {
+            "node": "Juntar los resultados",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Es un reclamo": {
+      "main": [
+        [
+          {
+            "node": "Juntar los resultados",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Es una idea": {
+      "main": [
+        [
+          {
+            "node": "Juntar los resultados",
+            "type": "main",
+            "index": 2
+          }
+        ]
+      ]
+    },
+    "No encaja": {
+      "main": [
+        [
+          {
+            "node": "Juntar los resultados",
+            "type": "main",
+            "index": 3
+          }
+        ]
+      ]
+    },
+    "Juntar los resultados": {
+      "main": [
+        [
+          {
+            "node": "¿Vino del formulario?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "¿Vino del formulario?": {
+      "main": [
+        [
+          {
+            "node": "Página de respuesta",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Resultado de la prueba",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "pinData": {},
+  "meta": {
+    "templateCredsSetupCompleted": false
+  }
+}

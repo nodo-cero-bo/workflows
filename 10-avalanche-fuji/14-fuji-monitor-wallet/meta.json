@@ -9,6 +9,9 @@
     "n8n",
     "avalanche"
   ],
+  "lineas": [
+    "web3"
+  ],
   "credenciales": [],
   "aprendes": [
     "Schedule Trigger",

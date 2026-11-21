@@ -1,0 +1,31 @@
+{
+  "id": "65-clasificar-mensajes-con-ia",
+  "titulo": "Clasificar mensajes con IA",
+  "resumen": "La IA lee cada mensaje y decide si es una consulta, un reclamo o una idea, y cada tipo sigue su propio camino.",
+  "categoria": "casos",
+  "nivel": "inicial",
+  "minutos": 20,
+  "tecnologias": [
+    "n8n",
+    "ia"
+  ],
+  "lineas": [
+    "ia",
+    "impacto"
+  ],
+  "credenciales": [
+    {
+      "nombre": "Google Gemini(PaLM) Api",
+      "tipo_n8n": "googlePalmApi",
+      "como": "Una clave gratis de Google AI Studio (aistudio.google.com, Get API key), en la credencial Google Gemini(PaLM) Api."
+    }
+  ],
+  "aprendes": [
+    "Text Classifier: una salida por categoría",
+    "Escribir buenas descripciones de categorías",
+    "La salida Other para lo que no encaja",
+    "Merge en modo Append para volver a juntar caminos"
+  ],
+  "probado": "auditado",
+  "orden": 65
+}

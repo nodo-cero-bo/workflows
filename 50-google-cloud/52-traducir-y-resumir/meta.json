@@ -1,0 +1,33 @@
+{
+  "id": "52-traducir-y-resumir",
+  "titulo": "Resumir y traducir con Google Cloud",
+  "resumen": "Pegás un aviso en español y te devuelve un resumen simple hecho por Gemini en Vertex AI y su traducción con Cloud Translation al quechua, al aimara, al guaraní, al inglés o al portugués.",
+  "categoria": "google-cloud",
+  "nivel": "intermedio",
+  "minutos": 30,
+  "tecnologias": [
+    "n8n",
+    "ia",
+    "google-cloud"
+  ],
+  "lineas": [
+    "impacto",
+    "ia"
+  ],
+  "credenciales": [
+    {
+      "nombre": "Google Service Account API",
+      "tipo_n8n": "googleApi",
+      "como": "Clave JSON de una cuenta de servicio con los roles Cloud Translation API User y Agent Platform User: client_email en Service Account Email, private_key en Private Key y Region en Global."
+    }
+  ],
+  "aprendes": [
+    "Google Translate con una cuenta de servicio",
+    "Quechua, aimara y guaraní en Cloud Translation",
+    "Basic LLM Chain con Gemini en Vertex AI",
+    "Pasar una opción del formulario a un código con una expresión",
+    "Limpiar el HTML que devuelve la traducción"
+  ],
+  "probado": "auditado",
+  "orden": 52
+}

@@ -122,7 +122,7 @@ export function buscarEmojis(texto) {
 
 // «n8n» va siempre en minúscula. Se ignoran variables de entorno (N8N_ALGO) y paquetes
 // (@n8n/..., n8n-nodes-base), que son código.
-export function buscarN8nMalEscrito(texto) {
+export function buscarMarcaMalEscrita(texto) {
   const res = [];
   const re = /(?<![\p{L}\p{N}_@/.-])n8n(?![\p{L}\p{N}_])/giu;
   for (const m of String(texto ?? '').matchAll(re)) {
@@ -138,7 +138,7 @@ export function revisarProsa(texto, { exclamaciones = true } = {}) {
   if (exclamaciones && /[\u00A1!]/.test(t)) out.push({ regla: 'sin signos de exclamación', detalle: recorte(t, t.search(/[\u00A1!]/)), nivel: 'error' });
   const emo = buscarEmojis(t);
   if (emo.length) out.push({ regla: 'sin emojis', detalle: emo.join(' '), nivel: 'error' });
-  const n8n = buscarN8nMalEscrito(t);
+  const n8n = buscarMarcaMalEscrita(t);
   if (n8n.length) out.push({ regla: '«n8n» va en minúscula', detalle: n8n.join(', '), nivel: 'error' });
   for (const x of buscarPalabras(t)) out.push({ ...x, nivel: 'error' });
   for (const x of buscarAtribucion(t)) out.push({ ...x, nivel: 'aviso' });

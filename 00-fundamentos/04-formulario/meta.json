@@ -8,6 +8,12 @@
   "tecnologias": [
     "n8n"
   ],
+  "lineas": [
+    "ia",
+    "web3",
+    "apps",
+    "impacto"
+  ],
   "credenciales": [],
   "aprendes": [
     "n8n Form Trigger con campos obligatorios y desplegables",

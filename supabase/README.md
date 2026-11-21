@@ -6,6 +6,7 @@ El esquema de base de datos que usan los workflows de Supabase, Clerk y Avalanch
 |---|---|
 | [`sql/00_esquema.sql`](sql/00_esquema.sql) | Crea todo. Se puede correr las veces que quieras: lo que ya existe queda como está. |
 | [`sql/01_datos_de_ejemplo.sql`](sql/01_datos_de_ejemplo.sql) | Opcional: tres ideas de ejemplo para probar la API del workflow 31. Tampoco repite filas. |
+| [`sql/02_reportes.sql`](sql/02_reportes.sql) | Para el workflow 67 (reportes ambientales): la tabla `reportes`, el bucket privado `reportes-fotos` de Storage y su RLS, explicada. También se puede correr las veces que quieras. |
 
 ## Qué crea
 

@@ -48,7 +48,7 @@ Nada más que tu n8n. No pide credenciales ni wallet: el saldo de una dirección
 
 ## Cómo probarlo
 
-**1. Sin publicar.** Hacé clic en **Execute** y abrí **Pasar de wei a AVAX**. Después cambiá la dirección de **Dirección de ejemplo** por la tuya y ejecutá de nuevo.
+**1. Sin publicar.** Hacé clic en **Execute workflow** y abrí **Pasar de wei a AVAX**. Después cambiá la dirección de **Dirección de ejemplo** por la tuya y ejecutá de nuevo.
 
 **2. La API.** Hacé **Publish** (arriba a la derecha). Abrí **Consulta por URL**, copiá la **Production URL** y abrila en el navegador con tu dirección al final:
 
@@ -66,7 +66,7 @@ Probá también con una dirección mal escrita (`?address=0x123`): responde 400 
 
 **3. El formulario.** Con el workflow publicado, abrí **Formulario de saldo**, copiá su **Production URL** y abrila en el navegador. Pegá una dirección y tocá **Ver saldo**.
 
-Las URL de prueba (`/webhook-test/`, `/form-test/`) funcionan nada más mientras el editor está escuchando (botón **Execute**); las de producción (`/webhook/`, `/form/`), cuando el workflow está publicado.
+Las URL de prueba (`/webhook-test/`, `/form-test/`) funcionan nada más mientras el editor está escuchando (botón **Execute workflow**); las de producción (`/webhook/`, `/form/`), cuando el workflow está publicado.
 
 ## Qué devuelve
 

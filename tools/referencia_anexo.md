@@ -130,7 +130,7 @@ Copiados de workflows que pasan el auditor y se importan en n8n 2.48.7. Cambiá 
 ```json
 {
   "parameters": {
-    "content": "## Hola n8n\n\n### Qué hace\nArma un dato de ejemplo, lo transforma con una expresión y con JavaScript, y decide un camino con un IF.\n\n### Qué necesitás\nNada más que tu cuenta de n8n. No usa credenciales.\n\n### Cómo probarlo\nHacé clic en **Execute** y abrí cada nodo para ver qué entra y qué sale.",
+    "content": "## Hola n8n\n\n### Qué hace\nArma un dato de ejemplo, lo transforma con una expresión y con JavaScript, y decide un camino con un IF.\n\n### Qué necesitás\nNada más que tu cuenta de n8n. No usa credenciales.\n\n### Cómo probarlo\nHacé clic en **Execute workflow** y abrí cada nodo para ver qué entra y qué sale.",
     "height": 480,
     "width": 440,
     "color": 7

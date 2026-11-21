@@ -1,0 +1,439 @@
+{
+  "name": "Nodo Cero · Leer una página web",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## Leer una página web\n\nDescarga una página, encuentra cada producto con selectores CSS y te deja una tabla limpia: título, precio, estrellas y enlace. Se llama *web scraping* (extraer datos de una página).\n\nLa práctica es con **books.toscrape.com**, una librería de mentira hecha para aprender: sus precios y reseñas son inventados y la página invita a leerla con programas.\n\n### Qué hace\n1. **Qué página leer**: la dirección y desde cuántas estrellas te interesa un libro.\n2. **Descargar la página**: un HTTP Request que trae el HTML.\n3. **Separar cada libro**: el nodo HTML corta la página en un pedazo por libro.\n4. **Leer cada libro**: el mismo nodo, ahora dentro de cada pedazo.\n5. **Limpiar los datos**, **¿Tiene buenas reseñas?** y **Más baratos primero** dejan la tabla final.\n\n### Qué necesitás\nNada más que tu n8n. No usa credenciales.\n\n### Cómo probarlo\n1. Tocá **Execute workflow** y abrí **Más baratos primero** en la vista **Table**.\n2. Cambiá `estrellas_minimas` (de 1 a 5) y ejecutá de nuevo.\n3. Antes de leer otra página, mirá la nota de la derecha: no todas se pueden leer.",
+        "height": 1000,
+        "width": 640,
+        "color": 4
+      },
+      "id": "148133c2-cc1c-4c79-8a88-df4f56c37f8b",
+      "name": "Nota de inicio",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -760,
+        -560
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "125325a3-0a33-4c78-ba8f-274070529dc0",
+      "name": "Al tocar Execute",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "content": "### Antes de leer cualquier página\n1. **robots.txt**: abrí `https://el-sitio.com/robots.txt`. Si dice `Disallow` para la parte que querés, no la leas.\n2. **Términos de uso**: muchos sitios prohíben copiar sus datos. Si hay una API oficial o datos abiertos, usalos.\n3. **Despacio**: una página cada tanto, nunca cientos por minuto.\n4. Nada de datos personales.\n\nbooks.toscrape.com no tiene robots.txt (responde 404, sin reglas) y existe para practicar.",
+        "height": 420,
+        "width": 400,
+        "color": 3
+      },
+      "id": "293f3f32-6cd6-4640-bd1b-d1fdd6d82e21",
+      "name": "Nota: permiso",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -100,
+        -560
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "manual",
+        "assignments": {
+          "assignments": [
+            {
+              "id": "21cd466d-2ea0-4c6d-ba1a-c3c43262e648",
+              "name": "url",
+              "value": "https://books.toscrape.com/",
+              "type": "string"
+            },
+            {
+              "id": "fc840ab1-f77e-45e7-8534-8bb2aa37294d",
+              "name": "estrellas_minimas",
+              "value": 4,
+              "type": "number"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "57e81792-b373-4d80-8401-676ec5a4bb03",
+      "name": "Qué página leer",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        260,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "content": "### 1. Descargar el HTML\n**HTTP Request** con **Response Format: Text** guarda la página entera como texto en el campo `html`.\n\nEl encabezado `User-Agent` dice quién pide la página: es de buena educación presentarse.",
+        "height": 300,
+        "width": 360,
+        "color": 7
+      },
+      "id": "4eca9ab8-58d8-4286-ab43-aebefadc1d53",
+      "name": "Nota: descargar",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        160,
+        260
+      ]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $json.url }}",
+        "sendHeaders": true,
+        "specifyHeaders": "keypair",
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "User-Agent",
+              "value": "n8n (taller Nodo Cero, aprendiendo a leer páginas)"
+            }
+          ]
+        },
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "text",
+              "outputPropertyName": "html"
+            }
+          }
+        }
+      },
+      "id": "e336b4c3-75d7-402c-b11c-b7f97c04b0f2",
+      "name": "Descargar la página",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        520,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "content": "### 2. Selectores CSS, en dos pasos\nUn **selector CSS** le dice al nodo qué parte de la página buscar:\n- `article.product_pod`: cada etiqueta `<article>` con la clase `product_pod` (una tarjeta de libro).\n- `li.next a`: el enlace «next» a la página siguiente.\n\n**Paso 1**: con **Return Array** y **Return Value: HTML**, sale una lista con el HTML de cada tarjeta.\n**Paso 2**: el segundo nodo recibe esa lista y devuelve **un ítem por libro**.\n\nPara encontrar selectores: en el navegador, clic derecho sobre el dato → **Inspeccionar**.",
+        "height": 440,
+        "width": 460,
+        "color": 7
+      },
+      "id": "480edd07-0866-47db-a06d-b6f7c4cea902",
+      "name": "Nota: selectores",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        380,
+        -560
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "extractHtmlContent",
+        "sourceData": "json",
+        "dataPropertyName": "html",
+        "extractionValues": {
+          "values": [
+            {
+              "key": "libros",
+              "cssSelector": "article.product_pod",
+              "returnValue": "html",
+              "returnArray": true
+            },
+            {
+              "key": "pagina_siguiente",
+              "cssSelector": "li.next a",
+              "returnValue": "attribute",
+              "attribute": "href",
+              "returnArray": false
+            }
+          ]
+        },
+        "options": {
+          "trimValues": true,
+          "cleanUpText": true
+        }
+      },
+      "id": "45a2db76-0c9e-4abf-9b0d-96036f3bc7aa",
+      "name": "Separar cada libro",
+      "type": "n8n-nodes-base.html",
+      "typeVersion": 1.2,
+      "position": [
+        780,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "content": "### 3. Texto o atributo\nDentro de cada tarjeta:\n- **Text**: lo que se lee (`p.price_color` → `£51.77`).\n- **Attribute**: un dato escondido en la etiqueta. El título completo está en el atributo `title` del enlace (el texto viene cortado con «...») y las estrellas, en la clase: `star-rating Three`.",
+        "height": 340,
+        "width": 400,
+        "color": 7
+      },
+      "id": "85c27140-c9d4-432e-92f5-c2aa8b3d4b47",
+      "name": "Nota: texto o atributo",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        880,
+        260
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "extractHtmlContent",
+        "sourceData": "json",
+        "dataPropertyName": "libros",
+        "extractionValues": {
+          "values": [
+            {
+              "key": "titulo",
+              "cssSelector": "h3 a",
+              "returnValue": "attribute",
+              "attribute": "title",
+              "returnArray": false
+            },
+            {
+              "key": "precio",
+              "cssSelector": "p.price_color",
+              "returnValue": "text",
+              "returnArray": false
+            },
+            {
+              "key": "estrellas",
+              "cssSelector": "p.star-rating",
+              "returnValue": "attribute",
+              "attribute": "class",
+              "returnArray": false
+            },
+            {
+              "key": "disponibilidad",
+              "cssSelector": "p.availability",
+              "returnValue": "text",
+              "returnArray": false
+            },
+            {
+              "key": "enlace",
+              "cssSelector": "h3 a",
+              "returnValue": "attribute",
+              "attribute": "href",
+              "returnArray": false
+            }
+          ]
+        },
+        "options": {
+          "trimValues": true,
+          "cleanUpText": true
+        }
+      },
+      "id": "319d8562-6fdc-4ae2-839f-b9eba86e86f3",
+      "name": "Leer cada libro",
+      "type": "n8n-nodes-base.html",
+      "typeVersion": 1.2,
+      "position": [
+        1040,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "content": "### 4. De texto a datos\nLo que sale de una página es siempre texto. El Code lo convierte:\n- `£51.77` → `51.77` (un número, para poder ordenar).\n- `star-rating Three` → `3`.\n- `catalogue/...` → el enlace completo.\n\nEn el Code de n8n no existe `URL`: por eso el enlace se arma pegando textos.",
+        "height": 440,
+        "width": 400,
+        "color": 7
+      },
+      "id": "bc344a05-46a0-4e78-b0fc-9c27f26b5af9",
+      "name": "Nota: limpiar",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        880,
+        -560
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "// Lo que sale del nodo HTML es texto: lo pasamos a números y a enlaces completos.\n// Los enlaces de la página son relativos a su carpeta:\n// en «https://books.toscrape.com/catalogue/page-2.html» la carpeta es «https://books.toscrape.com/catalogue/».\nlet url = String($('Qué página leer').first().json.url).trim();\nif (/^https?:\\/\\/[^/]+$/.test(url)) url += '/';\nconst base = url.slice(0, url.lastIndexOf('/') + 1);\nconst ESTRELLAS = { One: 1, Two: 2, Three: 3, Four: 4, Five: 5 };\n\nreturn $input.all().map((item) => {\n  const libro = item.json;\n  // «star-rating Three» → «Three» → 3\n  const palabra = String(libro.estrellas ?? '').replace('star-rating', '').trim();\n  // «£51.77» → 51.77 (sacamos todo lo que no sea número o punto)\n  const precio = Number(String(libro.precio ?? '').replace(/[^0-9.]/g, ''));\n  const enlace = String(libro.enlace ?? '');\n  return {\n    json: {\n      titulo: libro.titulo,\n      precio_libras: precio,\n      estrellas: ESTRELLAS[palabra] ?? 0,\n      disponible: /in stock/i.test(libro.disponibilidad ?? ''),\n      enlace: enlace.startsWith('http') ? enlace : base + enlace,\n    },\n  };\n});"
+      },
+      "id": "f204f084-5ee0-4578-9ac6-f33a84068c8a",
+      "name": "Limpiar los datos",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1300,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 4
+          },
+          "conditions": [
+            {
+              "id": "ef028d08-4983-40cf-a1b3-cd48e070d7a1",
+              "leftValue": "={{ $json.estrellas }}",
+              "rightValue": "={{ $('Qué página leer').first().json.estrellas_minimas }}",
+              "operator": {
+                "type": "number",
+                "operation": "gte"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": false,
+        "options": {}
+      },
+      "id": "85804b32-a676-4024-b0a3-6cad65a04952",
+      "name": "¿Tiene buenas reseñas?",
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2.4,
+      "position": [
+        1560,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "type": "simple",
+        "sortFieldsUi": {
+          "sortField": [
+            {
+              "fieldName": "precio_libras",
+              "order": "ascending"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "7aff3870-78d2-4c6a-9faa-110af535a85a",
+      "name": "Más baratos primero",
+      "type": "n8n-nodes-base.sort",
+      "typeVersion": 1,
+      "position": [
+        1820,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "content": "### 5. Filtrar y ordenar\n**Filter** deja pasar los libros con `estrellas` mayor o igual que `estrellas_minimas`, y **Sort** los ordena por `precio_libras`, del más barato al más caro.\n\nDe los 20 libros de la página, quedan los que cumplen. El campo `pagina_siguiente` del paso 2 dice dónde sigue la lista: es la pista para leer más páginas.",
+        "height": 340,
+        "width": 460,
+        "color": 7
+      },
+      "id": "1283530d-02b2-4a1b-bf56-d83f2f4910b4",
+      "name": "Nota: filtrar y ordenar",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1320,
+        260
+      ]
+    }
+  ],
+  "connections": {
+    "Al tocar Execute": {
+      "main": [
+        [
+          {
+            "node": "Qué página leer",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Qué página leer": {
+      "main": [
+        [
+          {
+            "node": "Descargar la página",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Descargar la página": {
+      "main": [
+        [
+          {
+            "node": "Separar cada libro",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Separar cada libro": {
+      "main": [
+        [
+          {
+            "node": "Leer cada libro",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Leer cada libro": {
+      "main": [
+        [
+          {
+            "node": "Limpiar los datos",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Limpiar los datos": {
+      "main": [
+        [
+          {
+            "node": "¿Tiene buenas reseñas?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "¿Tiene buenas reseñas?": {
+      "main": [
+        [
+          {
+            "node": "Más baratos primero",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "pinData": {},
+  "meta": {
+    "templateCredsSetupCompleted": false
+  }
+}

@@ -9,6 +9,10 @@
     "n8n",
     "ia"
   ],
+  "lineas": [
+    "ia",
+    "impacto"
+  ],
   "credenciales": [
     {
       "nombre": "Google Gemini(PaLM) Api",

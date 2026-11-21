@@ -1,0 +1,705 @@
+{
+  "name": "Nodo Cero · Reportes ambientales ciudadanos",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## Reportes ambientales ciudadanos\n\nUn formulario para que cualquier vecina reporte un problema ambiental (un microbasural, una quema, una cañería rota, un árbol caído), con foto si quiere. La IA lo clasifica y le pone urgencia, n8n lo guarda en Supabase con la foto, y si es urgente avisa al equipo por Telegram. Es un proyecto completo de la línea **Impacto social y ambiental**.\n\n### Qué hace\n1. **Formulario de reportes** (o **Al tocar Execute** con un reporte de ejemplo).\n2. **Preparar el reporte** limpia los textos y le da un nombre único a la foto.\n3. **Clasificar el reporte** (Information Extractor + Gemini): categoría, urgencia y una frase de resumen.\n4. **Subir la foto** a un bucket privado de Supabase Storage y **Guardar el reporte** en la tabla `reportes`.\n5. **¿Es urgente?** avisa por Telegram (apagado hasta que tengas tu bot) y la persona ve una página de gracias.\n\n### Qué necesitás\n- Supabase con `supabase/sql/02_reportes.sql` corrido en el SQL Editor. Credencial **Supabase API** (`supabaseApi`).\n- Credencial **Google Gemini(PaLM) Api** (`googlePalmApi`), con una clave gratis de Google AI Studio.\n- Opcional: credencial **Telegram API** (`telegramApi`) para el aviso (el workflow 66 explica cómo crear el bot).\n\n### Cómo probarlo\n1. Corré el SQL y cargá las credenciales en **Modelo Gemini**, **Subir la foto** y **Guardar el reporte**.\n2. En **Subir la foto**, cambiá `TU-PROYECTO` en la URL por el de tu proyecto.\n3. **Execute workflow**: en Supabase, **Table Editor → reportes**, aparece la fila (con `origen` = `prueba`).\n4. **Publish** y abrí la **Production URL** del formulario para mandar un reporte con foto.",
+        "height": 1160,
+        "width": 680,
+        "color": 4
+      },
+      "id": "f1d2091c-e9f2-4469-810d-9e03e1b5d146",
+      "name": "Nota de inicio",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -800,
+        -700
+      ]
+    },
+    {
+      "parameters": {
+        "formTitle": "Reportá un problema ambiental",
+        "formDescription": "Contanos qué pasa y dónde. La foto es opcional: que no se vean caras ni patentes. No pongas tu nombre ni tus datos.",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "¿Qué pasa?",
+              "fieldName": "descripcion",
+              "fieldType": "textarea",
+              "placeholder": "Hay un microbasural en la esquina y lo están quemando",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "¿Dónde?",
+              "fieldName": "lugar",
+              "fieldType": "text",
+              "placeholder": "Barrio, calle o una referencia cercana",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Foto (opcional)",
+              "fieldName": "foto",
+              "fieldType": "file",
+              "multipleFiles": false,
+              "acceptFileTypes": ".jpg,.jpeg,.png,.webp",
+              "requiredField": false
+            }
+          ]
+        },
+        "responseMode": "lastNode",
+        "options": {
+          "path": "nodo-cero-reportes",
+          "buttonLabel": "Enviar reporte",
+          "customCss": ":root {\n  --font-family: 'Inter Tight', 'Inter', system-ui, sans-serif;\n  --color-background: #191919;\n  --color-card-bg: #242424;\n  --color-card-border: #5A0026;\n  --color-card-shadow: rgba(255, 145, 172, 0.12);\n  --color-header: #FAFAFA;\n  --color-header-subtext: #FFD0D9;\n  --color-label: #FAFAFA;\n  --color-link: #FFD0D9;\n  --color-input-bg: #191919;\n  --color-input-border: #5A0026;\n  --color-input-text: #FAFAFA;\n  --color-focus-border: #FF91AC;\n  --color-submit-btn-bg: #FF91AC;\n  --color-submit-btn-text: #191919;\n  --color-required: #FF91AC;\n  --color-html-text: #FAFAFA;\n  --color-html-link: #FF91AC;\n  --color-test-notice-bg: #242424;\n  --color-test-notice-border: #FF91AC;\n  --color-test-notice-text: #FFD0D9;\n  --border-radius-card: 12px;\n  --card-border-radius: 12px;\n  --border-radius-input: 8px;\n}\n/* Enlaces en rosa y el logo de n8n del pie en blanco, sobre el fondo oscuro */\na { color: #FF91AC; }\n.n8n-link svg path[fill='#101330'] { fill: #FAFAFA; }"
+        }
+      },
+      "id": "6bc7918a-1bf5-4528-a62f-03e8c0c322ca",
+      "name": "Formulario de reportes",
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.6,
+      "position": [
+        0,
+        -140
+      ],
+      "webhookId": "b8992fee-4d87-45b2-a458-887d11ebf62c"
+    },
+    {
+      "parameters": {},
+      "id": "de56952b-f018-4be4-bb90-5cb40dc86e73",
+      "name": "Al tocar Execute",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        180
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "manual",
+        "assignments": {
+          "assignments": [
+            {
+              "id": "41d81cf3-0e62-41fd-a763-9058390be089",
+              "name": "descripcion",
+              "value": "Desde hace una semana tiran basura en el canal y ayer la quemaron: hay mucho humo y al lado hay una escuela.",
+              "type": "string"
+            },
+            {
+              "id": "42a293d8-e472-4bc5-8984-697b3082fdcd",
+              "name": "lugar",
+              "value": "Canal Isuto, a la altura del segundo anillo (referencia de ejemplo)",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "07ad8d55-ce4d-4e55-bad5-f4bc3ec81dcf",
+      "name": "Reporte de ejemplo",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        260,
+        180
+      ]
+    },
+    {
+      "parameters": {
+        "content": "### 1. El formulario\nTres campos: **¿Qué pasa?**, **¿Dónde?** y una **Foto** opcional (campo **File**, que queda en el binario `foto`).\n\nCuidar a quien reporta es parte del proyecto: el formulario no pide nombre, teléfono ni correo, y pide fotos sin caras ni patentes.\n\n**Reporte de ejemplo** tiene la misma forma, sin foto, para probar con **Execute workflow**.",
+        "height": 340,
+        "width": 440,
+        "color": 7
+      },
+      "id": "eee2e886-f232-45fd-8722-5c43c44e9885",
+      "name": "Nota: el formulario",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -100,
+        400
+      ]
+    },
+    {
+      "parameters": {
+        "content": "### 2. Preparar el reporte\nEl Code recorta espacios, revisa que la foto sea una imagen y le arma un nombre único dentro del bucket: `fecha/reporte-ejecución-azar.jpg`. Así dos fotos que se llamen `IMG_0001.jpg` no se pisan.\n\n`origen` dice si vino del formulario o de una prueba.",
+        "height": 340,
+        "width": 400,
+        "color": 7
+      },
+      "id": "5166ce70-3223-4555-a30b-aa29f9967cd1",
+      "name": "Nota: preparar",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -100,
+        -700
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "// Limpia los textos y prepara el nombre de la foto, si vino una.\nconst TIPOS = { 'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp' };\nconst delFormulario = $('Formulario de reportes').isExecuted;\nconst fecha = $now.setZone('America/La_Paz').toFormat('yyyy-MM-dd');\n\nreturn $input.all().map((item, i) => {\n  const r = item.json;\n  const foto = item.binary?.foto;\n  // Un campo de archivo vacío puede llegar como un archivo sin nombre o de 0 bytes: no cuenta como foto.\n  const fotoValida = Boolean(foto && foto.fileName && TIPOS[foto.mimeType] && !/^0\\s/.test(String(foto.fileSize ?? '')));\n  const fotoRuta = fotoValida\n    ? `${fecha}/reporte-${$execution.id}-${i}-${Math.random().toString(36).slice(2, 8)}.${TIPOS[foto.mimeType]}`\n    : null;\n  return {\n    json: {\n      descripcion: String(r.descripcion ?? '').trim().replace(/\\s+/g, ' ').slice(0, 2000),\n      lugar: String(r.lugar ?? '').trim().replace(/\\s+/g, ' ').slice(0, 300),\n      tiene_foto: fotoValida,\n      foto_ruta: fotoRuta,\n      origen: delFormulario ? 'formulario' : 'prueba',\n    },\n    // La foto sigue viaje en el binario «foto» nada más si es válida.\n    ...(fotoValida ? { binary: { foto } } : {}),\n  };\n});"
+      },
+      "id": "2ee80b3a-1404-4643-9e43-3a5b1e86875d",
+      "name": "Preparar el reporte",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        520,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "content": "### 3. La IA clasifica\n**Information Extractor** le pide a Gemini tres datos con nombre y descripción: `categoria`, `urgencia` y `resumen`. La descripción de cada uno es la instrucción: ahí están las categorías posibles y qué es urgente.\n\nLa IA puede equivocarse o escribir distinto (`Basura`, `árboles`): el Code siguiente lo normaliza y, si no es una opción válida, usa `otro` o `media`. Así la base nunca rechaza el reporte.",
+        "height": 400,
+        "width": 460,
+        "color": 7
+      },
+      "id": "bc0e7f67-57d4-48b7-8055-f9fc2fda80e0",
+      "name": "Nota: la IA",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        440,
+        -700
+      ]
+    },
+    {
+      "parameters": {
+        "text": "=Lugar: {{ $json.lugar }}\nDescripción: {{ $json.descripcion }}",
+        "schemaType": "fromAttributes",
+        "attributes": {
+          "attributes": [
+            {
+              "name": "categoria",
+              "type": "string",
+              "required": true,
+              "description": "Una sola de estas, en minúsculas y sin tildes: basura (residuos, microbasurales), quema (quemas, chaqueos, humo, incendios), agua (cañerías rotas, inundaciones, canales tapados o contaminados), arboles (tala, árboles caídos o en riesgo), animales (fauna herida, maltrato o animales sueltos), ruido, u otro (si no encaja)."
+            },
+            {
+              "name": "urgencia",
+              "type": "string",
+              "required": true,
+              "description": "alta si hay riesgo para personas ahora (fuego, humo cerca de casas o escuelas, inundación, cables o árboles por caer); media si es un problema serio pero sin riesgo inmediato; baja en otro caso. Una sola palabra: alta, media o baja."
+            },
+            {
+              "name": "resumen",
+              "type": "string",
+              "required": true,
+              "description": "Una frase corta en español (máximo 20 palabras) que diga qué pasa y dónde. Sin datos personales."
+            }
+          ]
+        },
+        "options": {
+          "systemPromptTemplate": "Sos una persona experta en temas ambientales que ordena reportes ciudadanos de Santa Cruz de la Sierra, Bolivia. Leé el reporte y completá los atributos pedidos. Si dudás entre dos categorías, elegí la del problema principal. No inventes datos que no estén en el reporte."
+        }
+      },
+      "id": "552cd17a-ecf4-4ab9-a25f-fdd6f1050de8",
+      "name": "Clasificar el reporte",
+      "type": "@n8n/n8n-nodes-langchain.informationExtractor",
+      "typeVersion": 1.2,
+      "position": [
+        780,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-3.5-flash-lite",
+        "options": {
+          "temperature": 0.2
+        }
+      },
+      "id": "d7bc41c3-2f00-4dfa-8baa-1346e7601262",
+      "name": "Modelo Gemini",
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1.2,
+      "position": [
+        800,
+        240
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "// Junta el reporte con lo que dijo la IA y deja valores que la tabla acepta.\nconst CATEGORIAS = ['basura', 'quema', 'agua', 'arboles', 'animales', 'ruido', 'otro'];\nconst URGENCIAS = ['alta', 'media', 'baja'];\nconst limpiar = (t) => String(t ?? '').normalize('NFD').replace(/[\\u0300-\\u036f]/g, '').toLowerCase().trim();\n\nreturn $input.all().map((item, i) => {\n  const ia = item.json.output ?? {};\n  // El ítem de «Preparar el reporte» que corresponde a este (con su foto, si tiene).\n  const reporte = $('Preparar el reporte').itemMatching(i);\n  const categoria = CATEGORIAS.includes(limpiar(ia.categoria)) ? limpiar(ia.categoria) : 'otro';\n  const urgencia = URGENCIAS.includes(limpiar(ia.urgencia)) ? limpiar(ia.urgencia) : 'media';\n  return {\n    json: {\n      ...reporte.json,\n      categoria,\n      urgencia,\n      resumen: String(ia.resumen ?? '').trim().slice(0, 500),\n    },\n    ...(reporte.binary ? { binary: reporte.binary } : {}),\n  };\n});"
+      },
+      "id": "c75ec64b-ac13-4741-ac4d-698e04c1d6a1",
+      "name": "Ordenar la respuesta de la IA",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1100,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 4
+          },
+          "conditions": [
+            {
+              "id": "d93ce1f7-cb09-4e46-a8ba-6265408c84c1",
+              "leftValue": "={{ $json.tiene_foto }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": false,
+        "options": {}
+      },
+      "id": "18c82109-4dcc-482f-87b5-8ef58f62bbfb",
+      "name": "¿Trae foto?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.4,
+      "position": [
+        1360,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "content": "### 4. La foto, a Supabase Storage\nEl nodo Supabase de n8n trabaja con tablas, no con archivos. Para subir la foto usamos **HTTP Request** contra la API de Storage:\n`POST https://TU-PROYECTO.supabase.co/storage/v1/object/reportes-fotos/<ruta>`\n\n- **Authentication → Predefined Credential Type → Supabase API**: n8n le agrega tu clave secreta al pedido, sin escribirla en el nodo.\n- **Body → n8n Binary File** con el campo `foto`.\n- Cambiá `TU-PROYECTO` por el de tu proyecto (Project Settings → Data API, o la URL de tu credencial).\n\nEl bucket es **privado**: la foto se ve nada más desde el panel de Supabase.",
+        "height": 480,
+        "width": 480,
+        "color": 7
+      },
+      "id": "282b176f-03b6-47e4-a5fb-d2c27946e96a",
+      "name": "Nota: la foto",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        920,
+        -700
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://TU-PROYECTO.supabase.co/storage/v1/object/reportes-fotos/{{ $json.foto_ruta }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "supabaseApi",
+        "sendBody": true,
+        "contentType": "binaryData",
+        "inputDataFieldName": "foto",
+        "options": {}
+      },
+      "id": "332417e5-05d7-4dc6-bb8d-93fb29674869",
+      "name": "Subir la foto",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        1620,
+        -140
+      ]
+    },
+    {
+      "parameters": {
+        "content": "### 5. Guardar la fila\n**Supabase → Create** escribe en la tabla `reportes`. Los valores salen de **Ordenar la respuesta de la IA** con `$('Ordenar la respuesta de la IA').item.json...`: llegue por el camino de la foto o por el otro, el dato es el mismo.\n\nLa tabla tiene sus reglas (`check`): si la IA o alguien manda una categoría que no existe, Supabase la rechaza. Por eso el Code de antes ya la dejó en una válida.",
+        "height": 380,
+        "width": 460,
+        "color": 7
+      },
+      "id": "ae0fe3cc-232b-402f-85a9-948b5d4a7253",
+      "name": "Nota: guardar",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1420,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "row",
+        "operation": "create",
+        "tableId": "reportes",
+        "dataToSend": "defineBelow",
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "descripcion",
+              "fieldValue": "={{ $('Ordenar la respuesta de la IA').item.json.descripcion }}"
+            },
+            {
+              "fieldId": "lugar",
+              "fieldValue": "={{ $('Ordenar la respuesta de la IA').item.json.lugar }}"
+            },
+            {
+              "fieldId": "categoria",
+              "fieldValue": "={{ $('Ordenar la respuesta de la IA').item.json.categoria }}"
+            },
+            {
+              "fieldId": "urgencia",
+              "fieldValue": "={{ $('Ordenar la respuesta de la IA').item.json.urgencia }}"
+            },
+            {
+              "fieldId": "resumen",
+              "fieldValue": "={{ $('Ordenar la respuesta de la IA').item.json.resumen }}"
+            },
+            {
+              "fieldId": "foto_ruta",
+              "fieldValue": "={{ $('Ordenar la respuesta de la IA').item.json.foto_ruta }}"
+            },
+            {
+              "fieldId": "origen",
+              "fieldValue": "={{ $('Ordenar la respuesta de la IA').item.json.origen }}"
+            }
+          ]
+        }
+      },
+      "id": "a44aa952-2962-4f0f-a4b2-b6f419ddc44e",
+      "name": "Guardar el reporte",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        1880,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 4
+          },
+          "conditions": [
+            {
+              "id": "432ce045-9eb2-43a5-aa74-73d7d38ac862",
+              "leftValue": "={{ $json.urgencia }}",
+              "rightValue": "alta",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": false,
+        "options": {}
+      },
+      "id": "d4de3c38-dbc9-41c8-9bf2-50bb4a18a2b5",
+      "name": "¿Es urgente?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.4,
+      "position": [
+        2140,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "content": "### 6. Aviso si es urgente\n**Avisar al equipo por Telegram** está **apagado** (gris) para que el workflow corra sin bot. Para prenderlo:\n1. Creá el bot (workflow 66) y sumalo al grupo del equipo.\n2. Cargá la credencial **Telegram API** y poné el **Chat ID** del grupo en lugar de `TU_CHAT_ID`.\n3. Seleccioná el nodo y prendelo con la tecla **D**.\n\nEl texto escapa `&`, `<` y `>` porque usa **Parse Mode: HTML** y el lugar lo escribió otra persona.",
+        "height": 400,
+        "width": 460,
+        "color": 3
+      },
+      "id": "691bbdf3-7f0e-4c16-9269-13c309bafa79",
+      "name": "Nota: el aviso",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1900,
+        -700
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "message",
+        "operation": "sendMessage",
+        "chatId": "TU_CHAT_ID",
+        "text": "={{ ('Reporte urgente n.º ' + $json.id + ' (' + $json.categoria + '): ' + $json.resumen + ' Lugar: ' + $json.lugar).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;') }}",
+        "additionalFields": {
+          "appendAttribution": false,
+          "parse_mode": "HTML"
+        }
+      },
+      "id": "e7c5675e-b33b-4751-beeb-0d19e4f91aa4",
+      "name": "Avisar al equipo por Telegram",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        2400,
+        -140
+      ],
+      "webhookId": "6725a99d-6a8c-403a-b0a2-0ff38f0ca488",
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 4
+          },
+          "conditions": [
+            {
+              "id": "44adad36-2c3d-48c0-abe8-3409d3477734",
+              "leftValue": "={{ $('Formulario de reportes').isExecuted }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": false,
+        "options": {}
+      },
+      "id": "9ea77630-0ba0-4ebe-a762-47051be8b795",
+      "name": "¿Vino del formulario?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.4,
+      "position": [
+        2660,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "completion",
+        "respondWith": "text",
+        "completionTitle": "Gracias por tu reporte",
+        "completionMessage": "=Quedó guardado con el número {{ $('Guardar el reporte').item.json.id }}.\n\nLo clasificamos como {{ $('Guardar el reporte').item.json.categoria }}, con urgencia {{ $('Guardar el reporte').item.json.urgencia }}. El equipo lo va a revisar.",
+        "options": {
+          "formTitle": "Reportá un problema ambiental",
+          "customCss": ":root {\n  --font-family: 'Inter Tight', 'Inter', system-ui, sans-serif;\n  --color-background: #191919;\n  --color-card-bg: #242424;\n  --color-card-border: #5A0026;\n  --color-card-shadow: rgba(255, 145, 172, 0.12);\n  --color-header: #FAFAFA;\n  --color-header-subtext: #FFD0D9;\n  --color-label: #FAFAFA;\n  --color-link: #FFD0D9;\n  --color-input-bg: #191919;\n  --color-input-border: #5A0026;\n  --color-input-text: #FAFAFA;\n  --color-focus-border: #FF91AC;\n  --color-submit-btn-bg: #FF91AC;\n  --color-submit-btn-text: #191919;\n  --color-required: #FF91AC;\n  --color-html-text: #FAFAFA;\n  --color-html-link: #FF91AC;\n  --color-test-notice-bg: #242424;\n  --color-test-notice-border: #FF91AC;\n  --color-test-notice-text: #FFD0D9;\n  --border-radius-card: 12px;\n  --card-border-radius: 12px;\n  --border-radius-input: 8px;\n}\n/* Enlaces en rosa y el logo de n8n del pie en blanco, sobre el fondo oscuro */\na { color: #FF91AC; }\n.n8n-link svg path[fill='#101330'] { fill: #FAFAFA; }"
+        }
+      },
+      "id": "07a04966-0363-4b1d-8835-9828725f4f05",
+      "name": "Página de gracias",
+      "type": "n8n-nodes-base.form",
+      "typeVersion": 2.5,
+      "position": [
+        2920,
+        -140
+      ],
+      "webhookId": "fe2adb29-3f27-4629-8377-dced87c32776"
+    },
+    {
+      "parameters": {},
+      "id": "ea7b08f3-1df3-426d-83f4-0fbad668b07b",
+      "name": "Resultado de la prueba",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        2920,
+        140
+      ]
+    },
+    {
+      "parameters": {
+        "content": "### 7. El final\nSi el reporte vino del formulario, **Página de gracias** le muestra a la persona el número y la clasificación. Si vino de **Execute workflow**, termina en **Resultado de la prueba**: un nodo Form espera a alguien del otro lado y en una prueba no hay nadie.\n\nIdeas para seguir: un mapa con los reportes, un resumen semanal por categoría o que la IA mire la foto.",
+        "height": 340,
+        "width": 480,
+        "color": 7
+      },
+      "id": "3fcae6ec-9be6-44b5-8307-7b95dd93a65b",
+      "name": "Nota: el final",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        2400,
+        300
+      ]
+    }
+  ],
+  "connections": {
+    "Formulario de reportes": {
+      "main": [
+        [
+          {
+            "node": "Preparar el reporte",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Al tocar Execute": {
+      "main": [
+        [
+          {
+            "node": "Reporte de ejemplo",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Reporte de ejemplo": {
+      "main": [
+        [
+          {
+            "node": "Preparar el reporte",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Preparar el reporte": {
+      "main": [
+        [
+          {
+            "node": "Clasificar el reporte",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Modelo Gemini": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Clasificar el reporte",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Clasificar el reporte": {
+      "main": [
+        [
+          {
+            "node": "Ordenar la respuesta de la IA",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ordenar la respuesta de la IA": {
+      "main": [
+        [
+          {
+            "node": "¿Trae foto?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "¿Trae foto?": {
+      "main": [
+        [
+          {
+            "node": "Subir la foto",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Guardar el reporte",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Subir la foto": {
+      "main": [
+        [
+          {
+            "node": "Guardar el reporte",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Guardar el reporte": {
+      "main": [
+        [
+          {
+            "node": "¿Es urgente?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "¿Es urgente?": {
+      "main": [
+        [
+          {
+            "node": "Avisar al equipo por Telegram",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "¿Vino del formulario?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Avisar al equipo por Telegram": {
+      "main": [
+        [
+          {
+            "node": "¿Vino del formulario?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "¿Vino del formulario?": {
+      "main": [
+        [
+          {
+            "node": "Página de gracias",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Resultado de la prueba",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "pinData": {},
+  "meta": {
+    "templateCredsSetupCompleted": false
+  }
+}

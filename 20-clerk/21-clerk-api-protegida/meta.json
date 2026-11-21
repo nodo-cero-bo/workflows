@@ -10,6 +10,9 @@
     "clerk",
     "supabase"
   ],
+  "lineas": [
+    "apps"
+  ],
   "credenciales": [
     {
       "nombre": "JWT Auth con la clave pública de Clerk",

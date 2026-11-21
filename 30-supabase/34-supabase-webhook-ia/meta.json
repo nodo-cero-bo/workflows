@@ -10,6 +10,11 @@
     "ia",
     "supabase"
   ],
+  "lineas": [
+    "ia",
+    "apps",
+    "impacto"
+  ],
   "credenciales": [
     {
       "nombre": "Supabase API",

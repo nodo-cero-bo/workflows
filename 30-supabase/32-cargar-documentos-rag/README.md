@@ -39,7 +39,7 @@ Subir documento → Guardar en Supabase (Vector Store · Insert) → Contar los 
 ## Cómo probarlo
 
 1. Elegí la credencial de Supabase en **Guardar en Supabase** y la de Gemini en **Embeddings Gemini**.
-2. Tocá **Execute**: se abre el formulario de prueba.
+2. Tocá **Execute workflow**: se abre el formulario de prueba.
 3. Subí un archivo corto (un par de páginas está perfecto para empezar), escribí un tema (por ejemplo `agenda`) y tocá **Subir y guardar**.
 4. La página final dice cuántos pedazos guardó, por ejemplo «Guardamos 6 pedazos de agenda.txt».
 5. En Supabase, **Table Editor → documentos**: una fila por pedazo, con `content` (el texto), `metadata` (archivo, tema, página o líneas) y `embedding` (3072 números).

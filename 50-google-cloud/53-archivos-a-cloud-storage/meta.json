@@ -1,0 +1,32 @@
+{
+  "id": "53-archivos-a-cloud-storage",
+  "titulo": "Archivos a Cloud Storage",
+  "resumen": "Un formulario para subir un archivo que queda guardado en un bucket de Cloud Storage, con un nombre ordenado y un enlace para abrirlo.",
+  "categoria": "google-cloud",
+  "nivel": "inicial",
+  "minutos": 25,
+  "tecnologias": [
+    "n8n",
+    "google-cloud"
+  ],
+  "lineas": [
+    "impacto",
+    "apps"
+  ],
+  "credenciales": [
+    {
+      "nombre": "Google Service Account API",
+      "tipo_n8n": "googleApi",
+      "como": "Clave JSON de una cuenta de servicio con el rol Storage Object User sobre el bucket: client_email en Service Account Email y private_key en Private Key."
+    }
+  ],
+  "aprendes": [
+    "Formulario con archivo y datos binarios en n8n",
+    "Google Cloud Storage con una cuenta de servicio",
+    "Nombres de objeto ordenados por fecha",
+    "URL autenticada y dirección gs://",
+    "Permisos sobre un bucket y no sobre todo el proyecto"
+  ],
+  "probado": "auditado",
+  "orden": 53
+}

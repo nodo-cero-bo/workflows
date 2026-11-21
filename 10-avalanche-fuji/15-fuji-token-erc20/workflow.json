@@ -3,7 +3,7 @@
   "nodes": [
     {
       "parameters": {
-        "content": "## Saldo de un token ERC-20 en Fuji\n\n### Qué hace\nLee el nombre, el símbolo, los decimales y el saldo de una wallet en un token ERC-20, con `eth_call` y la llamada armada a mano. El ejemplo es el USDC de prueba de Circle en Fuji.\n\n### Qué necesitás\nNada más que tu n8n. Para tener USDC de prueba en tu wallet, el faucet de Circle (faucet.circle.com, red Avalanche Fuji).\n\n### Cómo probarlo\n1. Hacé clic en **Execute** y abrí **Decodificar las respuestas**: tiene que decir USDC, 6 decimales y el saldo de la wallet de ejemplo.\n2. Poné tu dirección en `wallet` de **Token y wallet** y ejecutá de nuevo.\n3. Probá con otro token de Fuji: cambiá `token` por su dirección.\n\n**Red:** Avalanche Fuji C-Chain · chainId 43113 (0xa869)\n**RPC público:** `https://api.avax-test.network/ext/bc/C/rpc`",
+        "content": "## Saldo de un token ERC-20 en Fuji\n\n### Qué hace\nLee el nombre, el símbolo, los decimales y el saldo de una wallet en un token ERC-20, con `eth_call` y la llamada armada a mano. El ejemplo es el USDC de prueba de Circle en Fuji.\n\n### Qué necesitás\nNada más que tu n8n. Para tener USDC de prueba en tu wallet, el faucet de Circle (faucet.circle.com, red Avalanche Fuji).\n\n### Cómo probarlo\n1. Hacé clic en **Execute workflow** y abrí **Decodificar las respuestas**: tiene que decir USDC, 6 decimales y el saldo de la wallet de ejemplo.\n2. Poné tu dirección en `wallet` de **Token y wallet** y ejecutá de nuevo.\n3. Probá con otro token de Fuji: cambiá `token` por su dirección.\n\n**Red:** Avalanche Fuji C-Chain · chainId 43113 (0xa869)\n**RPC público:** `https://api.avax-test.network/ext/bc/C/rpc`",
         "height": 420,
         "width": 500,
         "color": 7

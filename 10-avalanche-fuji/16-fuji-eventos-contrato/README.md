@@ -81,7 +81,7 @@ Nada más que tu n8n. Para leer un contrato tuyo: desplegalo en Fuji con Remix y
 
 ## Cómo probarlo
 
-1. Hacé clic en **Execute** y abrí **Decodificar los eventos**: un ítem por transferencia de USDC en los últimos 300 bloques. Si en ese rato nadie movió USDC, sale `eventos: 0` con un mensaje: subí `bloquesHaciaAtras` a 1000.
+1. Hacé clic en **Execute workflow** y abrí **Decodificar los eventos**: un ítem por transferencia de USDC en los últimos 300 bloques. Si en ese rato nadie movió USDC, sale `eventos: 0` con un mensaje: subí `bloquesHaciaAtras` a 1000.
 2. Vaciá `contrato` y `decimales` y ejecutá de nuevo: aparecen transferencias de cualquier token de Fuji, también de NFT.
 3. Abrí **Partir en tramos de 100 bloques** y mirá los rangos de cada pedido.
 4. **Con tu contrato** de [`avalanche/contratos`](../../avalanche/contratos):

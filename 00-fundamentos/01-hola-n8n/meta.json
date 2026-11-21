@@ -8,6 +8,12 @@
   "tecnologias": [
     "n8n"
   ],
+  "lineas": [
+    "ia",
+    "web3",
+    "apps",
+    "impacto"
+  ],
   "credenciales": [],
   "aprendes": [
     "Qué es un ítem y cómo viaja de nodo en nodo",

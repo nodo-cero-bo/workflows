@@ -1,0 +1,281 @@
+{
+  "name": "Nodo Cero · Opiniones con Cloud Natural Language",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## Opiniones con Cloud Natural Language\n\nUn formulario de opiniones que Google Cloud lee por vos: te dice si el tono es positivo, negativo, neutral o mixto, y de qué o de quién se habla (las **entidades**).\n\n### Qué hace\n**Formulario de opiniones** recibe el texto. **Analizar con Natural Language** lo manda a la API `documents:annotateText` (v2), que en un mismo pedido devuelve el sentimiento y las entidades. **Armar el resumen** lo pasa a palabras simples y **Página con el resumen** se lo muestra a quien escribió.\n\n### Qué necesitás\n- Un proyecto de Google Cloud con la **Cloud Natural Language API** habilitada. Las primeras 5.000 unidades por mes de cada análisis son gratis (una unidad = hasta 1.000 caracteres).\n- Una **cuenta de servicio** con el rol **Service Usage Consumer** (`roles/serviceusage.serviceUsageConsumer`) y su clave JSON.\n- La credencial **Google Service Account API** (tipo `googleApi`) con **Set up for use in HTTP Request node** activado y, en **Scope(s)**, `https://www.googleapis.com/auth/cloud-platform`.\n\nPaso a paso, con lo que vas a ver en cada pantalla: guía **Google Cloud y créditos** del repo `github.com/nodo-cero-bo/guias` (archivo `00-empezar/08-google-cloud.md`).\n\n### Cómo probarlo\n1. Abrí **Analizar con Natural Language** y elegí tu credencial.\n2. Tocá **Execute workflow**: se abre el formulario de prueba en otra pestaña.\n3. Escribí «El taller de n8n en Santa Cruz me encantó, pero el wifi anduvo lento.» y mandalo.\n4. Vas a ver el tono, el puntaje y lo que nombra el texto. Volvé a n8n y abrí cada nodo para ver qué devolvió Google.",
+        "height": 900,
+        "width": 640,
+        "color": 7
+      },
+      "id": "67235553-6f60-48e8-913f-902766f2f558",
+      "name": "Nota de inicio",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -720,
+        -460
+      ]
+    },
+    {
+      "parameters": {
+        "formTitle": "¿Qué te pareció?",
+        "formDescription": "Tu opinión se analiza con Google Cloud Natural Language: el tono y de qué o de quién hablás. No escribas datos personales.",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "Tu opinión",
+              "fieldName": "opinion",
+              "fieldType": "textarea",
+              "placeholder": "Por ejemplo: El taller de n8n en Santa Cruz me encantó, pero el wifi anduvo lento.",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "¿Sobre qué es?",
+              "fieldName": "tema",
+              "fieldType": "dropdown",
+              "fieldOptions": {
+                "values": [
+                  {
+                    "option": "Un evento"
+                  },
+                  {
+                    "option": "Un servicio de tu ciudad"
+                  },
+                  {
+                    "option": "Un producto o emprendimiento"
+                  },
+                  {
+                    "option": "Otra cosa"
+                  }
+                ]
+              },
+              "requiredField": true
+            }
+          ]
+        },
+        "responseMode": "lastNode",
+        "options": {
+          "path": "nodo-cero-opiniones",
+          "buttonLabel": "Analizar"
+        }
+      },
+      "id": "8a7e7c97-03c0-4987-bae7-72314ff08a49",
+      "name": "Formulario de opiniones",
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.6,
+      "position": [
+        0,
+        0
+      ],
+      "webhookId": "63570d69-0292-4ba3-a4be-5ba6a7b54c4b"
+    },
+    {
+      "parameters": {
+        "content": "### Por qué HTTP Request\nn8n tiene un nodo **Google Cloud Natural Language**, pero pide una credencial OAuth2 y analiza nada más el sentimiento. Con **HTTP Request** usás la misma cuenta de servicio de los otros workflows y pedís sentimiento y entidades juntos.\n\n**Authentication** = **Predefined Credential Type** con **Google Service Account API**: n8n firma el pedido con tu clave y le suma el permiso. En el cuerpo (JSON), `features` dice qué análisis querés.",
+        "height": 340,
+        "width": 340,
+        "color": 5
+      },
+      "id": "38079da9-f4b5-4329-8c0c-fb2f8cde39af",
+      "name": "Nota: por qué HTTP",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        140,
+        -500
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://language.googleapis.com/v2/documents:annotateText",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleApi",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ document: { type: 'PLAIN_TEXT', content: $json.opinion, languageCode: 'es' }, features: { extractDocumentSentiment: true, extractEntities: true }, encodingType: 'UTF8' }) }}",
+        "options": {}
+      },
+      "id": "761b6865-af38-40eb-98b6-d2abbf197c51",
+      "name": "Analizar con Natural Language",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        240,
+        0
+      ],
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "content": "### Cómo leer el resultado\n- `score` va de -1 (muy negativo) a 1 (muy positivo).\n- `magnitude` mide cuánta emoción hay en todo el texto, sin importar el signo. Un `score` cerca de 0 con `magnitude` alta es una opinión **mixta**.\n- Las **entidades** son lo que el texto nombra: personas, lugares, organizaciones, eventos. El resumen deja afuera teléfonos, direcciones y números para no mostrar datos personales.\n\nLos umbrales (0,25 y 1) están en **Armar el resumen**: ajustalos con tus datos.",
+        "height": 340,
+        "width": 360,
+        "color": 5
+      },
+      "id": "0aacaeaf-844e-41cd-9e83-184caeb892cc",
+      "name": "Nota: cómo leer",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        500,
+        -500
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "language": "javaScript",
+        "jsCode": "// Lo que devolvió Natural Language, pasado a palabras simples.\nconst r = $json;\nconst s = r.documentSentiment ?? { score: 0, magnitude: 0 };\n\n// score va de -1 (muy negativo) a 1 (muy positivo).\n// magnitude mide cuánta emoción hay en todo el texto, sin importar el signo.\nlet tono;\nif (s.score >= 0.25) tono = 'positivo';\nelse if (s.score <= -0.25) tono = 'negativo';\nelse if (s.magnitude >= 1) tono = 'mixto: hay cosas buenas y cosas malas';\nelse tono = 'neutral';\n\nconst TIPOS = {\n  PERSON: 'persona',\n  LOCATION: 'lugar',\n  ORGANIZATION: 'organización',\n  EVENT: 'evento',\n  WORK_OF_ART: 'obra',\n  CONSUMER_GOOD: 'producto',\n  OTHER: 'otro',\n  UNKNOWN: 'otro',\n};\n// Teléfonos, direcciones, números, precios y fechas quedan afuera del resumen: así no se muestran datos personales.\nconst entidades = (r.entities ?? [])\n  .filter((e) => TIPOS[e.type])\n  .sort((a, b) => (b.mentions?.length ?? 0) - (a.mentions?.length ?? 0))\n  .slice(0, 5)\n  .map((e) => `${e.name} (${TIPOS[e.type]})`);\n\n// La frase más positiva y la más negativa, para ver de dónde sale el tono.\nconst frases = (r.sentences ?? []).map((f) => ({ texto: f.text?.content ?? '', score: f.sentiment?.score ?? 0 }));\nconst ordenadas = [...frases].sort((a, b) => b.score - a.score);\nconst mejor = ordenadas[0];\nconst peor = ordenadas[ordenadas.length - 1];\n\nconst form = $('Formulario de opiniones').item.json;\nreturn {\n  json: {\n    tema: form.tema,\n    opinion: form.opinion,\n    tono,\n    puntaje: s.score,\n    intensidad: s.magnitude,\n    entidades,\n    entidades_texto: entidades.length ? entidades.join(', ') : 'nada en particular',\n    frase_mas_positiva: mejor && mejor.score > 0 ? mejor.texto : '',\n    frase_mas_negativa: peor && peor.score < 0 ? peor.texto : '',\n    idioma: r.languageCode ?? '',\n  },\n};"
+      },
+      "id": "89306d4a-3be6-47f8-831d-af893aad0f24",
+      "name": "Armar el resumen",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        500,
+        -120
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "completion",
+        "respondWith": "showText",
+        "responseText": "=<h2>Tono: {{ $json.tono }}</h2>\n<p>Puntaje <b>{{ $json.puntaje }}</b> (de -1 a 1) e intensidad <b>{{ $json.intensidad }}</b>.</p>\n<p>Habla de: {{ $json.entidades_texto }}.</p>\n{{ $json.frase_mas_positiva ? '<p>Lo más positivo: «' + $json.frase_mas_positiva + '»</p>' : '' }}\n{{ $json.frase_mas_negativa ? '<p>Lo más negativo: «' + $json.frase_mas_negativa + '»</p>' : '' }}\n<p>Gracias por tu opinión.</p>"
+      },
+      "id": "61c85696-1e64-4b3d-8d43-a8ad56cb69bc",
+      "name": "Página con el resumen",
+      "type": "n8n-nodes-base.form",
+      "typeVersion": 2.5,
+      "position": [
+        740,
+        -120
+      ],
+      "webhookId": "8ff9cfaf-2481-4741-93e7-ea1bb2ed4c14"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "language": "javaScript",
+        "jsCode": "// Llega acá cuando Google rechazó el pedido (la salida de error del nodo anterior).\n// Busca el código y el mensaje de Google, y suma una pista según el caso.\nconst e = $json.error ?? {};\nconst d = $json.details ?? {};\nconst texto = typeof e === 'string' ? e : [e.message, e.description ?? d.description].filter(Boolean).join(' · ');\nlet codigo = String(d.httpCode ?? e.httpCode ?? (String(e.cause?.message ?? '').match(/^(\\d{3})\\b/) ?? [])[1] ?? (texto.match(/\\b(400|401|403|404|429)\\b/) ?? [])[1] ?? '');\n// Algunos nodos no traen el número: se deduce del mensaje.\nif (!codigo) codigo = /not found/i.test(texto) ? '404' : /access denied|permission|forbidden/i.test(texto) ? '403' : /quota|rate limit/i.test(texto) ? '429' : '';\n\nconst PISTAS = {\n  400: 'El pedido está mal armado o falta un dato. Revisá lo que mandaste.',\n  401: 'La credencial no sirve: revisá el correo de la cuenta de servicio y la clave privada (copiala entera).',\n  403: 'Falta permiso: habilitá la API en tu proyecto y revisá el rol de la cuenta de servicio. En HTTP Request, la credencial necesita el scope cloud-platform.',\n  404: 'No existe lo que pediste: revisá el nombre del bucket, del proyecto, del dataset o de la tabla.',\n  429: 'Llegaste a un límite de uso. Esperá un minuto y probá de nuevo.',\n};\nconst pista = /billing/i.test(texto)\n  ? 'El proyecto no tiene facturación activa: vinculá una cuenta de facturación en Billing.'\n  : PISTAS[codigo] ?? 'Abrí la ejecución en la pestaña Executions para ver la respuesta completa de Google.';\nreturn {\n  json: {\n    codigo: codigo || 'sin código',\n    pista,\n    detalle: texto.slice(0, 400) || 'Google no mandó detalle.',\n  },\n};"
+      },
+      "id": "49ec3d59-8bb4-4058-aa07-9624e8196085",
+      "name": "Explicar el error",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        500,
+        140
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "completion",
+        "respondWith": "showText",
+        "responseText": "=<h2>No se pudo analizar la opinión</h2>\n<p>{{ $json.pista }}</p>\n<p><small>Respuesta de Google ({{ $json.codigo }}): {{ $json.detalle }}</small></p>"
+      },
+      "id": "d900a5e0-b53e-455d-99b3-c8ef178e4503",
+      "name": "Página de error",
+      "type": "n8n-nodes-base.form",
+      "typeVersion": 2.5,
+      "position": [
+        740,
+        140
+      ],
+      "webhookId": "9f11e999-dffe-49ac-b9ac-9ea8694edc04"
+    },
+    {
+      "parameters": {
+        "content": "### Si Google responde con un error\n**Analizar con Natural Language** tiene **Settings → On Error → Continue (using error output)**: si Google rechaza el pedido, el workflow no se corta y **Explicar el error** muestra en la página qué pasó y qué revisar.\n\nLo más común: la API no está habilitada (403 con «has not been used in project»), falta el scope en la credencial o el texto llegó vacío.",
+        "height": 300,
+        "width": 440,
+        "color": 3
+      },
+      "id": "303b949d-6bc3-4c59-b207-1ff2c8414ab5",
+      "name": "Nota: si falla",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        440,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "content": "### Para llevarlo más lejos\n- Guardá cada opinión con su tono en Supabase (como en **30-formulario-a-supabase**) y armá un tablero.\n- Analizá un archivo de Cloud Storage: cambiá `content` por `gcsContentUri` con el `gs://` que te da **53-archivos-a-cloud-storage**.\n- Sumá `classifyText: true` en `features` para saber de qué categoría es el texto.\n- Avisá por Telegram cuando llegue una opinión negativa.",
+        "height": 340,
+        "width": 360,
+        "color": 5
+      },
+      "id": "96c5e2f2-dde0-4099-9f17-b6dcfa4295de",
+      "name": "Nota: más lejos",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        880,
+        -500
+      ]
+    }
+  ],
+  "connections": {
+    "Formulario de opiniones": {
+      "main": [
+        [
+          {
+            "node": "Analizar con Natural Language",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Analizar con Natural Language": {
+      "main": [
+        [
+          {
+            "node": "Armar el resumen",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Explicar el error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Armar el resumen": {
+      "main": [
+        [
+          {
+            "node": "Página con el resumen",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Explicar el error": {
+      "main": [
+        [
+          {
+            "node": "Página de error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "pinData": {},
+  "meta": {
+    "templateCredsSetupCompleted": false
+  }
+}

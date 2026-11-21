@@ -73,7 +73,7 @@ El RPC público de Fuji no pide clave.
 
 1. Conseguí un token de sesión: en tu página con Clerk (por ejemplo [`clerk/app-ejemplo`](../../clerk/app-ejemplo)), con la sesión iniciada, abrí la consola del navegador y corré `await Clerk.session.getToken()`.
 2. En **Pedido de ejemplo** pegá el token después de `Bearer ` y el hash en `txHash`.
-3. Tocá **Execute**. El token dura poco: si ves «El token venció», pedí otro y volvé a ejecutar.
+3. Tocá **Execute workflow**. El token dura poco: si ves «El token venció», pedí otro y volvé a ejecutar.
 4. Mirá la salida del último nodo que corrió: en una ejecución manual, Respond to Webhook muestra lo que respondería.
 
 ### 3. Llamalo desde tu página

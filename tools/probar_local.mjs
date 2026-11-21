@@ -44,7 +44,7 @@ for (let i = 0; i < args.length; i++) {
 if (!rutas.length) rutas.push(REPO);
 
 // ---------------------------------------------------------------- n8n
-function buscarN8n() {
+function buscarInstalacion() {
   const candidatos = [];
   if (process.env.N8N_INSTALACION) candidatos.push(path.join(process.env.N8N_INSTALACION, 'node_modules'));
   if (process.env.N8N_MODULES) candidatos.push(process.env.N8N_MODULES);
@@ -55,7 +55,7 @@ function buscarN8n() {
   }
   return null;
 }
-const INSTALADO = buscarN8n();
+const INSTALADO = buscarInstalacion();
 if (!INSTALADO) {
   console.error('No encuentro n8n. Instalalo con «npm i» en workflows/ o definí N8N_INSTALACION (carpeta con node_modules/n8n).');
   process.exit(2);

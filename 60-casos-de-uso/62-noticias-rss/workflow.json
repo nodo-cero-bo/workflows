@@ -1,0 +1,478 @@
+{
+  "name": "Nodo Cero · Noticias por RSS: tu resumen del día",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## Noticias por RSS: tu resumen del día\n\nLee las noticias en español de Noticias ONU por RSS, se queda con las que hablan de lo que te importa (clima, agua, Bolivia, mujeres...) y arma un resumen con enlaces, listo para mandar.\n\n### Qué hace\n1. **Cada mañana a las 7** (publicado) o **Al tocar Execute** (para probar).\n2. **Fuente y palabras**: el enlace del RSS y tus palabras clave.\n3. **Leer el RSS** trae cada noticia como un ítem.\n4. **Buscar tus palabras** marca en qué noticias aparecen y cuáles son recientes.\n5. **Más nuevas primero**, **Quedarse con las que coinciden** y **Las primeras** ordenan, filtran y cortan la lista.\n6. **Armar el resumen** junta todo en un texto.\n7. **Resumen con IA (opcional)** está apagado: prendelo si tenés una clave de Gemini.\n\n### Qué necesitás\nNada más que tu n8n. La parte de IA es opcional y usa la credencial **Google Gemini(PaLM) Api** (`googlePalmApi`), con una clave gratis de Google AI Studio.\n\n### Cómo probarlo\n1. Tocá **Execute workflow** y abrí **Armar el resumen**.\n2. Cambiá las palabras en **Fuente y palabras** y ejecutá de nuevo.\n3. Probá otro RSS en español: muchos diarios y blogs tienen uno.",
+        "height": 1040,
+        "width": 640,
+        "color": 4
+      },
+      "id": "1220b219-1ed3-4bb9-b281-c510880e3d52",
+      "name": "Nota de inicio",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -760,
+        -560
+      ]
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "days",
+              "daysInterval": 1,
+              "triggerAtHour": 7,
+              "triggerAtMinute": 0
+            }
+          ]
+        }
+      },
+      "id": "7040952a-b871-454e-a338-4b172627abf3",
+      "name": "Cada mañana a las 7",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        0,
+        -100
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "fb6a6b2f-87da-4284-a718-2e0e5f2a60f6",
+      "name": "Al tocar Execute",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        100
+      ]
+    },
+    {
+      "parameters": {
+        "content": "### 1. Qué es un RSS\nUn **RSS** es una lista de las últimas notas de un sitio, en un formato que leen las máquinas (XML). Muchos diarios, blogs y organismos publican uno: buscá «RSS» al pie de su página.\n\nAcá usamos el de Noticias ONU en español. Cambiá `feed_url` por otro y el resto del workflow funciona igual.\n\n`palabras` es una lista: sumá o sacá las que quieras.",
+        "height": 400,
+        "width": 380,
+        "color": 7
+      },
+      "id": "2ba2be05-1502-4d7b-b85f-6ec59eecbe9c",
+      "name": "Nota: qué es RSS",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -100,
+        -560
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "manual",
+        "assignments": {
+          "assignments": [
+            {
+              "id": "29060068-68ec-4449-9270-ce40b0c32e42",
+              "name": "feed_url",
+              "value": "https://news.un.org/feed/subscribe/es/news/all/rss.xml",
+              "type": "string"
+            },
+            {
+              "id": "1e6b73ca-8d92-4730-bfa5-710975a73e5e",
+              "name": "palabras",
+              "value": "[\"clima\", \"agua\", \"bolivia\", \"américa latina\", \"mujeres\", \"niñas\", \"educación\", \"salud\", \"inteligencia artificial\"]",
+              "type": "array"
+            },
+            {
+              "id": "5774be5e-1d08-4aeb-b66c-7f3dbcec1e41",
+              "name": "dias",
+              "value": 7,
+              "type": "number"
+            },
+            {
+              "id": "31e322d2-13da-4f6c-a4b1-d1581887f34f",
+              "name": "maximo",
+              "value": 5,
+              "type": "number"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "c268d127-2609-4567-8600-c900d9254efd",
+      "name": "Fuente y palabras",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        260,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "content": "### 2. Leer el RSS\n**RSS Read** baja el RSS y devuelve **un ítem por noticia**, con `title`, `link`, `isoDate` (la fecha) y `contentSnippet` (el resumen sin HTML).\n\nFijate el número sobre la conexión que sale: son las noticias que trajo.",
+        "height": 360,
+        "width": 380,
+        "color": 7
+      },
+      "id": "951fe6f9-68b4-4584-8e46-a4cdf328ad63",
+      "name": "Nota: leer el RSS",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        160,
+        260
+      ]
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.feed_url }}",
+        "options": {}
+      },
+      "id": "4b108993-d13b-4180-8aeb-efce4d95aa3e",
+      "name": "Leer el RSS",
+      "type": "n8n-nodes-base.rssFeedRead",
+      "typeVersion": 1.2,
+      "position": [
+        520,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "content": "### 3. Buscar tus palabras\nEl Code pasa todo a minúsculas y sin tildes («Educación» y «educacion» cuentan igual) y busca cada palabra **entera**: así «ia» no aparece dentro de «noticias».\n\nDevuelve los mismos ítems con dos campos nuevos: `coincidencias` (qué palabras encontró) y `reciente` (si es de los últimos `dias`).",
+        "height": 400,
+        "width": 400,
+        "color": 7
+      },
+      "id": "80b00a12-05e8-40ac-9aee-f9475f7de8c2",
+      "name": "Nota: buscar palabras",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        320,
+        -560
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "// Un ítem por noticia. Les sumamos qué palabras clave aparecen y si son recientes.\nconst config = $('Fuente y palabras').first().json;\n\n// Minúsculas y sin tildes, para comparar «Educación» con «educacion».\nconst normalizar = (t) => String(t ?? '').normalize('NFD').replace(/[\\u0300-\\u036f]/g, '').toLowerCase();\n// Para usar una palabra dentro de una expresión regular sin que sus signos cambien el significado.\nconst escapar = (t) => t.replace(/[.*+?^${}()|[\\]\\\\]/g, '\\\\$&');\n\n// Cada palabra como la escribiste y en su versión para comparar.\nconst palabras = (config.palabras ?? []).map((p) => String(p).trim()).filter(Boolean).map((p) => ({ original: p, buscar: normalizar(p) }));\nconst desde = $now.minus({ days: config.dias ?? 7 });\n\nreturn $input.all().map((item) => {\n  const n = item.json;\n  const texto = normalizar(`${n.title ?? ''} ${n.contentSnippet ?? ''}`);\n  // \\b = borde de palabra: busca la palabra entera.\n  const coincidencias = palabras.filter((p) => new RegExp(`\\\\b${escapar(p.buscar)}\\\\b`).test(texto)).map((p) => p.original);\n  const fecha = n.isoDate ? DateTime.fromISO(n.isoDate) : null;\n  return {\n    json: {\n      titulo: n.title,\n      enlace: n.link,\n      fecha_iso: n.isoDate ?? '',\n      fecha: fecha ? fecha.setZone('America/La_Paz').setLocale('es').toFormat(\"d 'de' LLLL\") : '',\n      resumen: String(n.contentSnippet ?? '').slice(0, 300),\n      coincidencias,\n      reciente: fecha ? fecha >= desde : true,\n    },\n  };\n});"
+      },
+      "id": "9a8ba851-1c60-43ce-bb58-89f8efe2758a",
+      "name": "Buscar tus palabras",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        780,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "content": "### 4. Ordenar, filtrar y cortar\nTres nodos que no necesitan código:\n- **Sort**: por `fecha_iso`, de la más nueva a la más vieja.\n- **Filter**: se queda con las noticias recientes que tienen al menos una palabra. Tiene **Always Output Data** prendido (en **Settings** del nodo): si no queda ninguna, igual pasa un ítem vacío y el resumen te avisa que hoy no hubo.\n- **Limit**: las primeras `maximo` (5).\n\nEl orden importa: el Sort va antes del Filter porque un ítem vacío no tiene `fecha_iso` y el Sort fallaría.",
+        "height": 460,
+        "width": 440,
+        "color": 7
+      },
+      "id": "bebb35f3-5bc6-4f41-87ba-a6ce683ed581",
+      "name": "Nota: filtrar y ordenar",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        740,
+        260
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 4
+          },
+          "conditions": [
+            {
+              "id": "532634fc-cf18-430a-b5a9-367ffb66bdde",
+              "leftValue": "={{ $json.coincidencias.length }}",
+              "rightValue": 0,
+              "operator": {
+                "type": "number",
+                "operation": "gt"
+              }
+            },
+            {
+              "id": "d72a77b3-d8f3-438e-9955-5b6c5dbb0d95",
+              "leftValue": "={{ $json.reciente }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": false,
+        "options": {}
+      },
+      "id": "31a6fbd0-cf30-44a5-bc28-2be71db54edc",
+      "name": "Quedarse con las que coinciden",
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2.4,
+      "position": [
+        1300,
+        0
+      ],
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "type": "simple",
+        "sortFieldsUi": {
+          "sortField": [
+            {
+              "fieldName": "fecha_iso",
+              "order": "descending"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "7f38ee76-50d5-4cc7-b659-978c8af2161f",
+      "name": "Más nuevas primero",
+      "type": "n8n-nodes-base.sort",
+      "typeVersion": 1,
+      "position": [
+        1040,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "maxItems": "={{ $('Fuente y palabras').first().json.maximo }}",
+        "keep": "firstItems"
+      },
+      "id": "6e9d69e7-3c87-49a6-baa9-840473d016cc",
+      "name": "Las primeras",
+      "type": "n8n-nodes-base.limit",
+      "typeVersion": 1,
+      "position": [
+        1560,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "content": "### 5. Un texto para mandar\n**Armar el resumen** junta todos los ítems en uno (`$input.all()`) y arma un texto con viñetas y enlaces, listo para Telegram o Gmail (mirá la nota del workflow 60 para conectarlos).\n\nSi llegó el ítem vacío del Filter, el texto dice que hoy no hubo noticias con tus palabras.",
+        "height": 400,
+        "width": 400,
+        "color": 7
+      },
+      "id": "f0bc8ebc-bb89-46ba-a872-0567a60b7002",
+      "name": "Nota: el resumen",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1160,
+        -560
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "// Juntamos todas las noticias en un ítem, con un texto listo para mandar.\nconst noticias = $input.all().map((i) => i.json).filter((n) => n.titulo);\nconst config = $('Fuente y palabras').first().json;\nconst hoy = $now.setZone('America/La_Paz').setLocale('es').toFormat(\"cccc d 'de' LLLL\");\n\nif (!noticias.length) {\n  return [{ json: { cantidad: 0, texto: `Resumen del ${hoy}: hoy no hubo noticias recientes con tus palabras (${config.palabras.join(', ')}).` } }];\n}\n\nconst lineas = noticias.map((n) => `- ${n.titulo} (${n.fecha}). Habla de: ${n.coincidencias.join(', ')}.\\n  ${n.enlace}`);\nreturn [{\n  json: {\n    cantidad: noticias.length,\n    texto: `Resumen del ${hoy}: ${noticias.length} noticias que te pueden interesar.\\n\\n${lineas.join('\\n')}\\n\\nFuente: Noticias ONU.`,\n    noticias,\n  },\n}];"
+      },
+      "id": "671f49c0-05b9-47a9-b2cd-dbdbd2a771f8",
+      "name": "Armar el resumen",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1820,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "content": "### 6. Resumen con IA (opcional)\nEste nodo está **apagado** (gris): n8n lo saltea y el workflow corre sin credenciales.\n\nPara usarlo:\n1. Abrí **Modelo Gemini** y creá la credencial **Google Gemini(PaLM) Api** con tu clave de Google AI Studio.\n2. Seleccioná **Resumen con IA (opcional)** y **Modelo Gemini** y prendelos con la tecla **D** (o clic derecho → **Activate**).\n3. Ejecutá: la IA escribe un párrafo corto con lo más importante.",
+        "height": 400,
+        "width": 440,
+        "color": 5
+      },
+      "id": "7c24608b-498d-4997-828a-0fd5dfd29443",
+      "name": "Nota: la IA opcional",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1580,
+        -560
+      ]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Estas son las noticias de hoy, con su título, de qué hablan y su enlace:\n\n{{ $json.texto }}\n\nEscribí en español, con voseo, un párrafo corto (máximo 80 palabras) que cuente lo más importante para una persona de Bolivia. Sin signos de exclamación y sin emojis. No inventes datos que no estén en las noticias.",
+        "hasOutputParser": false,
+        "needsFallback": false,
+        "messages": {
+          "messageValues": [
+            {
+              "type": "SystemMessagePromptTemplate",
+              "message": "Sos una editora que resume noticias de forma clara, cálida y fiel a la fuente."
+            }
+          ]
+        }
+      },
+      "id": "1720da5b-0f1d-4b27-905e-2585c4254dfa",
+      "name": "Resumen con IA (opcional)",
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.9,
+      "position": [
+        2080,
+        0
+      ],
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-3.5-flash-lite",
+        "options": {
+          "temperature": 0.3
+        }
+      },
+      "id": "d40daefb-8fde-4be3-85d0-b2bf373c5d2c",
+      "name": "Modelo Gemini",
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1.2,
+      "position": [
+        2100,
+        220
+      ],
+      "disabled": true
+    }
+  ],
+  "connections": {
+    "Cada mañana a las 7": {
+      "main": [
+        [
+          {
+            "node": "Fuente y palabras",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Al tocar Execute": {
+      "main": [
+        [
+          {
+            "node": "Fuente y palabras",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fuente y palabras": {
+      "main": [
+        [
+          {
+            "node": "Leer el RSS",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Leer el RSS": {
+      "main": [
+        [
+          {
+            "node": "Buscar tus palabras",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Buscar tus palabras": {
+      "main": [
+        [
+          {
+            "node": "Más nuevas primero",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Más nuevas primero": {
+      "main": [
+        [
+          {
+            "node": "Quedarse con las que coinciden",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Quedarse con las que coinciden": {
+      "main": [
+        [
+          {
+            "node": "Las primeras",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Las primeras": {
+      "main": [
+        [
+          {
+            "node": "Armar el resumen",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Armar el resumen": {
+      "main": [
+        [
+          {
+            "node": "Resumen con IA (opcional)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Modelo Gemini": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Resumen con IA (opcional)",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "pinData": {},
+  "meta": {
+    "templateCredsSetupCompleted": false
+  }
+}

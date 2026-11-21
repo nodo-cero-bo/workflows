@@ -45,7 +45,7 @@ Nada más que tu n8n: [n8n Cloud](https://app.n8n.cloud/register) o una instalac
 
 ## Cómo probarlo
 
-1. Hacé clic en **Execute**.
+1. Hacé clic en **Execute workflow**.
 2. Abrí **Pasar a números legibles**. `chainId` tiene que ser `43113` (`0xa869`): es Fuji.
 3. Ejecutalo otra vez: `ultimoBloque` creció. En Fuji sale un bloque cada uno o dos segundos.
 4. Abrí el enlace de `explorador` y compará con lo que muestra el explorador de Fuji.

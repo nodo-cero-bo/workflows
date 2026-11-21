@@ -1,0 +1,24 @@
+{
+  "id": "61-tipo-de-cambio",
+  "titulo": "Tipo de cambio: dólar a bolivianos",
+  "resumen": "La cotización del día del dólar en bolivianos desde una API pública sin clave, con tu propia API para convertir montos.",
+  "categoria": "casos",
+  "nivel": "inicial",
+  "minutos": 15,
+  "tecnologias": [
+    "n8n"
+  ],
+  "lineas": [
+    "apps",
+    "impacto"
+  ],
+  "credenciales": [],
+  "aprendes": [
+    "Varios disparadores para el mismo camino",
+    "Expresiones con ?. y ?? para valores por defecto",
+    "Validar un pedido y responder 200 o 400",
+    "Respetar los límites y la atribución de una API pública"
+  ],
+  "probado": "ejecutado",
+  "orden": 61
+}

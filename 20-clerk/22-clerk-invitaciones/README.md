@@ -61,7 +61,7 @@ La Secret key permite administrar tu aplicación entera: va en esta credencial y
 5. En el panel de Clerk, **Users** → **Invitations**: cada invitación aparece como pendiente hasta que la persona se registra.
 6. Mandá el mismo correo otra vez: ahora la página final lo muestra como rechazado con **422**, porque ya tenía una invitación pendiente.
 
-Para probarlo sin formulario, en el editor tocá **Execute**: n8n abre el formulario de prueba.
+Para probarlo sin formulario, en el editor tocá **Execute workflow**: n8n abre el formulario de prueba.
 
 ## Cómo lo probamos
 

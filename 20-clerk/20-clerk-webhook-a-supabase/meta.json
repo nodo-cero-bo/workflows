@@ -10,6 +10,9 @@
     "clerk",
     "supabase"
   ],
+  "lineas": [
+    "apps"
+  ],
   "credenciales": [
     {
       "nombre": "Supabase API",

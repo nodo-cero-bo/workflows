@@ -1,0 +1,36 @@
+{
+  "id": "66-bot-de-telegram-con-ia",
+  "titulo": "Bot de Telegram con IA",
+  "resumen": "Tu propio bot de Telegram que responde con un agente de IA y recuerda la conversación de cada chat.",
+  "categoria": "casos",
+  "nivel": "intermedio",
+  "minutos": 25,
+  "tecnologias": [
+    "n8n",
+    "ia"
+  ],
+  "lineas": [
+    "ia",
+    "impacto"
+  ],
+  "credenciales": [
+    {
+      "nombre": "Telegram API",
+      "tipo_n8n": "telegramApi",
+      "como": "En Telegram, @BotFather → /newbot: el token que te da va en Access Token."
+    },
+    {
+      "nombre": "Google Gemini(PaLM) Api",
+      "tipo_n8n": "googlePalmApi",
+      "como": "Una clave gratis de Google AI Studio (aistudio.google.com, Get API key), en la credencial Google Gemini(PaLM) Api."
+    }
+  ],
+  "aprendes": [
+    "Crear un bot con @BotFather y conectarlo a n8n",
+    "Telegram Trigger y Send a text message",
+    "AI Agent con memoria separada por chat",
+    "Probar un bot sin Telegram con un mensaje de prueba"
+  ],
+  "probado": "auditado",
+  "orden": 66
+}

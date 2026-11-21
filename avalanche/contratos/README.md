@@ -111,7 +111,7 @@ El keccak256 de Ethereum no es el SHA3-256 que trae el nodo Crypto de n8n: se pa
    | `desdeBloque` | el bloque del despliegue |
    | `decimales` | vacío |
 
-3. **Execute**: un ítem por proyecto registrado, con `autora`, `nombre`, `enlace` y `cuando` legibles. Así salió en la prueba:
+3. **Execute workflow**: un ítem por proyecto registrado, con `autora`, `nombre`, `enlace` y `cuando` legibles. Así salió en la prueba:
 
    ```json
    { "evento": "ProyectoRegistrado", "autora": "0x00000000000000000000000000000000000c0de0", "nombre": "Las Fujinas", "enlace": "https://github.com/nodo-cero-bo/proyectos", "cuando": "21/11/2026 03:00:00" }

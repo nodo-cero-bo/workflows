@@ -10,6 +10,9 @@
     "ia",
     "supabase"
   ],
+  "lineas": [
+    "ia"
+  ],
   "credenciales": [
     {
       "nombre": "Supabase API",

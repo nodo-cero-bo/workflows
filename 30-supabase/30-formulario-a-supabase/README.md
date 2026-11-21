@@ -40,7 +40,7 @@ Elegí una de estas formas:
 
 1. Corré el esquema en Supabase, si todavía no lo hiciste.
 2. Abrí el nodo **Guardar la idea** y, en **Credential to connect with**, creá o elegí tu credencial **Supabase API**.
-3. Tocá **Execute**: n8n abre el formulario de prueba en una pestaña nueva. Completalo y tocá **Enviar idea**.
+3. Tocá **Execute workflow**: n8n abre el formulario de prueba en una pestaña nueva. Completalo y tocá **Enviar idea**.
 4. Vas a ver «Gracias, tu idea quedó guardada» con el número de tu idea.
 5. En Supabase, abrí **Table Editor → ideas**: ahí está la fila, con `id`, `creado_en` y `categoria` vacía.
 6. Para compartirlo: **publicá** el workflow (botón **Publish**) y abrí **Formulario de ideas** para copiar la **Production URL**. Esa es la que mandás a otras personas.

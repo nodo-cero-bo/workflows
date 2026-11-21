@@ -57,7 +57,7 @@ Abrí el nodo **Recibir el pedido**: arriba tiene dos pestañas con dos URL.
 | | URL de prueba (**Test URL**) | URL de producción (**Production URL**) |
 |---|---|---|
 | Forma | `https://<tu-n8n>/webhook-test/hola-n8n` | `https://<tu-n8n>/webhook/hola-n8n` |
-| Cuándo anda | Después de tocar **Execute** o **Listen for test event**, mientras el editor escucha | Cuando el workflow está publicado (botón **Publish**) |
+| Cuándo anda | Después de tocar **Execute workflow** o **Listen for test event**, mientras el editor escucha | Cuando el workflow está publicado (botón **Publish**) |
 | Cuántos pedidos | Uno por vez: después hay que volver a escuchar | Todos los que lleguen, aunque cierres el editor |
 | Dónde ves qué pasó | En vivo, en el canvas | En la pestaña **Executions** |
 
@@ -66,7 +66,7 @@ Mientras armás, usá la de prueba. Para compartir tu API, publicá el workflow 
 ## Cómo probarlo
 
 1. Abrí **Recibir el pedido** y copiá la **Test URL**.
-2. Tocá **Execute**, abajo del canvas: n8n se queda esperando un pedido.
+2. Tocá **Execute workflow**, abajo del canvas: n8n se queda esperando un pedido.
 3. Mandá el pedido desde una terminal, con tu URL.
 
    Mac, Linux o Git Bash:
@@ -87,8 +87,8 @@ Mientras armás, usá la de prueba. Para compartir tu API, publicá el workflow 
    ```
 
 4. La terminal muestra el saludo con la hora de Bolivia, y el canvas, el camino que hizo el pedido.
-5. Probá el error: volvé a tocar **Execute** y mandá `{}` en vez de `{"nombre":"Ada"}`. La respuesta tiene el código 400. En PowerShell aparece como un error en rojo con el JSON de la respuesta: es lo esperado.
-6. Publicá el workflow con **Publish**, copiá la **Production URL** y repetí el pedido: ahora responde siempre, sin tocar **Execute**, y cada pedido queda en **Executions**.
+5. Probá el error: volvé a tocar **Execute workflow** y mandá `{}` en vez de `{"nombre":"Ada"}`. La respuesta tiene el código 400. En PowerShell aparece como un error en rojo con el JSON de la respuesta: es lo esperado.
+6. Publicá el workflow con **Publish**, copiá la **Production URL** y repetí el pedido: ahora responde siempre, sin tocar **Execute workflow**, y cada pedido queda en **Executions**.
 
 ## Ideas para extenderlo
 

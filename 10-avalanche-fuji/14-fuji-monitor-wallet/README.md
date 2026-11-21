@@ -47,7 +47,7 @@ Cada 5 minutos, n8n lee el saldo de una dirección de Avalanche Fuji, lo compara
 
 ## Cómo probarlo
 
-**1. La primera vuelta.** Hacé clic en **Execute**. Sale por **Sin cambios** con `primeraRevision: true`: todavía no hay un saldo anterior para comparar.
+**1. La primera vuelta.** Hacé clic en **Execute workflow**. Sale por **Sin cambios** con `primeraRevision: true`: todavía no hay un saldo anterior para comparar.
 
 **2. El aviso, sin esperar.** En las ejecuciones manuales la memoria no se guarda, así que cada prueba manual es una «primera vuelta». Para ver el aviso, poné un monto cualquiera en `saldoAnteriorDePrueba` (por ejemplo `1000000`) y ejecutá de nuevo: sale por **Mensaje de aviso** con la diferencia.
 

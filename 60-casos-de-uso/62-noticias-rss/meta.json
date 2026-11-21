@@ -1,0 +1,32 @@
+{
+  "id": "62-noticias-rss",
+  "titulo": "Noticias por RSS: tu resumen del día",
+  "resumen": "Lee un RSS de noticias en español, se queda con las que hablan de lo que te importa y arma un resumen con enlaces.",
+  "categoria": "casos",
+  "nivel": "inicial",
+  "minutos": 15,
+  "tecnologias": [
+    "n8n",
+    "ia"
+  ],
+  "lineas": [
+    "ia",
+    "impacto"
+  ],
+  "credenciales": [
+    {
+      "nombre": "Google Gemini(PaLM) Api (opcional)",
+      "tipo_n8n": "googlePalmApi",
+      "como": "Nada más para el resumen con IA, que viene apagado: una clave gratis de Google AI Studio (Get API key)."
+    }
+  ],
+  "aprendes": [
+    "Leer un RSS con RSS Read",
+    "Buscar palabras enteras sin importar tildes ni mayúsculas",
+    "Filter, Sort y Limit sin código",
+    "Always Output Data para cuando no queda nada",
+    "Prender y apagar nodos"
+  ],
+  "probado": "ejecutado",
+  "orden": 62
+}

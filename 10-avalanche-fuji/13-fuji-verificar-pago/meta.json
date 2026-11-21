@@ -10,6 +10,10 @@
     "avalanche",
     "supabase"
   ],
+  "lineas": [
+    "web3",
+    "apps"
+  ],
   "credenciales": [
     {
       "nombre": "Supabase API (opcional)",

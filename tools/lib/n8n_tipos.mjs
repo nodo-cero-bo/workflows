@@ -63,9 +63,9 @@ export async function cargarTipos(modulos) {
   // Variantes «Tool» (por ejemplo httpRequestTool, supabaseTool): las crea n8n al cargar.
   let herramientas = 'n8n/dist/tool-generation';
   const n8nPj = path.join(modulos, 'n8n', 'package.json');
-  let versionN8n = null;
+  let versionInstalada = null;
   if (fs.existsSync(n8nPj)) {
-    versionN8n = leerJSON(n8nPj).version;
+    versionInstalada = leerJSON(n8nPj).version;
     const req = createRequire(n8nPj);
     try {
       const tg = req('./dist/tool-generation/index.js');
@@ -87,7 +87,7 @@ export async function cargarTipos(modulos) {
 
   return {
     modulos,
-    versionN8n,
+    versionInstalada,
     paquetes,
     herramientas,
     nodos,
@@ -111,7 +111,7 @@ export async function cargarTipos(modulos) {
 }
 
 // n8n-workflow de la misma instalación (para displayParameter, getNodeParameters, etc.).
-export function cargarN8nWorkflow(modulos) {
+export function cargarPaqueteWorkflow(modulos) {
   const base = fs.existsSync(path.join(modulos, 'n8n', 'package.json'))
     ? path.join(modulos, 'n8n', 'package.json')
     : path.join(modulos, 'n8n-nodes-base', 'package.json');

@@ -1,0 +1,24 @@
+{
+  "id": "63-leer-una-pagina-web",
+  "titulo": "Leer una página web",
+  "resumen": "Descarga una página de práctica, encuentra cada producto con selectores CSS y arma una tabla limpia con título, precio y estrellas.",
+  "categoria": "casos",
+  "nivel": "intermedio",
+  "minutos": 20,
+  "tecnologias": [
+    "n8n"
+  ],
+  "lineas": [
+    "apps",
+    "impacto"
+  ],
+  "credenciales": [],
+  "aprendes": [
+    "Descargar el HTML de una página con HTTP Request",
+    "Selectores CSS con el nodo HTML, en dos pasos",
+    "Leer texto o atributos de una etiqueta",
+    "Respetar robots.txt y los términos de un sitio"
+  ],
+  "probado": "ejecutado",
+  "orden": 63
+}

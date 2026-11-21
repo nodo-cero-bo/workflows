@@ -9,6 +9,10 @@
     "n8n",
     "supabase"
   ],
+  "lineas": [
+    "apps",
+    "impacto"
+  ],
   "credenciales": [
     {
       "nombre": "Supabase API",

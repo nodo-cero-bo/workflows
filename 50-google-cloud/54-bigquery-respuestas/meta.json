@@ -1,0 +1,32 @@
+{
+  "id": "54-bigquery-respuestas",
+  "titulo": "Respuestas en BigQuery",
+  "resumen": "Una encuesta que guarda cada respuesta como fila en BigQuery y enseguida consulta con SQL cuántas respuestas hay por línea y su promedio.",
+  "categoria": "google-cloud",
+  "nivel": "intermedio",
+  "minutos": 30,
+  "tecnologias": [
+    "n8n",
+    "google-cloud"
+  ],
+  "lineas": [
+    "apps",
+    "impacto"
+  ],
+  "credenciales": [
+    {
+      "nombre": "Google Service Account API",
+      "tipo_n8n": "googleApi",
+      "como": "Clave JSON de una cuenta de servicio con BigQuery Data Editor sobre el dataset y BigQuery Job User en el proyecto: client_email en Service Account Email y private_key en Private Key."
+    }
+  ],
+  "aprendes": [
+    "Google BigQuery con una cuenta de servicio",
+    "Crear un dataset y una tabla con SQL",
+    "INSERT con parámetros, sin inyección de SQL",
+    "Consultar con SQL y expresiones de n8n",
+    "Frenar costos con Maximum Bytes Billed"
+  ],
+  "probado": "auditado",
+  "orden": 54
+}

@@ -1,0 +1,635 @@
+{
+  "name": "Nodo Cero · Limpiar una lista (CSV)",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## Limpiar una lista (CSV)\n\nToma una lista desordenada (nombres en mayúsculas, espacios de más, correos repetidos o mal escritos), la limpia y te devuelve un CSV prolijo, ordenado y sin repetidos. Las filas con problemas quedan aparte, con el motivo.\n\n### Qué hace\n1. **Al tocar Execute** usa **CSV de ejemplo** (datos inventados). **Formulario para subir tu CSV** recibe el tuyo.\n2. **Leer el CSV** convierte el archivo en un ítem por fila.\n3. **Limpiar cada fila** arregla nombres, correos y ciudades, y marca lo que está mal.\n4. **¿Correo válido?** separa las filas buenas de las que hay que revisar.\n5. **Sacar repetidos**, **Ordenar por nombre** y **Dejar las columnas** preparan la lista.\n6. **Armar el CSV limpio** crea el archivo y el formulario te lo deja descargar.\n\n### Qué necesitás\nNada más que tu n8n. No usa credenciales ni guarda la lista en ninguna base: queda nada más en el historial de ejecuciones (**Executions**) de tu n8n.\n\n### Cómo probarlo\n1. Tocá **Execute workflow**. Abrí **Armar el CSV limpio** y tocá **Download** para bajar `lista_limpia.csv`.\n2. Abrí **Filas para revisar**: ahí están las 3 filas con problemas y por qué.\n3. Para tu lista: tocá **Publish**, abrí la **Production URL** del formulario y subí tu CSV.",
+        "height": 1060,
+        "width": 640,
+        "color": 4
+      },
+      "id": "ad8b9bf3-4f45-4a69-9156-b5e54dbb705a",
+      "name": "Nota de inicio",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -760,
+        -620
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "d9085c21-77b9-4228-9f7b-a1c663ea66b0",
+      "name": "Al tocar Execute",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        -120
+      ]
+    },
+    {
+      "parameters": {
+        "content": "### 1. Datos de ejemplo\n**CSV de ejemplo** es un texto con forma de CSV (valores separados por comas, la primera fila es el encabezado). Tiene a propósito todo lo que suele salir mal: mayúsculas, espacios, un correo repetido, correos sin forma de correo, una fila vacía y una sin correo.\n\nLas personas y los correos son inventados (`example.com` es un dominio reservado para ejemplos).\n\n**Convertir el texto en archivo** lo vuelve un archivo, igual al que llega por el formulario.",
+        "height": 440,
+        "width": 460,
+        "color": 7
+      },
+      "id": "701d1ad7-e7ad-4dd6-b8a3-97ce8970514b",
+      "name": "Nota: datos de ejemplo",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -100,
+        -620
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "manual",
+        "assignments": {
+          "assignments": [
+            {
+              "id": "43aa86db-85e7-4282-b08f-d8f0bca5acc4",
+              "name": "csv",
+              "value": "Nombre,Correo,Equipo,Ciudad\n  ana  FLORES ,ANA.FLORES@EXAMPLE.COM,Equipo Tajibo,santa cruz\nMaría José Rojas,mariajose.rojas@example.com,Equipo Motacú,SCZ\nAna Flores,ana.flores@example.com ,Equipo Tajibo,Santa Cruz\nLUCÍA VACA DÍEZ,lucia.vaca(arroba)example.com,Equipo Guapurú,Montero\ncarla suárez,carla.suarez@example,Equipo Guapurú,Warnes\n,,,\nValeria Justiniano,valeria.justiniano@example.com,Equipo Cusi,sta. cruz\nrosa áñez,rosa.anez@example.com,  Equipo Cusi  ,La Guardia\nDaniela Ortiz,,Equipo Tajibo,Cotoca",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "f596c8e2-38bc-4dfa-b11d-3b7e1a95845d",
+      "name": "CSV de ejemplo",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        260,
+        -120
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "toText",
+        "sourceProperty": "csv",
+        "binaryPropertyName": "archivo",
+        "options": {
+          "fileName": "inscripciones.csv"
+        }
+      },
+      "id": "c30276f0-e09b-436c-8f49-f07fb038293d",
+      "name": "Convertir el texto en archivo",
+      "type": "n8n-nodes-base.convertToFile",
+      "typeVersion": 1.2,
+      "position": [
+        520,
+        -120
+      ]
+    },
+    {
+      "parameters": {
+        "formTitle": "Limpiá tu lista",
+        "formDescription": "Subí un CSV con columnas nombre, correo, equipo y ciudad (separadas por comas). Te devolvemos la lista limpia para descargar.",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "Tu archivo CSV",
+              "fieldName": "archivo",
+              "fieldType": "file",
+              "multipleFiles": false,
+              "acceptFileTypes": ".csv",
+              "requiredField": true
+            }
+          ]
+        },
+        "responseMode": "lastNode",
+        "options": {
+          "path": "nodo-cero-limpiar-lista",
+          "buttonLabel": "Limpiar mi lista",
+          "customCss": ":root {\n  --font-family: 'Inter Tight', 'Inter', system-ui, sans-serif;\n  --color-background: #191919;\n  --color-card-bg: #242424;\n  --color-card-border: #5A0026;\n  --color-card-shadow: rgba(255, 145, 172, 0.12);\n  --color-header: #FAFAFA;\n  --color-header-subtext: #FFD0D9;\n  --color-label: #FAFAFA;\n  --color-link: #FFD0D9;\n  --color-input-bg: #191919;\n  --color-input-border: #5A0026;\n  --color-input-text: #FAFAFA;\n  --color-focus-border: #FF91AC;\n  --color-submit-btn-bg: #FF91AC;\n  --color-submit-btn-text: #191919;\n  --color-required: #FF91AC;\n  --color-html-text: #FAFAFA;\n  --color-html-link: #FF91AC;\n  --color-test-notice-bg: #242424;\n  --color-test-notice-border: #FF91AC;\n  --color-test-notice-text: #FFD0D9;\n  --border-radius-card: 12px;\n  --card-border-radius: 12px;\n  --border-radius-input: 8px;\n}\n/* Enlaces en rosa y el logo de n8n del pie en blanco, sobre el fondo oscuro */\na { color: #FF91AC; }\n.n8n-link svg path[fill='#101330'] { fill: #FAFAFA; }"
+        }
+      },
+      "id": "b23eae79-676c-41d1-b1f8-fc6cef9877ad",
+      "name": "Formulario para subir tu CSV",
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.6,
+      "position": [
+        0,
+        200
+      ],
+      "webhookId": "1e6c029b-8ea6-4ee3-94ff-8203e1b7020a"
+    },
+    {
+      "parameters": {
+        "content": "### 1 bis. Tu propio archivo\nEl campo de tipo **File** del formulario deja el archivo en el binario `archivo` (el **Field Name**), con el mismo nombre que usa la rama de ejemplo: por eso las dos llegan al mismo nodo.\n\n**Respond When: Workflow Finishes** hace que la persona espere hasta que el archivo esté listo.",
+        "height": 320,
+        "width": 400,
+        "color": 7
+      },
+      "id": "3873ff88-de3a-4093-ba70-5608d9babeeb",
+      "name": "Nota: el formulario",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -100,
+        360
+      ]
+    },
+    {
+      "parameters": {
+        "content": "### 2. Leer el CSV\n**Extract from File** (operación **CSV**) lee el binario `archivo` y devuelve **un ítem por fila**. Las claves salen del encabezado: `Nombre`, `Correo`...\n\nSi tu Excel guarda con punto y coma, abrí **Options** → **Delimiter** y poné `;`.",
+        "height": 300,
+        "width": 400,
+        "color": 7
+      },
+      "id": "6cf346cf-4b01-4bef-aa34-ebf517232936",
+      "name": "Nota: leer el CSV",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        420,
+        160
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "csv",
+        "binaryPropertyName": "archivo",
+        "options": {
+          "headerRow": true,
+          "delimiter": ","
+        }
+      },
+      "id": "6b136653-1fec-4f77-9649-69d8916a3888",
+      "name": "Leer el CSV",
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1.2,
+      "position": [
+        780,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "content": "### 3. Limpiar cada fila\nEl Code recorre las filas y:\n- encuentra cada columna aunque el encabezado diga `Correo `, `E-mail` o `correo`;\n- escribe los nombres como nombres propios (`ANA FLORES` → `Ana Flores`);\n- pasa los correos a minúsculas y revisa que tengan forma de correo;\n- unifica ciudades (`SCZ`, `sta. cruz` → `Santa Cruz de la Sierra`);\n- saltea las filas vacías.\n\nRevisar la forma de un correo no dice si existe: para eso hay que escribirle.",
+        "height": 440,
+        "width": 460,
+        "color": 7
+      },
+      "id": "e564b508-846c-430a-9961-771f38b2c45c",
+      "name": "Nota: limpiar",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        600,
+        -620
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "// Cada ítem es una fila del CSV. Las claves salen del encabezado del archivo.\nconst normalizar = (t) => String(t ?? '').normalize('NFD').replace(/[\\u0300-\\u036f]/g, '').toLowerCase().trim();\n\n// Una columna puede venir escrita de varias formas: buscamos la clave que se parezca.\nconst COLUMNAS = {\n  nombre: ['nombre', 'nombres', 'nombre completo', 'name'],\n  correo: ['correo', 'correo electronico', 'email', 'e-mail', 'mail'],\n  equipo: ['equipo', 'team'],\n  ciudad: ['ciudad', 'city', 'municipio'],\n};\nconst leer = (fila, campo) => {\n  for (const [clave, valor] of Object.entries(fila)) {\n    if (COLUMNAS[campo].includes(normalizar(clave))) return String(valor ?? '');\n  }\n  return '';\n};\n\n// «  ana  FLORES » → «Ana Flores». «de», «del», «la» y «y» quedan en minúscula.\nconst MINUSCULAS = new Set(['de', 'del', 'la', 'las', 'los', 'y']);\nconst nombrePropio = (texto) =>\n  texto.trim().replace(/\\s+/g, ' ').toLowerCase().split(' ').filter(Boolean)\n    .map((p, i) => (i > 0 && MINUSCULAS.has(p) ? p : p.charAt(0).toUpperCase() + p.slice(1)))\n    .join(' ');\n\n// La misma ciudad escrita de distintas formas (la clave va en minúsculas y sin tildes).\nconst CIUDADES = {\n  'scz': 'Santa Cruz de la Sierra',\n  'santa cruz': 'Santa Cruz de la Sierra',\n  'sta. cruz': 'Santa Cruz de la Sierra',\n  'sta cruz': 'Santa Cruz de la Sierra',\n  'santa cruz de la sierra': 'Santa Cruz de la Sierra',\n};\n\n// Forma de correo: texto, una arroba, un dominio con punto y sin espacios. No confirma que el correo exista.\nconst FORMA_DE_CORREO = /^[^\\s@]+@[^\\s@]+\\.[a-z]{2,}$/i;\n\nconst filas = [];\nfor (const item of $input.all()) {\n  const fila = item.json;\n  const nombre = nombrePropio(leer(fila, 'nombre'));\n  const correo = leer(fila, 'correo').trim().toLowerCase();\n  const equipo = leer(fila, 'equipo').trim().replace(/\\s+/g, ' ');\n  const ciudadOriginal = leer(fila, 'ciudad').trim().replace(/\\s+/g, ' ');\n  const ciudad = CIUDADES[normalizar(ciudadOriginal)] ?? nombrePropio(ciudadOriginal);\n\n  // Fila vacía (como «,,,»): no aporta nada, la salteamos.\n  if (!nombre && !correo && !equipo && !ciudad) continue;\n\n  const problemas = [];\n  if (!nombre) problemas.push('falta el nombre');\n  if (!correo) problemas.push('falta el correo');\n  else if (!FORMA_DE_CORREO.test(correo)) problemas.push(`el correo «${correo}» no tiene forma de correo`);\n\n  filas.push({ json: { nombre, correo, equipo, ciudad, valido: problemas.length === 0, problema: problemas.join('; ') } });\n}\nreturn filas;"
+      },
+      "id": "490375f1-1d08-4f01-9274-1ba2e14b05b8",
+      "name": "Limpiar cada fila",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1040,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 4
+          },
+          "conditions": [
+            {
+              "id": "5a55e83f-93f1-4ca7-ad83-adb856952db7",
+              "leftValue": "={{ $json.valido }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": false,
+        "options": {}
+      },
+      "id": "89befa61-526a-41f2-aac1-6790d2f47cf1",
+      "name": "¿Correo válido?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.4,
+      "position": [
+        1300,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "content": "### 4. Sin repetidos y en orden\n- **Remove Duplicates** compara el campo `correo`: si dos filas tienen el mismo, deja la primera. Por eso va **después** de limpiar: `ANA.FLORES@EXAMPLE.COM` y `ana.flores@example.com ` recién son iguales cuando están en minúsculas y sin espacios.\n- **Sort** ordena por `nombre`.\n- **Edit Fields** deja nada más las cuatro columnas (saca `valido` y `problema`).",
+        "height": 440,
+        "width": 460,
+        "color": 7
+      },
+      "id": "4248e193-2be4-4bde-b1c2-aa7c02bb8281",
+      "name": "Nota: repetidos",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1120,
+        -620
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "removeDuplicateInputItems",
+        "compare": "selectedFields",
+        "fieldsToCompare": "correo",
+        "options": {}
+      },
+      "id": "58abb316-0a5a-481b-bdad-5a99d423c4d6",
+      "name": "Sacar repetidos",
+      "type": "n8n-nodes-base.removeDuplicates",
+      "typeVersion": 2,
+      "position": [
+        1560,
+        -120
+      ]
+    },
+    {
+      "parameters": {
+        "type": "simple",
+        "sortFieldsUi": {
+          "sortField": [
+            {
+              "fieldName": "nombre",
+              "order": "ascending"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "11930e94-07e1-439b-806f-0520192b70e0",
+      "name": "Ordenar por nombre",
+      "type": "n8n-nodes-base.sort",
+      "typeVersion": 1,
+      "position": [
+        1820,
+        -120
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "manual",
+        "assignments": {
+          "assignments": [
+            {
+              "id": "1485314e-0fdb-493d-b3fa-959a19ee2bcc",
+              "name": "nombre",
+              "value": "={{ $json.nombre }}",
+              "type": "string"
+            },
+            {
+              "id": "f42739c3-7d49-45ff-b501-a707a1c0e3ff",
+              "name": "correo",
+              "value": "={{ $json.correo }}",
+              "type": "string"
+            },
+            {
+              "id": "4c685e62-b486-45e0-9bed-5e0b4ce818f6",
+              "name": "equipo",
+              "value": "={{ $json.equipo }}",
+              "type": "string"
+            },
+            {
+              "id": "1f67ab05-ec67-4f93-b712-1600cc7daf11",
+              "name": "ciudad",
+              "value": "={{ $json.ciudad }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "e891e30c-4b7e-49bd-b6ee-43dbc473b81e",
+      "name": "Dejar las columnas",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        2080,
+        -120
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "manual",
+        "assignments": {
+          "assignments": [
+            {
+              "id": "a560e1c7-41a8-4912-af66-f249db1061d1",
+              "name": "problema",
+              "value": "={{ $json.problema }}",
+              "type": "string"
+            },
+            {
+              "id": "2b75813f-1cc6-400d-94cb-32b488f38b74",
+              "name": "nombre",
+              "value": "={{ $json.nombre }}",
+              "type": "string"
+            },
+            {
+              "id": "f19e5fd1-3047-4e37-8370-d0861677b9af",
+              "name": "correo",
+              "value": "={{ $json.correo }}",
+              "type": "string"
+            },
+            {
+              "id": "26dddc89-fa4d-456c-bde9-6fec5513fce7",
+              "name": "equipo",
+              "value": "={{ $json.equipo }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "5ac8e0b6-1ba0-4600-a5ce-a95df6c08ce2",
+      "name": "Filas para revisar",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        1560,
+        160
+      ]
+    },
+    {
+      "parameters": {
+        "content": "### 5. De vuelta a un archivo\n**Convert to File** (operación **CSV**) junta todos los ítems en un archivo, con el encabezado arriba. En el editor, abrí el nodo y tocá **Download**.\n\nSi vino del formulario, **Descargar la lista limpia** (n8n Form, **Completion** con **Return Binary File**) se lo devuelve a la persona. Ese paso va separado con **¿Vino del formulario?** porque un nodo Form espera a alguien del otro lado: si arrancaste con **Execute workflow**, no hay nadie esperando.",
+        "height": 400,
+        "width": 520,
+        "color": 7
+      },
+      "id": "308d144f-4802-4c6a-8dd6-1e7784e69649",
+      "name": "Nota: el archivo",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1640,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "csv",
+        "binaryPropertyName": "data",
+        "options": {
+          "fileName": "lista_limpia.csv",
+          "headerRow": true,
+          "delimiter": ","
+        }
+      },
+      "id": "0889dce3-5a95-4e22-8329-08120363aa5f",
+      "name": "Armar el CSV limpio",
+      "type": "n8n-nodes-base.convertToFile",
+      "typeVersion": 1.2,
+      "position": [
+        2340,
+        -120
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 4
+          },
+          "conditions": [
+            {
+              "id": "00e9f9f3-16e3-4598-b48b-3e37b4a62e37",
+              "leftValue": "={{ $('Formulario para subir tu CSV').isExecuted }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": false,
+        "options": {}
+      },
+      "id": "394caf6a-1bff-43ed-b603-8177da333fbf",
+      "name": "¿Vino del formulario?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.4,
+      "position": [
+        2600,
+        -120
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "completion",
+        "respondWith": "returnBinary",
+        "inputDataFieldName": "data",
+        "completionTitle": "Tu lista está lista",
+        "completionMessage": "=Filas limpias y sin repetidos: {{ $('Dejar las columnas').all().length }}. Filas para revisar: {{ $('¿Correo válido?').all(1).length }} (les falta un dato o el correo no tiene forma de correo). El archivo lista_limpia.csv se baja automáticamente.",
+        "options": {
+          "formTitle": "Limpiá tu lista",
+          "customCss": ":root {\n  --font-family: 'Inter Tight', 'Inter', system-ui, sans-serif;\n  --color-background: #191919;\n  --color-card-bg: #242424;\n  --color-card-border: #5A0026;\n  --color-card-shadow: rgba(255, 145, 172, 0.12);\n  --color-header: #FAFAFA;\n  --color-header-subtext: #FFD0D9;\n  --color-label: #FAFAFA;\n  --color-link: #FFD0D9;\n  --color-input-bg: #191919;\n  --color-input-border: #5A0026;\n  --color-input-text: #FAFAFA;\n  --color-focus-border: #FF91AC;\n  --color-submit-btn-bg: #FF91AC;\n  --color-submit-btn-text: #191919;\n  --color-required: #FF91AC;\n  --color-html-text: #FAFAFA;\n  --color-html-link: #FF91AC;\n  --color-test-notice-bg: #242424;\n  --color-test-notice-border: #FF91AC;\n  --color-test-notice-text: #FFD0D9;\n  --border-radius-card: 12px;\n  --card-border-radius: 12px;\n  --border-radius-input: 8px;\n}\n/* Enlaces en rosa y el logo de n8n del pie en blanco, sobre el fondo oscuro */\na { color: #FF91AC; }\n.n8n-link svg path[fill='#101330'] { fill: #FAFAFA; }"
+        }
+      },
+      "id": "e9e674d5-f93b-47bb-bb8a-b51a09e39906",
+      "name": "Descargar la lista limpia",
+      "type": "n8n-nodes-base.form",
+      "typeVersion": 2.5,
+      "position": [
+        2860,
+        -240
+      ],
+      "webhookId": "564654d5-aa3a-49cd-8689-eecbf6fb5cb8"
+    },
+    {
+      "parameters": {},
+      "id": "8b8776cb-be3e-4a52-b833-69609e31bc76",
+      "name": "Listo en el editor",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        2860,
+        0
+      ]
+    }
+  ],
+  "connections": {
+    "Al tocar Execute": {
+      "main": [
+        [
+          {
+            "node": "CSV de ejemplo",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "CSV de ejemplo": {
+      "main": [
+        [
+          {
+            "node": "Convertir el texto en archivo",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Convertir el texto en archivo": {
+      "main": [
+        [
+          {
+            "node": "Leer el CSV",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Formulario para subir tu CSV": {
+      "main": [
+        [
+          {
+            "node": "Leer el CSV",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Leer el CSV": {
+      "main": [
+        [
+          {
+            "node": "Limpiar cada fila",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Limpiar cada fila": {
+      "main": [
+        [
+          {
+            "node": "¿Correo válido?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "¿Correo válido?": {
+      "main": [
+        [
+          {
+            "node": "Sacar repetidos",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Filas para revisar",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Sacar repetidos": {
+      "main": [
+        [
+          {
+            "node": "Ordenar por nombre",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ordenar por nombre": {
+      "main": [
+        [
+          {
+            "node": "Dejar las columnas",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Dejar las columnas": {
+      "main": [
+        [
+          {
+            "node": "Armar el CSV limpio",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Armar el CSV limpio": {
+      "main": [
+        [
+          {
+            "node": "¿Vino del formulario?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "¿Vino del formulario?": {
+      "main": [
+        [
+          {
+            "node": "Descargar la lista limpia",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Listo en el editor",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "pinData": {},
+  "meta": {
+    "templateCredsSetupCompleted": false
+  }
+}

@@ -9,6 +9,9 @@
     "n8n",
     "avalanche"
   ],
+  "lineas": [
+    "web3"
+  ],
   "credenciales": [],
   "aprendes": [
     "eth_call para leer un contrato sin gastar gas",

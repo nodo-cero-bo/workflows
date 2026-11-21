@@ -1,0 +1,486 @@
+{
+  "name": "Nodo Cero · Bot de Telegram con IA",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## Bot de Telegram con IA\n\nTu propio bot de Telegram que conversa con IA: cada mensaje que le escriben llega a n8n, un agente con Gemini lo responde y n8n manda la respuesta al mismo chat. Recuerda los últimos mensajes de cada chat por separado.\n\n### Qué hace\n1. **Mensaje en Telegram** recibe cada mensaje (con el workflow publicado). **Al tocar Execute** prueba con un mensaje inventado.\n2. **Leer el mensaje** saca el chat, el texto y el nombre.\n3. **¿Es un mensaje de texto?** deja pasar texto; a fotos o audios les pide que escriban.\n4. **Agente de IA** (Gemini + memoria por chat) arma la respuesta.\n5. **Responder en Telegram** la manda al chat. En las pruebas termina en **Respuesta de prueba**.\n\n### Qué necesitás\n- Un bot de Telegram y su token: credencial **Telegram API** (`telegramApi`). Mirá la nota «Crear el bot».\n- La credencial **Google Gemini(PaLM) Api** (`googlePalmApi`): una clave gratis de Google AI Studio.\n\n### Cómo probarlo\n1. Cargá las dos credenciales (en **Mensaje en Telegram**, **Responder en Telegram** y **Modelo Gemini**).\n2. **Execute workflow** y abrí **Respuesta de prueba**: ahí está lo que contestaría el bot.\n3. **Publish**, abrí Telegram, buscá tu bot y escribile «Hola».",
+        "height": 1080,
+        "width": 660,
+        "color": 4
+      },
+      "id": "8907f8cc-9e3a-4ce3-a55c-427783ca8666",
+      "name": "Nota de inicio",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -780,
+        -640
+      ]
+    },
+    {
+      "parameters": {
+        "content": "### Crear el bot (5 minutos)\n1. En Telegram, buscá **@BotFather** (con la tilde azul de verificado) y escribile `/newbot`.\n2. Elegí un nombre y un usuario que termine en `bot` (por ejemplo `nodocero_equipo_bot`).\n3. BotFather te da un **token** (números, dos puntos y letras). Es la llave del bot: no la compartas ni la subas a GitHub.\n4. En n8n, credencial **Telegram API** → **Access Token**: pegá el token.\n\nTelegram necesita una dirección pública con HTTPS para avisarle a n8n. n8n Cloud ya la tiene; en tu compu hace falta un túnel.",
+        "height": 460,
+        "width": 460,
+        "color": 3
+      },
+      "id": "5e40f75a-b504-4376-acac-0688a297dc9b",
+      "name": "Nota: crear el bot",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -100,
+        -640
+      ]
+    },
+    {
+      "parameters": {
+        "updates": [
+          "message"
+        ],
+        "additionalFields": {}
+      },
+      "id": "8d9e6b4c-6a0b-4779-ae04-c18630ca3ec7",
+      "name": "Mensaje en Telegram",
+      "type": "n8n-nodes-base.telegramTrigger",
+      "typeVersion": 1.5,
+      "position": [
+        0,
+        -120
+      ],
+      "webhookId": "11a51f61-ce1a-456c-9d04-d9c40f8195e4"
+    },
+    {
+      "parameters": {},
+      "id": "3eb544ec-5081-47e5-8076-f8b87b0b3879",
+      "name": "Al tocar Execute",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "manual",
+        "assignments": {
+          "assignments": [
+            {
+              "id": "b37054e0-f801-4e2f-8edc-d638aab049c4",
+              "name": "message",
+              "value": "{\n  \"message_id\": 1,\n  \"chat\": { \"id\": 100000001, \"type\": \"private\" },\n  \"from\": { \"first_name\": \"Ana\" },\n  \"text\": \"Hola, ¿qué es n8n y qué podría automatizar en mi feria de emprendedoras?\"\n}",
+              "type": "object"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "ce12b8e4-3c0b-4eed-8b01-ad7f66384211",
+      "name": "Mensaje de prueba",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        260,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "content": "### 1. Qué llega de Telegram\nTelegram manda un **update**: `message.chat.id` (a qué chat responder), `message.text` (el texto) y `message.from.first_name` (quién escribió). Si mandan una foto o un audio, `text` no viene.\n\n**Mensaje de prueba** imita ese mismo formato, para probar sin Telegram. `es_prueba` vale `true` cuando arrancaste con **Execute workflow**: así el workflow sabe que no tiene que mandar nada.",
+        "height": 360,
+        "width": 460,
+        "color": 7
+      },
+      "id": "ebf7985f-45f9-498c-8348-95f5441defe9",
+      "name": "Nota: el mensaje",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        220,
+        400
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "manual",
+        "assignments": {
+          "assignments": [
+            {
+              "id": "6eee7324-b0f9-4abc-bfe5-5e73158d036d",
+              "name": "chat_id",
+              "value": "={{ String($json.message?.chat?.id ?? '') }}",
+              "type": "string"
+            },
+            {
+              "id": "0d9b6c52-badc-4c15-969a-e1568e82c56f",
+              "name": "texto",
+              "value": "={{ String($json.message?.text ?? '').trim() }}",
+              "type": "string"
+            },
+            {
+              "id": "3892266a-3d20-465e-b9ac-9b427444b6bf",
+              "name": "nombre",
+              "value": "={{ $json.message?.from?.first_name ?? '' }}",
+              "type": "string"
+            },
+            {
+              "id": "6ef22a4d-c6bc-4005-a079-eb29823805fb",
+              "name": "es_prueba",
+              "value": "={{ $('Al tocar Execute').isExecuted }}",
+              "type": "boolean"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "36e2a784-5293-4e5a-bfa6-705b4bf5092c",
+      "name": "Leer el mensaje",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        520,
+        40
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 4
+          },
+          "conditions": [
+            {
+              "id": "1c8ed4d7-6b70-43da-bea0-3a7b3f23a086",
+              "leftValue": "={{ $json.texto }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": false,
+        "options": {}
+      },
+      "id": "6ed5fcbb-c35d-44ac-83dd-9dc90c3c8c1b",
+      "name": "¿Es un mensaje de texto?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.4,
+      "position": [
+        780,
+        40
+      ]
+    },
+    {
+      "parameters": {
+        "content": "### 2. El agente\n**AI Agent** recibe el texto en **Prompt (User Message)** (`{{ $json.texto }}`) y responde siguiendo el **System Message**: quién es el bot y cómo habla. Cambialo por el de tu proyecto.\n\n**Memoria por chat** guarda los últimos 10 mensajes con una clave por chat (`telegram-` + el id del chat): cada persona tiene su propia conversación y no se mezclan.\n\nLa memoria simple vive en n8n y se borra si n8n se reinicia. Para guardarla en una base, mirá el workflow 33.",
+        "height": 440,
+        "width": 480,
+        "color": 7
+      },
+      "id": "08c8ccdd-eafe-4640-9d10-322fb7591de6",
+      "name": "Nota: el agente",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        580,
+        -640
+      ]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.texto }}",
+        "options": {
+          "systemMessage": "Sos el asistente de Telegram de un equipo de Nodo Cero – Hackathon n8n Bolivia, la hackathon de la comunidad n8n en Bolivia, enfocada en mujeres, de la mano de Women Techmakers Santa Cruz (sábado 21 de noviembre de 2026, en el Centro de Educación Ambiental de Santa Cruz de la Sierra).\n\nCómo respondés:\n- En español, con voseo, claro y cálido. Mensajes cortos: es un chat en el celular (como mucho 5 líneas).\n- Sin signos de exclamación y sin emojis.\n- Texto plano: sin asteriscos, sin numerales y sin formato Markdown.\n- Ayudás a entender qué es n8n y a pensar automatizaciones simples: qué nodos usar y en qué orden.\n- Si no sabés algo, decilo. No inventes datos, horarios, lugares ni nombres.\n- No pidas datos personales.\n\nCambiá este texto por el de tu proyecto: quién es el bot, para quién y qué sabe."
+        }
+      },
+      "id": "ea8d0916-ecb8-4dbf-a12a-861d2d7605dd",
+      "name": "Agente de IA",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        1060,
+        -80
+      ]
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-3.5-flash-lite",
+        "options": {
+          "temperature": 0.4
+        }
+      },
+      "id": "1ae5e73b-e097-4cfb-899d-3f4c49908e38",
+      "name": "Modelo Gemini",
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1.2,
+      "position": [
+        1040,
+        160
+      ]
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "={{ 'telegram-' + $('Leer el mensaje').item.json.chat_id }}",
+        "contextWindowLength": 10
+      },
+      "id": "4adb825a-6ea6-4f8b-8f75-fd9c5f802c2d",
+      "name": "Memoria por chat",
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.4,
+      "position": [
+        1200,
+        160
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "manual",
+        "assignments": {
+          "assignments": [
+            {
+              "id": "11270216-aefb-4a62-8824-6ca9574a1967",
+              "name": "output",
+              "value": "Por ahora leo nada más mensajes de texto. Escribime tu pregunta y te respondo.",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "d5997094-162d-40c3-9ce9-cc220ebf2c20",
+      "name": "Pedir texto",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        1060,
+        320
+      ]
+    },
+    {
+      "parameters": {
+        "content": "### 3. Responder al mismo chat\nLas dos ramas dejan la respuesta en `output` (el agente la deja ahí y **Pedir texto** también).\n\n**Responder en Telegram** (Send a text message) usa el `chat_id` de **Leer el mensaje**. **Append n8n Attribution** está apagado para que el mensaje no lleve la firma de n8n al final.\n\n**Parse Mode: HTML** y la expresión del texto cambia `&`, `<` y `>` por sus códigos: así Telegram acepta el mensaje aunque la IA escriba esos signos.\n\n¿Tu bot es para un grupo o para pocas personas? En **Mensaje en Telegram** → **Restrict to Chat IDs** poné los ids permitidos: así nadie más lo usa (ni gasta tu clave de Gemini).",
+        "height": 520,
+        "width": 480,
+        "color": 7
+      },
+      "id": "5672c5e0-6323-4ae5-ab97-62b7a2d8eb35",
+      "name": "Nota: responder",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1280,
+        -640
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 4
+          },
+          "conditions": [
+            {
+              "id": "70728be0-8e7d-45bb-8886-e1cb3f156417",
+              "leftValue": "={{ $('Leer el mensaje').item.json.es_prueba }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": false,
+        "options": {}
+      },
+      "id": "c42a3290-3c87-4ef2-bcbf-3d0907c60292",
+      "name": "¿Es una prueba?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.4,
+      "position": [
+        1400,
+        40
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "f933687e-87f6-4011-9edd-6de83f803dc1",
+      "name": "Respuesta de prueba",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        1660,
+        160
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "message",
+        "operation": "sendMessage",
+        "chatId": "={{ $('Leer el mensaje').item.json.chat_id }}",
+        "text": "={{ String($json.output ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;') }}",
+        "additionalFields": {
+          "appendAttribution": false,
+          "parse_mode": "HTML"
+        }
+      },
+      "id": "66eb7bf3-7052-49ac-8e3f-f89ee17e9ce1",
+      "name": "Responder en Telegram",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1660,
+        -80
+      ],
+      "webhookId": "fb05e0eb-6ed5-42a8-b383-6884951f0d91"
+    }
+  ],
+  "connections": {
+    "Mensaje en Telegram": {
+      "main": [
+        [
+          {
+            "node": "Leer el mensaje",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Al tocar Execute": {
+      "main": [
+        [
+          {
+            "node": "Mensaje de prueba",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mensaje de prueba": {
+      "main": [
+        [
+          {
+            "node": "Leer el mensaje",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Leer el mensaje": {
+      "main": [
+        [
+          {
+            "node": "¿Es un mensaje de texto?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "¿Es un mensaje de texto?": {
+      "main": [
+        [
+          {
+            "node": "Agente de IA",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Pedir texto",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Modelo Gemini": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Agente de IA",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Memoria por chat": {
+      "ai_memory": [
+        [
+          {
+            "node": "Agente de IA",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Agente de IA": {
+      "main": [
+        [
+          {
+            "node": "¿Es una prueba?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Pedir texto": {
+      "main": [
+        [
+          {
+            "node": "¿Es una prueba?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "¿Es una prueba?": {
+      "main": [
+        [
+          {
+            "node": "Respuesta de prueba",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Responder en Telegram",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "pinData": {},
+  "meta": {
+    "templateCredsSetupCompleted": false
+  }
+}

@@ -1,0 +1,433 @@
+{
+  "name": "Nodo Cero · Alerta del clima en Santa Cruz",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## Alerta del clima en Santa Cruz\n\nCada mañana mira el pronóstico de Santa Cruz de la Sierra y, si viene lluvia fuerte, tormenta, calor extremo o rayos UV extremos, te deja listo un mensaje de alerta.\n\n### Qué hace\n1. **Cada mañana a las 6** lo dispara por su cuenta, cuando el workflow está publicado. **Al tocar Execute** es para probarlo ahora.\n2. **Dónde y cuándo avisar** guarda la ciudad, sus coordenadas y los límites que vos elegís.\n3. **Pronóstico de Open-Meteo** pide el pronóstico de hoy a una API pública y gratis, sin clave.\n4. **Leer el pronóstico** lo pasa a palabras y decide si hay alertas.\n5. **¿Hay alerta?** manda el ítem por el camino que corresponde y cada camino arma su mensaje.\n\n### Qué necesitás\nNada más que tu n8n. No usa credenciales: Open-Meteo no pide cuenta para uso no comercial.\n\n### Cómo probarlo\n1. Tocá **Execute workflow** (abajo del canvas). Todo se pone en verde en unos segundos.\n2. Abrí **Leer el pronóstico**: ahí está el tiempo de hoy en Santa Cruz, en palabras.\n3. Si hoy no hay alerta, en **Dónde y cuándo avisar** cambiá `simular` a `calor` o `lluvia` y ejecutá de nuevo: vas a ver el camino de la alerta.\n4. Para que corra todos los días, tocá **Publish** arriba a la derecha.\n\nNo se rompe nada si probás: este workflow lee datos y no manda nada a nadie.",
+        "height": 1000,
+        "width": 620,
+        "color": 4
+      },
+      "id": "6adf7142-12e4-4b34-b8cc-244f104de08e",
+      "name": "Nota de inicio",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -720,
+        -520
+      ]
+    },
+    {
+      "parameters": {
+        "content": "### 1. El horario\n**Schedule Trigger** dispara el workflow a una hora fija, pero nada más cuando está **publicado**.\n\nLa hora es la de tu n8n. Revisala en el menú del workflow → **Settings** → **Timezone**: elegí `America/La_Paz` para la hora de Bolivia.\n\n**Al tocar Execute** hace lo mismo, cuando vos quieras.",
+        "height": 380,
+        "width": 340,
+        "color": 7
+      },
+      "id": "6e3aa60a-35dc-40c3-b152-5a98169a8529",
+      "name": "Nota: el horario",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -80,
+        -520
+      ]
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "days",
+              "daysInterval": 1,
+              "triggerAtHour": 6,
+              "triggerAtMinute": 0
+            }
+          ]
+        }
+      },
+      "id": "8613ba00-faf9-4226-b0e8-5a0ac8f8ae61",
+      "name": "Cada mañana a las 6",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        0,
+        -100
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "b72d9536-5b4f-49a6-948e-84564eb83f71",
+      "name": "Al tocar Execute",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        100
+      ]
+    },
+    {
+      "parameters": {
+        "content": "### 2. Dónde y cuándo avisar\nTodo lo que vas a querer cambiar está en este nodo, así no tenés que buscar en el resto:\n- `latitud` y `longitud`: el centro de Santa Cruz de la Sierra. Para otra ciudad, buscá sus coordenadas en un mapa.\n- `calor_maximo_c`, `lluvia_mm` y `probabilidad_lluvia`: desde qué valor avisa.\n- `simular`: `no`, `calor` o `lluvia`, para probar la alerta aunque hoy el día esté lindo.",
+        "height": 420,
+        "width": 340,
+        "color": 7
+      },
+      "id": "f65de408-dcb8-4751-b9f0-204273b8712e",
+      "name": "Nota: lugar y límites",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        180,
+        260
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "manual",
+        "assignments": {
+          "assignments": [
+            {
+              "id": "114bfc58-2bf2-40de-9a3f-1a6bb41e32c4",
+              "name": "ciudad",
+              "value": "Santa Cruz de la Sierra",
+              "type": "string"
+            },
+            {
+              "id": "1bccf0b2-20d0-4cd3-903e-26f252a6b6f8",
+              "name": "latitud",
+              "value": -17.7833,
+              "type": "number"
+            },
+            {
+              "id": "b7d8e949-e1e2-40ec-9f53-d738f11d11cb",
+              "name": "longitud",
+              "value": -63.1821,
+              "type": "number"
+            },
+            {
+              "id": "3da23afe-4cc5-4682-9160-e85881052228",
+              "name": "calor_maximo_c",
+              "value": 35,
+              "type": "number"
+            },
+            {
+              "id": "5dd127be-3def-4087-8fbf-dc83a1ec6efa",
+              "name": "lluvia_mm",
+              "value": 10,
+              "type": "number"
+            },
+            {
+              "id": "46d25bce-51e6-427e-9f36-b19acc3d4869",
+              "name": "probabilidad_lluvia",
+              "value": 70,
+              "type": "number"
+            },
+            {
+              "id": "a3f085f2-46c7-4b51-99bd-eda069e516be",
+              "name": "simular",
+              "value": "no",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "8ba984eb-8def-4198-af81-cea7a0c38451",
+      "name": "Dónde y cuándo avisar",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        260,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "content": "### 3. Pedirle el pronóstico a una API\n**HTTP Request** hace un GET a `api.open-meteo.com` con parámetros en la URL (Query Parameters): la latitud y la longitud salen del nodo anterior con una expresión, `daily` dice qué datos querés para el día y `timezone` pide las horas de Bolivia.\n\nLa respuesta trae listas: la posición 0 es hoy. Abrí el nodo y mirala en la vista **JSON**.\n\nOpen-Meteo es gratis para uso no comercial y pide que la nombres como fuente de los datos.",
+        "height": 380,
+        "width": 440,
+        "color": 7
+      },
+      "id": "07073bb8-56e0-47c4-b5ff-792610c0383b",
+      "name": "Nota: la API",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        300,
+        -520
+      ]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "https://api.open-meteo.com/v1/forecast",
+        "sendQuery": true,
+        "specifyQuery": "keypair",
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "latitude",
+              "value": "={{ $json.latitud }}"
+            },
+            {
+              "name": "longitude",
+              "value": "={{ $json.longitud }}"
+            },
+            {
+              "name": "daily",
+              "value": "weather_code,temperature_2m_max,temperature_2m_min,apparent_temperature_max,precipitation_sum,precipitation_probability_max,uv_index_max"
+            },
+            {
+              "name": "timezone",
+              "value": "America/La_Paz"
+            },
+            {
+              "name": "forecast_days",
+              "value": "1"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "d665517b-c4e1-456e-8468-e51e7b7d9c80",
+      "name": "Pronóstico de Open-Meteo",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        520,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "content": "### 4. De números a palabras\nEl **Code** lee la respuesta (`$input.first().json`) y la configuración (`$('Dónde y cuándo avisar')`), traduce el código del tiempo (por ejemplo 95 = tormenta) y arma la lista `alertas`.\n\n¿Por qué un Code y no varios IF? Porque son varias reglas que se suman: con JavaScript quedan juntas y comentadas, y la salida es un ítem prolijo con `hay_alerta` en `true` o `false`.",
+        "height": 420,
+        "width": 400,
+        "color": 7
+      },
+      "id": "f0a8354f-3baa-4d56-ae08-184f2d84b03e",
+      "name": "Nota: el código",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        560,
+        260
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "// Open-Meteo responde con listas: la posición 0 de cada lista es hoy.\nconst config = $('Dónde y cuándo avisar').first().json;\nconst respuesta = $input.first().json;\nconst d = respuesta.daily ?? {};\nconst hoy = (lista) => (Array.isArray(lista) ? lista[0] : null);\n\n// Códigos del tiempo de la Organización Meteorológica Mundial (WMO), los que usa Open-Meteo.\nconst CIELO = {\n  0: 'despejado', 1: 'casi despejado', 2: 'parcialmente nublado', 3: 'nublado',\n  45: 'niebla', 48: 'niebla con escarcha',\n  51: 'llovizna débil', 53: 'llovizna', 55: 'llovizna intensa', 56: 'llovizna helada', 57: 'llovizna helada intensa',\n  61: 'lluvia débil', 63: 'lluvia', 65: 'lluvia fuerte', 66: 'lluvia helada', 67: 'lluvia helada fuerte',\n  71: 'nevada débil', 73: 'nevada', 75: 'nevada fuerte', 77: 'granizo fino',\n  80: 'chaparrones débiles', 81: 'chaparrones', 82: 'chaparrones violentos', 85: 'chaparrones de nieve', 86: 'chaparrones de nieve fuertes',\n  95: 'tormenta eléctrica', 96: 'tormenta con granizo', 99: 'tormenta fuerte con granizo',\n};\n\nconst p = {\n  fecha: hoy(d.time),\n  codigo: hoy(d.weather_code),\n  maxima: hoy(d.temperature_2m_max),\n  minima: hoy(d.temperature_2m_min),\n  sensacion: hoy(d.apparent_temperature_max),\n  lluvia: hoy(d.precipitation_sum),\n  probabilidad: hoy(d.precipitation_probability_max),\n  uv: hoy(d.uv_index_max),\n};\n\n// Para probar las alertas un día lindo: «simular» en el nodo de configuración.\nconst simular = String(config.simular ?? 'no').toLowerCase().trim();\nif (simular === 'calor') Object.assign(p, { maxima: 39, sensacion: 42, codigo: 1, uv: 12, lluvia: 0, probabilidad: 5 });\nif (simular === 'lluvia') Object.assign(p, { lluvia: 28, probabilidad: 95, codigo: 95 });\n\nconst alertas = [];\nif (p.maxima >= config.calor_maximo_c || p.sensacion >= config.calor_maximo_c) {\n  alertas.push(`Calor extremo: máxima de ${p.maxima} °C, con sensación de ${p.sensacion} °C. Tomá agua, buscá sombra y evitá el sol del mediodía.`);\n}\nif (p.lluvia >= config.lluvia_mm || p.probabilidad >= config.probabilidad_lluvia) {\n  alertas.push(`Lluvia: ${p.lluvia} mm y ${p.probabilidad} % de probabilidad. Llevá paraguas y cuidado con las calles que se inundan.`);\n}\nif ([95, 96, 99].includes(p.codigo)) {\n  alertas.push('Tormenta eléctrica: si podés, quedate bajo techo y lejos de árboles aislados.');\n}\nif (p.uv >= 11) {\n  alertas.push(`Rayos UV extremos (índice ${p.uv}): protector solar, gorra y sombra entre las 10 y las 16.`);\n}\n\n// La fecha en palabras, con Luxon (DateTime viene incluido en n8n).\nconst fecha = p.fecha ? DateTime.fromISO(p.fecha).setLocale('es').toFormat(\"cccc d 'de' LLLL\") : 'hoy';\n\nreturn [{\n  json: {\n    ciudad: config.ciudad,\n    fecha,\n    cielo: CIELO[p.codigo] ?? `código del tiempo ${p.codigo}`,\n    maxima_c: p.maxima,\n    minima_c: p.minima,\n    sensacion_maxima_c: p.sensacion,\n    lluvia_mm: p.lluvia,\n    probabilidad_lluvia: p.probabilidad,\n    uv_maximo: p.uv,\n    hay_alerta: alertas.length > 0,\n    alertas,\n    simulado: simular === 'calor' || simular === 'lluvia',\n    fuente: 'Datos del tiempo: Open-Meteo.com (CC BY 4.0)',\n  },\n}];"
+      },
+      "id": "671d3b76-70e4-4a02-8b3a-480b465c5edc",
+      "name": "Leer el pronóstico",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        780,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "content": "### 5. ¿Hay alerta?\n**If** mira `hay_alerta`: si es `true`, el ítem sale por arriba (**true**) y si no, por abajo (**false**).\n\nCada camino arma su `mensaje` con una expresión. `$json.alertas.join('\\n')` pone cada alerta en su propia línea.",
+        "height": 380,
+        "width": 380,
+        "color": 7
+      },
+      "id": "7d5c5daa-f0d5-478c-9195-09da835df862",
+      "name": "Nota: la decisión",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        780,
+        -520
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 4
+          },
+          "conditions": [
+            {
+              "id": "81c722b3-e661-4707-8a1b-97ca05808a7a",
+              "leftValue": "={{ $json.hay_alerta }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": false,
+        "options": {}
+      },
+      "id": "67ed8695-19db-41dd-b78d-a9cf48f7f895",
+      "name": "¿Hay alerta?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.4,
+      "position": [
+        1040,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "manual",
+        "assignments": {
+          "assignments": [
+            {
+              "id": "99f1b52c-7928-4d8b-9c21-1a6886e4bb6d",
+              "name": "mensaje",
+              "value": "=Alerta del clima en {{ $json.ciudad }}, {{ $json.fecha }}:\n{{ $json.alertas.join('\\n') }}\nPronóstico: {{ $json.cielo }}, entre {{ $json.minima_c }} y {{ $json.maxima_c }} °C.{{ $json.simulado ? '\\n(Es una prueba: los datos están simulados.)' : '' }}",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "id": "b042440c-6736-4cc6-989e-5b83ebe74cad",
+      "name": "Mensaje de alerta",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        1300,
+        -100
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "manual",
+        "assignments": {
+          "assignments": [
+            {
+              "id": "af3908dd-4c3c-4b7d-8d38-e7b71e6be2f6",
+              "name": "mensaje",
+              "value": "=Hoy en {{ $json.ciudad }} ({{ $json.fecha }}): {{ $json.cielo }}, entre {{ $json.minima_c }} y {{ $json.maxima_c }} °C. Sin alertas.",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "id": "72ceddb4-3230-44fd-a205-c5c018708335",
+      "name": "Día tranquilo",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        1300,
+        100
+      ]
+    },
+    {
+      "parameters": {
+        "content": "### 6. Mandá la alerta a tu celular\n**Mensaje de alerta** deja el texto listo en `mensaje`. Conectale un nodo más a la derecha:\n- **Telegram → Send a text message**: credencial **Telegram API** (`telegramApi`) con el token de tu bot de @BotFather, tu Chat ID y en Text `{{ $json.mensaje }}`. El workflow 66 explica cómo crear el bot.\n- **Gmail → Send a message**: credencial **Gmail OAuth2** (`gmailOAuth2`) y en Message `{{ $json.mensaje }}`.\n\nAsí, el aviso te llega nada más los días que hace falta.",
+        "height": 420,
+        "width": 460,
+        "color": 4
+      },
+      "id": "ac044036-e91d-487d-8a65-9357dde3b5ea",
+      "name": "Nota: el aviso",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1180,
+        260
+      ]
+    }
+  ],
+  "connections": {
+    "Cada mañana a las 6": {
+      "main": [
+        [
+          {
+            "node": "Dónde y cuándo avisar",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Al tocar Execute": {
+      "main": [
+        [
+          {
+            "node": "Dónde y cuándo avisar",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Dónde y cuándo avisar": {
+      "main": [
+        [
+          {
+            "node": "Pronóstico de Open-Meteo",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Pronóstico de Open-Meteo": {
+      "main": [
+        [
+          {
+            "node": "Leer el pronóstico",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Leer el pronóstico": {
+      "main": [
+        [
+          {
+            "node": "¿Hay alerta?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "¿Hay alerta?": {
+      "main": [
+        [
+          {
+            "node": "Mensaje de alerta",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Día tranquilo",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "pinData": {},
+  "meta": {
+    "templateCredsSetupCompleted": false
+  }
+}

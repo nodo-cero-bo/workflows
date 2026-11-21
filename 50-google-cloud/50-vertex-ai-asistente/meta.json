@@ -1,0 +1,33 @@
+{
+  "id": "50-vertex-ai-asistente",
+  "titulo": "Asistente con Gemini en Vertex AI",
+  "resumen": "Un asistente que conversa en el chat de n8n con Gemini en Vertex AI, la IA de Google Cloud, recuerda la conversación y ayuda a tu equipo a armar su proyecto.",
+  "categoria": "google-cloud",
+  "nivel": "intermedio",
+  "minutos": 30,
+  "tecnologias": [
+    "n8n",
+    "ia",
+    "google-cloud"
+  ],
+  "lineas": [
+    "ia",
+    "impacto"
+  ],
+  "credenciales": [
+    {
+      "nombre": "Google Service Account API",
+      "tipo_n8n": "googleApi",
+      "como": "Clave JSON de una cuenta de servicio con el rol Agent Platform User (roles/aiplatform.user): client_email en Service Account Email, private_key en Private Key y Region en Global."
+    }
+  ],
+  "aprendes": [
+    "Google Vertex Chat Model con una cuenta de servicio",
+    "AI Agent con mensaje de sistema y memoria",
+    "Un nodo de configuración que leen los demás con una expresión",
+    "Modelos y regiones de Gemini en Vertex AI",
+    "Cuidar los costos de la IA en Google Cloud"
+  ],
+  "probado": "auditado",
+  "orden": 50
+}

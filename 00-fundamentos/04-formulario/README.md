@@ -46,12 +46,12 @@ Nada más que tu n8n ([n8n Cloud](https://app.n8n.cloud/register) o en tu compu)
 
 ## Cómo probarlo
 
-1. Tocá **Execute**, abajo del canvas: se abre el formulario de prueba en una pestaña nueva.
+1. Tocá **Execute workflow**, abajo del canvas: se abre el formulario de prueba en una pestaña nueva.
 2. Completalo y tocá **Enviar**. Probá con ideas distintas: «un bot para mi emprendimiento», «verificar pagos en Fuji», «un login para socias», «guardar el inventario en una tabla».
 3. Mirá la página final y, de vuelta en el canvas, lo que salió de cada nodo.
 4. Para compartirlo: tocá **Publish**, abrí **Formulario de bienvenida** y copiá la **Production URL** (termina en `/form/nodo-cero-bienvenida`). Esa URL anda siempre, aunque cierres el editor, y cada respuesta queda en **Executions**.
 
-> La URL de prueba (`/form-test/...`) anda nada más mientras el editor está esperando, después de tocar **Execute**. La de producción (`/form/...`) anda cuando el workflow está publicado.
+> La URL de prueba (`/form-test/...`) anda nada más mientras el editor está esperando, después de tocar **Execute workflow**. La de producción (`/form/...`) anda cuando el workflow está publicado.
 
 ## Cómo está hecho el estilo
 

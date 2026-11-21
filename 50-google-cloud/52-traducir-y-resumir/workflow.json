@@ -1,0 +1,345 @@
+{
+  "name": "Nodo Cero · Resumir y traducir con Google Cloud",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## Resumir y traducir con Google Cloud\n\nPegás un aviso largo en español y te devuelve un resumen en frases simples y su traducción al quechua, al aimara, al guaraní, al inglés o al portugués. Sirve para que un aviso de tu barrio, una campaña o una noticia llegue a más gente.\n\n### Qué hace\n**Aviso para tu comunidad** recibe el texto y el idioma. **Configuración** pasa el idioma a su código (`qu`, `ay`, `gn`). **Resumir con Gemini** lo resume con **Gemini en Vertex AI**. **Traducir el resumen** usa **Cloud Translation** y **Armar la respuesta** deja todo listo para la **Página final**.\n\n### Qué necesitás\n- Un proyecto de Google Cloud con facturación y dos APIs habilitadas: **Cloud Translation API** y la de Vertex AI (`aiplatform.googleapis.com`).\n- Una **cuenta de servicio** con los roles **Cloud Translation API User** (`roles/cloudtranslate.user`) y **Agent Platform User** (`roles/aiplatform.user`), y su clave JSON.\n- La credencial **Google Service Account API** (tipo `googleApi`), la misma para los dos nodos de Google. **Region**: `Global`.\n\nPaso a paso, con lo que vas a ver en cada pantalla: guía **Google Cloud y créditos** del repo `github.com/nodo-cero-bo/guias` (archivo `00-empezar/08-google-cloud.md`).\n\n### Cómo probarlo\n1. En **Configuración**, escribí el ID de tu proyecto en `proyecto_id`.\n2. Elegí tu credencial en **Gemini en Vertex AI** y en **Traducir el resumen**.\n3. Tocá **Execute workflow**, pegá un aviso (por ejemplo, el de una feria o un corte de agua) y elegí **Quechua**.\n4. La página final muestra el resumen y su traducción. Abrí cada nodo para ver qué entró y qué salió.",
+        "height": 900,
+        "width": 640,
+        "color": 7
+      },
+      "id": "109171d1-4119-4185-8ca9-716351aa3cec",
+      "name": "Nota de inicio",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -720,
+        -460
+      ]
+    },
+    {
+      "parameters": {
+        "formTitle": "Resumí y traducí un aviso",
+        "formDescription": "Pegá un aviso o una noticia en español. Gemini lo resume en frases simples y Cloud Translation traduce el resumen al idioma que elijas. No pegues datos personales.",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "Texto en español",
+              "fieldName": "texto",
+              "fieldType": "textarea",
+              "placeholder": "Por ejemplo: el aviso de una campaña de vacunación, una feria o un corte de agua.",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Traducir a",
+              "fieldName": "idioma",
+              "fieldType": "dropdown",
+              "fieldOptions": {
+                "values": [
+                  {
+                    "option": "Quechua"
+                  },
+                  {
+                    "option": "Aimara"
+                  },
+                  {
+                    "option": "Guaraní"
+                  },
+                  {
+                    "option": "Inglés"
+                  },
+                  {
+                    "option": "Portugués"
+                  }
+                ]
+              },
+              "requiredField": true
+            }
+          ]
+        },
+        "responseMode": "lastNode",
+        "options": {
+          "path": "nodo-cero-traducir",
+          "buttonLabel": "Resumir y traducir"
+        }
+      },
+      "id": "a44b3a8b-95b3-4ad9-82b8-f016c6a58421",
+      "name": "Aviso para tu comunidad",
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.6,
+      "position": [
+        0,
+        0
+      ],
+      "webhookId": "ac05cd7a-4b95-4d3e-90de-809c28aacf39"
+    },
+    {
+      "parameters": {
+        "content": "### Configuración\n- `proyecto_id`: el **ID** de tu proyecto de Google Cloud. Lo lee el modelo.\n- `codigo_idioma`: pasa lo que elegiste en el formulario a su código. Cloud Translation usa códigos ISO-639: `qu` quechua, `ay` aimara, `gn` guaraní.\n\nPara sumar un idioma, agregalo al desplegable del formulario y a esta lista con su código (están en la página de idiomas de Cloud Translation).",
+        "height": 400,
+        "width": 320,
+        "color": 5
+      },
+      "id": "1b7beeef-78db-450d-bfde-7ceb8e79169b",
+      "name": "Nota: configuración",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        100,
+        -460
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "manual",
+        "assignments": {
+          "assignments": [
+            {
+              "id": "ea909e42-e959-409c-a194-e04fc1988090",
+              "name": "proyecto_id",
+              "value": "",
+              "type": "string"
+            },
+            {
+              "id": "6148e2c9-11aa-4622-a8a7-7a7eb23bea1d",
+              "name": "codigo_idioma",
+              "value": "={{ { 'Quechua': 'qu', 'Aimara': 'ay', 'Guaraní': 'gn', 'Inglés': 'en', 'Portugués': 'pt' }[$json.idioma] }}",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "id": "887c412d-25cd-4778-9707-3e4a0e2a05e4",
+      "name": "Configuración",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        220,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "content": "### Por qué resumir primero\nUn aviso corto se entiende mejor y se traduce mejor. Además, Cloud Translation cobra por carácter: traducir el resumen gasta menos que traducir todo.\n\n**Basic LLM Chain** manda una sola instrucción al modelo, sin memoria ni herramientas. La instrucción está en **Prompt**: pide no inventar y mantener fechas y lugares. Temperatura 0,2 para que se apegue al texto.",
+        "height": 400,
+        "width": 320,
+        "color": 5
+      },
+      "id": "d4f83c68-e124-46a1-8920-61853909b73f",
+      "name": "Nota: el resumen",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        440,
+        -460
+      ]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Resumí este texto en tres frases cortas y simples, en español, para que lo entienda cualquier persona del barrio.\nMantené las fechas, los lugares, los horarios y los números tal como están. No agregues nada que el texto no diga. Devolvé nada más el resumen, sin títulos.\n\nTexto:\n{{ $json.texto }}"
+      },
+      "id": "689e17d2-9f98-47f0-b843-1f323cd63f06",
+      "name": "Resumir con Gemini",
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.9,
+      "position": [
+        440,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "projectId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "={{ $('Configuración').first().json.proyecto_id }}"
+        },
+        "modelName": "gemini-3.5-flash-lite",
+        "location": "global",
+        "options": {
+          "temperature": 0.2
+        }
+      },
+      "id": "4ac647a9-55f7-4473-a5f0-83ffb8e2931c",
+      "name": "Gemini en Vertex AI",
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleVertex",
+      "typeVersion": 1,
+      "position": [
+        480,
+        220
+      ]
+    },
+    {
+      "parameters": {
+        "content": "### Cuánto cuesta Gemini en Vertex AI\nVertex AI cobra por **tokens**, los pedazos de texto que entran y salen del modelo. No tiene nivel gratuito: lo paga la facturación de tu proyecto. Una prueba de la hackathon cuesta centavos, pero igual se cobra.\n\nSi abriste la prueba gratis de Google Cloud desde el 16 de noviembre de 2026, los USD 300 de bienvenida **no cubren** Vertex AI. Si tu equipo recibió un código de créditos, mirá en **Billing → Credits** a qué servicios se aplica.\n\nAntes de probar, creá una **alerta de presupuesto**. Para usar Gemini sin gastar, cambiá este modelo por **Google Gemini Chat Model** con la clave gratis de Google AI Studio (como en **05-agente-ia**).",
+        "height": 400,
+        "width": 460,
+        "color": 3
+      },
+      "id": "9dd1d7e6-7311-4185-a2f3-48f69032d05e",
+      "name": "Nota: costos",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        380,
+        380
+      ]
+    },
+    {
+      "parameters": {
+        "content": "### Cloud Translation y los idiomas originarios\nCloud Translation traduce al quechua (`qu`), al aimara (`ay`) y al guaraní (`gn`) con su modelo de traducción neuronal (NMT), verificado en la documentación de Google en noviembre de 2026.\n\nLa traducción automática ayuda, pero no reemplaza a una persona hablante: antes de publicar un aviso, pedile a alguien que lo revise.\n\nLos primeros 500.000 caracteres por mes no se cobran (Google lo aplica como un crédito de USD 10 por mes).",
+        "height": 400,
+        "width": 360,
+        "color": 5
+      },
+      "id": "25c2c5d0-b39e-4495-9cc3-0d7bdfcf603b",
+      "name": "Nota: la traducción",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        780,
+        -460
+      ]
+    },
+    {
+      "parameters": {
+        "authentication": "serviceAccount",
+        "text": "={{ $json.text }}",
+        "translateTo": "={{ $('Configuración').item.json.codigo_idioma }}"
+      },
+      "id": "0070fe5b-2179-4b70-88ff-7f0374d1ad98",
+      "name": "Traducir el resumen",
+      "type": "n8n-nodes-base.googleTranslate",
+      "typeVersion": 2,
+      "position": [
+        740,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "language": "javaScript",
+        "jsCode": "// Cloud Translation devuelve el texto como HTML: las comillas y los apóstrofos llegan como &quot; o &#39;.\n// Acá se pasan a caracteres normales.\nconst ENTIDADES = { '&quot;': '\"', '&#39;': \"'\", '&apos;': \"'\", '&lt;': '<', '&gt;': '>', '&nbsp;': ' ', '&amp;': '&' };\nconst limpiar = (t) =>\n  String(t ?? '')\n    .replace(/&#(\\d+);/g, (_, n) => String.fromCodePoint(Number(n)))\n    .replace(/&(?:quot|#39|apos|lt|gt|nbsp|amp);/g, (m) => ENTIDADES[m]);\n\nconst config = $('Configuración').item.json;\nconst resumen = $('Resumir con Gemini').item.json.text ?? '';\nreturn {\n  json: {\n    original: config.texto,\n    resumen: resumen.trim(),\n    idioma: config.idioma,\n    codigo_idioma: config.codigo_idioma,\n    traduccion: limpiar($json.translatedText).trim(),\n    idioma_detectado: $json.detectedSourceLanguage ?? '',\n  },\n};"
+      },
+      "id": "7bd98f9e-9f00-417c-9cc5-5f31631d2df5",
+      "name": "Armar la respuesta",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        960,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "completion",
+        "respondWith": "showText",
+        "responseText": "=<h2>Resumen en español</h2>\n<p>{{ $json.resumen }}</p>\n<h2>En {{ $json.idioma.toLowerCase() }} ({{ $json.codigo_idioma }})</h2>\n<p>{{ $json.traduccion }}</p>\n<p><small>Traducción automática de Cloud Translation: revisala con una persona hablante antes de publicarla.</small></p>"
+      },
+      "id": "aa21c17b-0777-4cb6-b6bc-1fd93bb052c0",
+      "name": "Página final",
+      "type": "n8n-nodes-base.form",
+      "typeVersion": 2.5,
+      "position": [
+        1180,
+        0
+      ],
+      "webhookId": "911c8d14-15bd-45b5-b6a2-1de8418bdf83"
+    },
+    {
+      "parameters": {
+        "content": "### Para llevarlo más lejos\n- Mandá el aviso traducido por Telegram o guardalo en Supabase con su idioma.\n- Traducí al revés: un mensaje en guaraní al español (Cloud Translation detecta el idioma de origen si no se lo decís).\n- Leé el aviso en voz alta con una API de texto a voz, para quien prefiere escuchar.\n- Combinalo con **51-sentimiento-natural-language** para ordenar los mensajes que llegan.",
+        "height": 400,
+        "width": 340,
+        "color": 5
+      },
+      "id": "efb56d03-2bc2-4cae-88eb-7e370e94cfed",
+      "name": "Nota: más lejos",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1160,
+        -460
+      ]
+    }
+  ],
+  "connections": {
+    "Aviso para tu comunidad": {
+      "main": [
+        [
+          {
+            "node": "Configuración",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Configuración": {
+      "main": [
+        [
+          {
+            "node": "Resumir con Gemini",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gemini en Vertex AI": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Resumir con Gemini",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Resumir con Gemini": {
+      "main": [
+        [
+          {
+            "node": "Traducir el resumen",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Traducir el resumen": {
+      "main": [
+        [
+          {
+            "node": "Armar la respuesta",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Armar la respuesta": {
+      "main": [
+        [
+          {
+            "node": "Página final",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "pinData": {},
+  "meta": {
+    "templateCredsSetupCompleted": false
+  }
+}

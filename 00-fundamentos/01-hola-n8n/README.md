@@ -49,7 +49,7 @@ Más detalle en la guía [Importar workflows](https://github.com/nodo-cero-bo/gu
 
 ## Cómo probarlo
 
-1. Tocá **Execute** (Execute), el botón de abajo del canvas. Todos los nodos se ponen en verde.
+1. Tocá **Execute workflow**, el botón de abajo del canvas. Todos los nodos se ponen en verde.
 2. Fijate en los números sobre las conexiones: 1 ítem hasta el Code node, 3 ítems después, y en el If se reparten 1 por **true** y 2 por **false**.
 3. Abrí cada nodo con doble clic. A la izquierda está lo que entra (INPUT) y a la derecha lo que sale (OUTPUT). Probá las vistas **Schema**, **Table** y **JSON**.
 4. Abrí **Mensaje: buscan integrantes**. Tenés que ver dos ítems con mensajes como estos:

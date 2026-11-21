@@ -1,0 +1,24 @@
+{
+  "id": "64-limpiar-una-lista",
+  "titulo": "Limpiar una lista (CSV)",
+  "resumen": "Subí un CSV desordenado y descargalo limpio: nombres prolijos, correos revisados, sin repetidos y ordenado.",
+  "categoria": "casos",
+  "nivel": "inicial",
+  "minutos": 20,
+  "tecnologias": [
+    "n8n"
+  ],
+  "lineas": [
+    "apps",
+    "impacto"
+  ],
+  "credenciales": [],
+  "aprendes": [
+    "Leer y crear archivos CSV con Extract from File y Convert to File",
+    "Limpiar textos y revisar la forma de un correo en un Code node",
+    "Remove Duplicates y Sort sin código",
+    "Un formulario que recibe un archivo y devuelve otro"
+  ],
+  "probado": "ejecutado",
+  "orden": 64
+}

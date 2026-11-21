@@ -10,6 +10,10 @@
     "ia",
     "avalanche"
   ],
+  "lineas": [
+    "web3",
+    "ia"
+  ],
   "credenciales": [
     {
       "nombre": "Google Gemini(PaLM) Api",

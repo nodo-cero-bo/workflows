@@ -1,0 +1,23 @@
+{
+  "id": "60-alerta-del-clima",
+  "titulo": "Alerta del clima en Santa Cruz",
+  "resumen": "Cada mañana lee el pronóstico de Santa Cruz de la Sierra y arma una alerta si viene lluvia fuerte, tormenta o calor extremo.",
+  "categoria": "casos",
+  "nivel": "inicial",
+  "minutos": 15,
+  "tecnologias": [
+    "n8n"
+  ],
+  "lineas": [
+    "impacto"
+  ],
+  "credenciales": [],
+  "aprendes": [
+    "Schedule Trigger y la zona horaria del workflow",
+    "HTTP Request con parámetros en la URL",
+    "Leer listas de una API con un Code node",
+    "Probar caminos con datos simulados"
+  ],
+  "probado": "ejecutado",
+  "orden": 60
+}

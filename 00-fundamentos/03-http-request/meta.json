@@ -9,6 +9,12 @@
     "n8n",
     "avalanche"
   ],
+  "lineas": [
+    "ia",
+    "web3",
+    "apps",
+    "impacto"
+  ],
   "credenciales": [],
   "aprendes": [
     "Método, URL, query parameters, headers y body JSON",

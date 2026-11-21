@@ -1,0 +1,32 @@
+{
+  "id": "51-sentimiento-natural-language",
+  "titulo": "Opiniones con Cloud Natural Language",
+  "resumen": "Un formulario de opiniones que Google Cloud Natural Language analiza: el tono (positivo, negativo, neutral o mixto) y de qué o de quién se habla.",
+  "categoria": "google-cloud",
+  "nivel": "inicial",
+  "minutos": 20,
+  "tecnologias": [
+    "n8n",
+    "google-cloud"
+  ],
+  "lineas": [
+    "impacto",
+    "ia"
+  ],
+  "credenciales": [
+    {
+      "nombre": "Google Service Account API",
+      "tipo_n8n": "googleApi",
+      "como": "Clave JSON de una cuenta de servicio con el rol Service Usage Consumer: client_email en Service Account Email y private_key en Private Key. Activá Set up for use in HTTP Request node con el scope https://www.googleapis.com/auth/cloud-platform."
+    }
+  ],
+  "aprendes": [
+    "Llamar una API de Google Cloud con HTTP Request y una cuenta de servicio",
+    "Sentimiento y entidades con Natural Language v2",
+    "Pasar números a palabras simples en un Code node",
+    "Manejar errores con la salida de error de un nodo",
+    "Página final de un formulario con HTML"
+  ],
+  "probado": "auditado",
+  "orden": 51
+}

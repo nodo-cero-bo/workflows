@@ -1,0 +1,44 @@
+{
+  "id": "67-reportes-ambientales",
+  "titulo": "Reportes ambientales ciudadanos",
+  "resumen": "Un formulario ciudadano con foto: la IA clasifica el reporte y le pone urgencia, Supabase lo guarda y, si es urgente, se avisa al equipo.",
+  "categoria": "casos",
+  "nivel": "intermedio",
+  "minutos": 35,
+  "tecnologias": [
+    "n8n",
+    "ia",
+    "supabase"
+  ],
+  "lineas": [
+    "impacto",
+    "ia",
+    "apps"
+  ],
+  "credenciales": [
+    {
+      "nombre": "Supabase API",
+      "tipo_n8n": "supabaseApi",
+      "como": "En Supabase, Project Settings → API Keys: la URL del proyecto va en Host y una clave secreta (sb_secret_...) en Secret Key. Antes, corré supabase/sql/02_reportes.sql."
+    },
+    {
+      "nombre": "Google Gemini(PaLM) Api",
+      "tipo_n8n": "googlePalmApi",
+      "como": "Una clave gratis de Google AI Studio (aistudio.google.com, Get API key), en la credencial Google Gemini(PaLM) Api."
+    },
+    {
+      "nombre": "Telegram API (opcional)",
+      "tipo_n8n": "telegramApi",
+      "como": "Nada más para el aviso, que viene apagado: el token de tu bot de @BotFather en Access Token."
+    }
+  ],
+  "aprendes": [
+    "Un formulario con archivo opcional",
+    "Information Extractor para clasificar y poner urgencia",
+    "Subir una foto a Supabase Storage con HTTP Request y la credencial de Supabase",
+    "Guardar una fila con datos de varios nodos",
+    "Cuidar los datos de quien reporta"
+  ],
+  "probado": "auditado",
+  "orden": 67
+}

@@ -1,0 +1,378 @@
+{
+  "name": "Nodo Cero · Archivos a Cloud Storage",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## Archivos a Cloud Storage\n\nUn formulario para subir un archivo (una foto, un PDF, una planilla) que queda guardado en un **bucket** de Cloud Storage de tu proyecto, con un nombre ordenado y un enlace para abrirlo.\n\n### Qué hace\n**Subir un archivo** recibe el archivo. **Configuración** dice a qué bucket va. **Preparar el nombre** le pone fecha, hora y un nombre sin caracteres raros. **Subir al bucket** lo guarda y **Armar los enlaces** prepara lo que muestra la **Página con el enlace**.\n\n### Qué necesitás\n- Un proyecto de Google Cloud con facturación y un **bucket** (por ejemplo, en la región `us-central1`, que entra en el nivel gratuito de 5 GB por mes).\n- Una **cuenta de servicio** con el rol **Storage Object User** (`roles/storage.objectUser`) dado **sobre ese bucket**, no sobre todo el proyecto, y su clave JSON.\n- La credencial **Google Service Account API** (tipo `googleApi`).\n\nPaso a paso, con lo que vas a ver en cada pantalla: guía **Google Cloud y créditos** del repo `github.com/nodo-cero-bo/guias` (archivo `00-empezar/08-google-cloud.md`).\n\n### Cómo probarlo\n1. En **Configuración**, escribí el nombre de tu bucket en `bucket`.\n2. Abrí **Subir al bucket** y elegí tu credencial.\n3. Tocá **Execute workflow**, completá el formulario y elegí un archivo chico.\n4. La página final trae el enlace. Abrilo con tu cuenta de Google y buscá el archivo en la consola, en **Cloud Storage → Buckets**.",
+        "height": 940,
+        "width": 640,
+        "color": 7
+      },
+      "id": "6ec90ce8-bb75-4060-a444-5572afab8153",
+      "name": "Nota de inicio",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -720,
+        -540
+      ]
+    },
+    {
+      "parameters": {
+        "formTitle": "Subí un archivo a Google Cloud",
+        "formDescription": "El archivo se guarda en un bucket de Cloud Storage del proyecto. No subas documentos con datos personales.",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "Tu nombre o el de tu equipo",
+              "fieldName": "equipo",
+              "fieldType": "text",
+              "placeholder": "Por ejemplo: Las Automatizadoras",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Archivo",
+              "fieldName": "archivo",
+              "fieldType": "file",
+              "multipleFiles": false,
+              "acceptFileTypes": ".pdf,.png,.jpg,.jpeg,.txt,.csv",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "¿Qué es? (opcional)",
+              "fieldName": "descripcion",
+              "fieldType": "text",
+              "placeholder": "Por ejemplo: foto del punto de reciclaje"
+            }
+          ]
+        },
+        "responseMode": "lastNode",
+        "options": {
+          "path": "nodo-cero-archivos",
+          "buttonLabel": "Subir"
+        }
+      },
+      "id": "532434ed-6f36-41eb-9117-c915bba467e1",
+      "name": "Subir un archivo",
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.6,
+      "position": [
+        0,
+        0
+      ],
+      "webhookId": "be6da960-0913-4b21-a046-22822ed889df"
+    },
+    {
+      "parameters": {
+        "content": "### Configuración\n- `bucket`: el nombre de tu bucket, tal cual lo creaste (sin `gs://`).\n- `carpeta`: la «carpeta» donde caen los archivos. En Cloud Storage no hay carpetas de verdad: el nombre del archivo lleva barras y la consola lo muestra como carpetas.\n\n**Options → Strip Binary** está apagado para que el archivo siga viaje hasta Cloud Storage.",
+        "height": 440,
+        "width": 300,
+        "color": 5
+      },
+      "id": "c251fea7-c566-4957-9120-d9efdb71f86e",
+      "name": "Nota: configuración",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        100,
+        -540
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "manual",
+        "assignments": {
+          "assignments": [
+            {
+              "id": "f53be278-e406-4234-80be-94eea54632f5",
+              "name": "bucket",
+              "value": "",
+              "type": "string"
+            },
+            {
+              "id": "00c64293-cda9-4683-a513-6f2be12b4816",
+              "name": "carpeta",
+              "value": "nodo-cero",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {
+          "stripBinary": false
+        }
+      },
+      "id": "39a9b612-fd7b-4c06-a47f-3be0f780c00d",
+      "name": "Configuración",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        220,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "content": "### Un nombre ordenado\nEl objeto queda como `nodo-cero/2026-11-21/101530-mi-foto.jpg`: carpeta, fecha, hora y el nombre original sin acentos ni espacios.\n\nLa hora adelante evita que dos archivos con el mismo nombre se pisen. La fecha usa la hora de Bolivia (`America/La_Paz`).",
+        "height": 440,
+        "width": 300,
+        "color": 5
+      },
+      "id": "364678af-67e3-4676-a275-ad8d484bbe72",
+      "name": "Nota: el nombre",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        420,
+        -540
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "language": "javaScript",
+        "jsCode": "// Arma un nombre de objeto ordenado y sin caracteres raros:\n//   <carpeta>/<fecha>/<hora>-<nombre-del-archivo>.<extensión>\n// La hora al principio evita que dos archivos con el mismo nombre se pisen.\nconst item = $input.item;\nconst archivo = item.binary?.archivo;\nif (!archivo) throw new Error('No llegó ningún archivo: revisá el campo «Archivo» del formulario.');\n\nconst original = archivo.fileName ?? 'archivo';\nconst punto = original.lastIndexOf('.');\nconst ext = punto > 0 ? original.slice(punto + 1).toLowerCase().replace(/[^a-z0-9]/g, '') : '';\nconst base = (punto > 0 ? original.slice(0, punto) : original)\n  .normalize('NFD')\n  .replace(/[\\u0300-\\u036f]/g, '')\n  .toLowerCase()\n  .replace(/[^a-z0-9]+/g, '-')\n  .replace(/^-+|-+$/g, '')\n  .slice(0, 60) || 'archivo';\n\nconst ahora = $now.setZone('America/La_Paz');\nconst carpeta = String(item.json.carpeta ?? '').replace(/^\\/+|\\/+$/g, '');\nconst objeto = [carpeta, ahora.toFormat('yyyy-LL-dd'), `${ahora.toFormat('HHmmss')}-${base}${ext ? '.' + ext : ''}`].filter(Boolean).join('/');\n\nreturn {\n  json: {\n    bucket: String(item.json.bucket ?? '').trim(),\n    objeto,\n    equipo: String(item.json.equipo ?? '').trim(),\n    descripcion: String(item.json.descripcion ?? '').trim(),\n    nombre_original: original,\n  },\n  binary: item.binary,\n};"
+      },
+      "id": "3c4ac67d-1c7d-4f10-8018-0144d7986f4b",
+      "name": "Preparar el nombre",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        440,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "content": "### Subir al bucket\n**Resource** `Object`, **Operation** `Create`, con **Authentication** en **Service Account**. Toma el archivo del campo binario `archivo` y guarda su tipo (**Content Type**) y, en **Metadata**, el equipo y la descripción.\n\nSi te sale 403, a la cuenta de servicio le falta el rol en el bucket. Si sale 404, el nombre del bucket no coincide.",
+        "height": 380,
+        "width": 320,
+        "color": 5
+      },
+      "id": "796a82fe-ee19-43de-b43d-10ba28ff76c4",
+      "name": "Nota: subir",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        740,
+        -540
+      ]
+    },
+    {
+      "parameters": {
+        "authentication": "serviceAccount",
+        "resource": "object",
+        "operation": "create",
+        "bucketName": "={{ $json.bucket }}",
+        "objectName": "={{ $json.objeto }}",
+        "updateProjection": "noAcl",
+        "createBinaryPropertyName": "archivo",
+        "createData": {
+          "contentType": "={{ $binary.archivo.mimeType }}",
+          "metadata": "={{ JSON.stringify({ equipo: $json.equipo, descripcion: $json.descripcion }) }}"
+        }
+      },
+      "id": "c9862ad4-0081-4800-b2a8-95ed74304feb",
+      "name": "Subir al bucket",
+      "type": "n8n-nodes-base.googleCloudStorage",
+      "typeVersion": 1.1,
+      "position": [
+        680,
+        0
+      ],
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "language": "javaScript",
+        "jsCode": "// La respuesta de Cloud Storage es el objeto que quedó guardado (su «metadata»).\n// Con su bucket y su nombre se arman los dos enlaces que sirven.\nconst o = $json.body ?? $json;\nconst bucket = o.bucket;\nconst nombre = o.name;\n// En la URL, cada parte del nombre va codificada (espacios, acentos), pero las barras se quedan.\nconst ruta = nombre.split('/').map(encodeURIComponent).join('/');\n\nconst bytes = Number(o.size ?? 0);\nconst tamano = bytes >= 1048576 ? `${(bytes / 1048576).toFixed(1)} MB` : `${Math.max(1, Math.round(bytes / 1024))} KB`;\n\nreturn {\n  json: {\n    bucket,\n    objeto: nombre,\n    tamano,\n    tipo: o.contentType ?? '',\n    // Abre el archivo en el navegador a quien inició sesión con una cuenta de Google que tiene permiso en el bucket.\n    enlace: `https://storage.cloud.google.com/${bucket}/${ruta}`,\n    // La dirección «gs://» la usan otros servicios de Google Cloud, como Natural Language o BigQuery.\n    gs: `gs://${bucket}/${nombre}`,\n    equipo: $('Preparar el nombre').item.json.equipo,\n  },\n};"
+      },
+      "id": "94850774-5871-4dbb-96ac-ee96c748bd8b",
+      "name": "Armar los enlaces",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        920,
+        -120
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "completion",
+        "respondWith": "showText",
+        "responseText": "=<h2>Listo, {{ $json.equipo }}: tu archivo está en Google Cloud</h2>\n<p>Se guardó como <code>{{ $json.objeto }}</code> ({{ $json.tamano }}).</p>\n<p><a href=\"{{ $json.enlace }}\" target=\"_blank\">Abrir el archivo</a> (pide iniciar sesión con una cuenta de Google que tenga permiso en el bucket).</p>\n<p>Dirección para otros servicios de Google Cloud: <code>{{ $json.gs }}</code></p>"
+      },
+      "id": "7171bde1-e10b-44d2-b963-38465c15497c",
+      "name": "Página con el enlace",
+      "type": "n8n-nodes-base.form",
+      "typeVersion": 2.5,
+      "position": [
+        1160,
+        -120
+      ],
+      "webhookId": "904eb060-94f9-4fc0-b9d7-8c6ae5734a2a"
+    },
+    {
+      "parameters": {
+        "content": "### Qué enlace te da\n- `https://storage.cloud.google.com/<bucket>/<archivo>`: la **URL autenticada**. Abre el archivo a quien inicia sesión con una cuenta de Google con permiso para verlo. Para el resto del mundo, no abre: tu bucket sigue privado.\n- `gs://<bucket>/<archivo>`: la dirección que usan Natural Language, BigQuery y Vertex AI para leer el archivo.\n\nPara compartir con alguien sin cuenta, mirá las **URL firmadas** (signed URLs) en la documentación de Cloud Storage.",
+        "height": 380,
+        "width": 360,
+        "color": 5
+      },
+      "id": "3df6d466-cc8a-4efd-91c0-ab11287f8b32",
+      "name": "Nota: enlaces",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1080,
+        -540
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "language": "javaScript",
+        "jsCode": "// Llega acá cuando Google rechazó el pedido (la salida de error del nodo anterior).\n// Busca el código y el mensaje de Google, y suma una pista según el caso.\nconst e = $json.error ?? {};\nconst d = $json.details ?? {};\nconst texto = typeof e === 'string' ? e : [e.message, e.description ?? d.description].filter(Boolean).join(' · ');\nlet codigo = String(d.httpCode ?? e.httpCode ?? (String(e.cause?.message ?? '').match(/^(\\d{3})\\b/) ?? [])[1] ?? (texto.match(/\\b(400|401|403|404|429)\\b/) ?? [])[1] ?? '');\n// Algunos nodos no traen el número: se deduce del mensaje.\nif (!codigo) codigo = /not found/i.test(texto) ? '404' : /access denied|permission|forbidden/i.test(texto) ? '403' : /quota|rate limit/i.test(texto) ? '429' : '';\n\nconst PISTAS = {\n  400: 'El pedido está mal armado o falta un dato. Revisá lo que mandaste.',\n  401: 'La credencial no sirve: revisá el correo de la cuenta de servicio y la clave privada (copiala entera).',\n  403: 'Falta permiso: habilitá la API en tu proyecto y revisá el rol de la cuenta de servicio. En HTTP Request, la credencial necesita el scope cloud-platform.',\n  404: 'No existe lo que pediste: revisá el nombre del bucket, del proyecto, del dataset o de la tabla.',\n  429: 'Llegaste a un límite de uso. Esperá un minuto y probá de nuevo.',\n};\nconst pista = /billing/i.test(texto)\n  ? 'El proyecto no tiene facturación activa: vinculá una cuenta de facturación en Billing.'\n  : PISTAS[codigo] ?? 'Abrí la ejecución en la pestaña Executions para ver la respuesta completa de Google.';\nreturn {\n  json: {\n    codigo: codigo || 'sin código',\n    pista,\n    detalle: texto.slice(0, 400) || 'Google no mandó detalle.',\n  },\n};"
+      },
+      "id": "6fc2659b-ba26-4956-813c-7398f2416777",
+      "name": "Explicar el error",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        920,
+        140
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "completion",
+        "respondWith": "showText",
+        "responseText": "=<h2>No se pudo subir el archivo</h2>\n<p>{{ $json.pista }}</p>\n<p><small>Respuesta de Google ({{ $json.codigo }}): {{ $json.detalle }}</small></p>"
+      },
+      "id": "b5740a6e-0fb2-4c76-a619-88b8a60b51cd",
+      "name": "Página de error",
+      "type": "n8n-nodes-base.form",
+      "typeVersion": 2.5,
+      "position": [
+        1160,
+        140
+      ],
+      "webhookId": "e1cd7789-a34d-4694-917c-2655fc6d8919"
+    },
+    {
+      "parameters": {
+        "content": "### Si Google responde con un error\n**Subir al bucket** tiene **On Error → Continue (using error output)**: el error no corta el workflow y **Explicar el error** lo cuenta en la página.\n\nUn bucket nuevo viene privado y con la prevención de acceso público activada. Dejalo así: si necesitás mostrar algo, usá la URL autenticada o una URL firmada, nunca un bucket público con datos de personas.",
+        "height": 300,
+        "width": 420,
+        "color": 3
+      },
+      "id": "60f03172-4b23-41ce-94c6-e06490d0417c",
+      "name": "Nota: si falla",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        860,
+        320
+      ]
+    },
+    {
+      "parameters": {
+        "content": "### Para llevarlo más lejos\n- Pasale una foto a Gemini para que describa qué hay (Basic LLM Chain con imagen), como en un reporte ambiental.\n- Guardá en Supabase quién subió qué, con el `gs://` de cada archivo.\n- Listá lo que hay en el bucket con la operación **Get Many** del mismo nodo.\n- Borrá los archivos viejos con una regla de ciclo de vida del bucket (**Lifecycle**), sin n8n.",
+        "height": 380,
+        "width": 340,
+        "color": 5
+      },
+      "id": "41a7827c-0596-4490-9ce8-acace24a24ac",
+      "name": "Nota: más lejos",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1460,
+        -540
+      ]
+    }
+  ],
+  "connections": {
+    "Subir un archivo": {
+      "main": [
+        [
+          {
+            "node": "Configuración",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Configuración": {
+      "main": [
+        [
+          {
+            "node": "Preparar el nombre",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Preparar el nombre": {
+      "main": [
+        [
+          {
+            "node": "Subir al bucket",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Subir al bucket": {
+      "main": [
+        [
+          {
+            "node": "Armar los enlaces",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Explicar el error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Armar los enlaces": {
+      "main": [
+        [
+          {
+            "node": "Página con el enlace",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Explicar el error": {
+      "main": [
+        [
+          {
+            "node": "Página de error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "pinData": {},
+  "meta": {
+    "templateCredsSetupCompleted": false
+  }
+}

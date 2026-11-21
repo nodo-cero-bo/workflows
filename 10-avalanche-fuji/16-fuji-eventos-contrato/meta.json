@@ -9,6 +9,9 @@
     "n8n",
     "avalanche"
   ],
+  "lineas": [
+    "web3"
+  ],
   "credenciales": [],
   "aprendes": [
     "eth_getLogs con filtro por contrato, topic0 y rango de bloques",

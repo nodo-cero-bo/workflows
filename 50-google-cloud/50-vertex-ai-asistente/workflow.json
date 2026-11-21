@@ -1,0 +1,244 @@
+{
+  "name": "Nodo Cero · Asistente con Gemini en Vertex AI",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## Asistente con Gemini en Vertex AI\n\nUn asistente que conversa en el chat de n8n con **Gemini en Vertex AI**, la plataforma de IA de Google Cloud. Recuerda la conversación y ayuda a tu equipo a pensar su proyecto con n8n y Google Cloud.\n\n### Qué hace\n**Mensaje en el chat** recibe lo que escribís. **Configuración** le suma el ID de tu proyecto de Google Cloud. **Asistente** arma la respuesta con **Gemini en Vertex AI** y usa la **Memoria simple** para acordarse de los últimos mensajes.\n\n### Qué necesitás\n- Un proyecto de Google Cloud con facturación y la API `aiplatform.googleapis.com` habilitada (en la consola aparece como **Vertex AI API** o **Agent Platform API**).\n- Una **cuenta de servicio** con el rol **Agent Platform User** (`roles/aiplatform.user`, antes «Vertex AI User») y su clave JSON.\n- La credencial **Google Service Account API** (tipo `googleApi`): en **Service Account Email** va el `client_email` del JSON y en **Private Key**, el `private_key`. **Region**: `Global`.\n\nPaso a paso, con lo que vas a ver en cada pantalla: guía **Google Cloud y créditos** del repo `github.com/nodo-cero-bo/guias` (archivo `00-empezar/08-google-cloud.md`).\n\n### Cómo probarlo\n1. Abrí **Configuración** y escribí el ID de tu proyecto en `proyecto_id`.\n2. Abrí **Gemini en Vertex AI** y elegí tu credencial.\n3. Tocá **Open chat**, abajo del canvas, y escribí «Hola, ¿qué servicio de Google Cloud me sirve para traducir avisos al quechua?».\n4. Seguí con «¿Y cómo lo conecto con n8n?»: la memoria hace que siga el hilo.\n5. Abrí **Asistente** y mirá los registros (**Logs**): qué recibió el modelo, qué contestó y cuánto tardó.",
+        "height": 860,
+        "width": 640,
+        "color": 7
+      },
+      "id": "75c49506-21e5-4525-9dc6-81e5948f6bf9",
+      "name": "Nota de inicio",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -720,
+        -420
+      ]
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "42049f5c-3360-46a1-97c1-565646b8ade2",
+      "name": "Mensaje en el chat",
+      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+      "typeVersion": 1.5,
+      "position": [
+        0,
+        0
+      ],
+      "webhookId": "269c9003-ed30-429f-ad4b-155035474c08"
+    },
+    {
+      "parameters": {
+        "content": "### Configuración: lo tuyo va acá\n`proyecto_id` es el **ID** de tu proyecto de Google Cloud (por ejemplo `nodo-cero-482915`), no su nombre ni su número. Lo ves en la consola, en el selector de proyectos de arriba.\n\nEl nodo deja pasar lo que llega del chat (**Include Other Input Fields**) y le suma este dato. El modelo lo lee con la expresión `$('Configuración').first().json.proyecto_id`.",
+        "height": 380,
+        "width": 300,
+        "color": 5
+      },
+      "id": "4d407a0d-e83f-4421-8779-008ad2cc07a8",
+      "name": "Nota: configuración",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        100,
+        -420
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "manual",
+        "assignments": {
+          "assignments": [
+            {
+              "id": "daa88527-df9f-460a-87ef-3fd9aecbddf4",
+              "name": "proyecto_id",
+              "value": "",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "id": "059aa9c5-83e8-4c4f-9a10-8bde70f0a705",
+      "name": "Configuración",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        220,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "content": "### El agente y su mensaje de sistema\n**AI Agent** recibe tu mensaje, le suma el historial de la memoria y le pide la respuesta al modelo.\n\nEn **Options → System Message** está quién es el asistente y cómo responde. Es lo que más cambia el resultado: reescribilo para tu proyecto y probá de nuevo.\n\nUn buen asistente prefiere decir «no sé» antes que inventar: decile qué hacer cuando no sabe algo.",
+        "height": 380,
+        "width": 320,
+        "color": 5
+      },
+      "id": "36f2225b-2a44-4e59-a2e4-913cd8a44215",
+      "name": "Nota: el agente",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        420,
+        -420
+      ]
+    },
+    {
+      "parameters": {
+        "promptType": "auto",
+        "options": {
+          "systemMessage": "Sos el asistente de Google Cloud de Nodo Cero – Hackathon n8n Bolivia: la hackathon de la comunidad n8n en Bolivia, enfocada en mujeres, de la mano de Women Techmakers Santa Cruz. Es el sábado 21 de noviembre de 2026, de 08:00 a 16:00, en el Centro de Educación Ambiental (CEA) de Santa Cruz de la Sierra.\n\nAyudás a los equipos a pensar y armar su proyecto con n8n y Google Cloud. Los servicios que conocés:\n- Vertex AI: los modelos Gemini, como vos. Sirven para conversar, resumir, clasificar y extraer datos.\n- Cloud Translation: traduce textos, también al quechua (qu), al aimara (ay) y al guaraní (gn). La traducción automática a esos idiomas conviene revisarla con hablantes.\n- Cloud Natural Language: dice si un texto es positivo o negativo y qué personas, lugares u organizaciones nombra.\n- Cloud Storage: guarda archivos en un bucket.\n- BigQuery: guarda datos en tablas y los consulta con SQL.\nLos workflows de ejemplo están en github.com/nodo-cero-bo/workflows, en la carpeta 50-google-cloud, y la guía para crear la cuenta en github.com/nodo-cero-bo/guias.\n\nCómo respondés:\n- En español, con voseo, claro y cálido, en frases cortas. Sin signos de exclamación y sin emojis.\n- Proponé pasos concretos: qué nodos de n8n usar, en qué orden y qué API de Google Cloud habilitar.\n- Recordá cuidar los costos: una alerta de presupuesto antes de empezar y apagar el proyecto al terminar.\n- Si no sabés algo o no está en estos datos, decilo y sugerí preguntarle a una mentora o a la organización. No inventes horarios, reglas, criterios de evaluación ni precios.\n- No pidas datos personales ni claves."
+        }
+      },
+      "id": "a8db7652-61b8-4d6b-8cc0-38ea88fbb6ab",
+      "name": "Asistente",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        440,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "projectId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "={{ $('Configuración').first().json.proyecto_id }}"
+        },
+        "modelName": "gemini-3.5-flash-lite",
+        "location": "global",
+        "options": {
+          "temperature": 0.4
+        }
+      },
+      "id": "8e1b8ad6-fd08-4c4f-85dd-82e3ec71c9d3",
+      "name": "Gemini en Vertex AI",
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleVertex",
+      "typeVersion": 1,
+      "position": [
+        400,
+        220
+      ]
+    },
+    {
+      "parameters": {
+        "contextWindowLength": 10
+      },
+      "id": "ee1ccaeb-6314-4d36-8f51-fdaaa548f82a",
+      "name": "Memoria simple",
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.4,
+      "position": [
+        580,
+        220
+      ]
+    },
+    {
+      "parameters": {
+        "content": "### El modelo y la región\nViene elegido `gemini-3.5-flash-lite`: estable (GA), rápido y el más económico de la línea 3.5 en Vertex AI (noviembre de 2026).\n\n**Region** está en **Global**: los Gemini 3.x se sirven desde `global` o desde las multirregiones `us` y `eu`. En una región puntual el modelo puede no estar.\n\nPara cambiarlo, escribí otro ID en **Model Name** tal como figura en la página de modelos de Google, por ejemplo `gemini-3.5-flash`. En Vertex AI los IDs van sin `models/` adelante, a diferencia de la API de Gemini de AI Studio.",
+        "height": 400,
+        "width": 420,
+        "color": 5
+      },
+      "id": "276b49f0-1ac8-4cf4-8e43-a7dc9b06eda6",
+      "name": "Nota: el modelo",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        140,
+        380
+      ]
+    },
+    {
+      "parameters": {
+        "content": "### Cuánto cuesta Gemini en Vertex AI\nVertex AI cobra por **tokens**, los pedazos de texto que entran y salen del modelo. No tiene nivel gratuito: lo paga la facturación de tu proyecto. Una prueba de la hackathon cuesta centavos, pero igual se cobra.\n\nSi abriste la prueba gratis de Google Cloud desde el 16 de noviembre de 2026, los USD 300 de bienvenida **no cubren** Vertex AI. Si tu equipo recibió un código de créditos, mirá en **Billing → Credits** a qué servicios se aplica.\n\nAntes de probar, creá una **alerta de presupuesto**. Para usar Gemini sin gastar, cambiá este modelo por **Google Gemini Chat Model** con la clave gratis de Google AI Studio (como en **05-agente-ia**).",
+        "height": 400,
+        "width": 440,
+        "color": 3
+      },
+      "id": "3c650765-7485-404f-b8fc-cb5ca5c35e29",
+      "name": "Nota: costos",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        580,
+        380
+      ]
+    },
+    {
+      "parameters": {
+        "content": "### Para llevarlo más lejos\n- **Herramientas**: conectá un **HTTP Request Tool** en la entrada **Tool** del agente para que consulte una API cuando lo necesite (mirá **40-agente-web3-fuji**).\n- **Memoria que dura**: cambiá **Memoria simple** por **Postgres Chat Memory** en Supabase, como en **33-agente-con-memoria-y-rag**.\n- **Chat público**: en **Mensaje en el chat**, activá **Make Chat Publicly Available** y publicá con **Publish**. Cualquiera con la URL usa tu facturación: sumale **Authentication**.",
+        "height": 380,
+        "width": 380,
+        "color": 5
+      },
+      "id": "f1d2b4f9-f033-447d-b491-d005285e649c",
+      "name": "Nota: más lejos",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        760,
+        -420
+      ]
+    }
+  ],
+  "connections": {
+    "Mensaje en el chat": {
+      "main": [
+        [
+          {
+            "node": "Configuración",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Configuración": {
+      "main": [
+        [
+          {
+            "node": "Asistente",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gemini en Vertex AI": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Asistente",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Memoria simple": {
+      "ai_memory": [
+        [
+          {
+            "node": "Asistente",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "pinData": {},
+  "meta": {
+    "templateCredsSetupCompleted": false
+  }
+}

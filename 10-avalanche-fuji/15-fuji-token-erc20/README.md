@@ -72,7 +72,7 @@ Nada más que tu n8n. Para tener USDC de prueba en tu wallet: el [faucet de Circ
 
 ## Cómo probarlo
 
-1. Hacé clic en **Execute** y abrí **Decodificar las respuestas**: `USD Coin`, `USDC`, 6 decimales y el saldo.
+1. Hacé clic en **Execute workflow** y abrí **Decodificar las respuestas**: `USD Coin`, `USDC`, 6 decimales y el saldo.
 2. Abrí **Armar las llamadas** y **Llamar al contrato (eth_call)** para ver cada `data` y cada respuesta cruda.
 3. Poné tu dirección en `wallet` y ejecutá de nuevo (si todavía no pediste USDC en el faucet de Circle, el saldo es `0`).
 4. Probá con WAVAX: `token` = `0xd00ae08403b9bbb9124bb305c09058e32c39a48c` (18 decimales).

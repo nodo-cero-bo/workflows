@@ -57,69 +57,100 @@ Por ejemplo, el primero: `https://raw.githubusercontent.com/nodo-cero-bo/workflo
 
 <!-- catalogo:inicio -->
 
-**23 workflows en 5 categorías** · 11 ejecutados de verdad y 12 auditados.
+**36 workflows en 7 categorías** · 16 ejecutados de verdad y 20 auditados.
+
+La columna **Líneas** dice para qué línea de la hackathon sirve cada workflow («las 4» si sirve para cualquiera). Cada equipo elige una línea; tocá cada una para ver su guía:
+
+**IA**: [IA para tu comunidad](https://github.com/nodo-cero-bo/guias/blob/main/lineas/ia.md) · **Web3**: [Web3 con Avalanche Fuji](https://github.com/nodo-cero-bo/guias/blob/main/lineas/web3.md) · **Apps**: [Apps con login y datos](https://github.com/nodo-cero-bo/guias/blob/main/lineas/apps.md) · **Impacto**: [Impacto social y ambiental](https://github.com/nodo-cero-bo/guias/blob/main/lineas/impacto.md)
 
 ### [Fundamentos](00-fundamentos) · 5 workflows
 
 Para arrancar de cero: datos, expresiones, tu primera API, HTTP Request, formularios y tu primer agente de IA. Ninguno pide credenciales, salvo el agente (una clave gratis de Google AI Studio).
 
-| Workflow | Qué hace | Nivel | Credenciales | Estado |
-|---|---|---|---|---|
-| [`01-hola-n8n`](00-fundamentos/01-hola-n8n) | **Hola n8n: datos, expresiones y decisiones**<br>Tu primer workflow: armá datos, transformalos con JavaScript y tomá una decisión con IF. | inicial<br>10 min | ninguna | ![ejecutado](https://img.shields.io/badge/ejecutado-FF91AC?style=flat-square) |
-| [`02-mi-primera-api`](00-fundamentos/02-mi-primera-api) | **Tu primera API**<br>Un Webhook que recibe tu nombre y responde un saludo en JSON: tu propia API en cinco nodos. | inicial<br>10 min | ninguna | ![ejecutado](https://img.shields.io/badge/ejecutado-FF91AC?style=flat-square) |
-| [`03-http-request`](00-fundamentos/03-http-request) | **Llamar a cualquier API con HTTP Request**<br>Consultá el clima de Santa Cruz y el último bloque de Avalanche Fuji, y leé cada respuesta. | inicial<br>15 min | ninguna | ![ejecutado](https://img.shields.io/badge/ejecutado-FF91AC?style=flat-square) |
-| [`04-formulario`](00-fundamentos/04-formulario) | **Un formulario de n8n**<br>Un formulario con los colores de Nodo Cero que procesa la respuesta y muestra una página final para cada persona. | inicial<br>10 min | ninguna | ![ejecutado](https://img.shields.io/badge/ejecutado-FF91AC?style=flat-square) |
-| [`05-agente-ia`](00-fundamentos/05-agente-ia) | **Tu primer agente de IA**<br>Un agente que conversa en el chat de n8n con Google Gemini, recuerda la conversación y responde como el asistente de Nodo Cero. | inicial<br>15 min | Google Gemini(PaLM) Api | ![auditado](https://img.shields.io/badge/auditado-5A0026?style=flat-square) |
+| Workflow | Qué hace | Líneas | Nivel | Credenciales | Estado |
+|---|---|---|---|---|---|
+| [`01-hola-n8n`](00-fundamentos/01-hola-n8n) | **Hola n8n: datos, expresiones y decisiones**<br>Tu primer workflow: armá datos, transformalos con JavaScript y tomá una decisión con IF. | las 4 | inicial<br>10 min | ninguna | ![ejecutado](https://img.shields.io/badge/ejecutado-FF91AC?style=flat-square) |
+| [`02-mi-primera-api`](00-fundamentos/02-mi-primera-api) | **Tu primera API**<br>Un Webhook que recibe tu nombre y responde un saludo en JSON: tu propia API en cinco nodos. | las 4 | inicial<br>10 min | ninguna | ![ejecutado](https://img.shields.io/badge/ejecutado-FF91AC?style=flat-square) |
+| [`03-http-request`](00-fundamentos/03-http-request) | **Llamar a cualquier API con HTTP Request**<br>Consultá el clima de Santa Cruz y el último bloque de Avalanche Fuji, y leé cada respuesta. | las 4 | inicial<br>15 min | ninguna | ![ejecutado](https://img.shields.io/badge/ejecutado-FF91AC?style=flat-square) |
+| [`04-formulario`](00-fundamentos/04-formulario) | **Un formulario de n8n**<br>Un formulario con los colores de Nodo Cero que procesa la respuesta y muestra una página final para cada persona. | las 4 | inicial<br>10 min | ninguna | ![ejecutado](https://img.shields.io/badge/ejecutado-FF91AC?style=flat-square) |
+| [`05-agente-ia`](00-fundamentos/05-agente-ia) | **Tu primer agente de IA**<br>Un agente que conversa en el chat de n8n con Google Gemini, recuerda la conversación y responde como el asistente de Nodo Cero. | IA<br>Impacto | inicial<br>15 min | Google Gemini(PaLM) Api | ![auditado](https://img.shields.io/badge/auditado-5A0026?style=flat-square) |
 
 ### [Avalanche Fuji](10-avalanche-fuji) · 7 workflows
 
-Leé la red de prueba de Avalanche con su RPC público: sin cuentas y sin claves privadas. Es el track de Avalanche Fuji, con mención especial para los equipos que lo integren.
+Leé la red de prueba de Avalanche con su RPC público: sin cuentas y sin claves privadas. Son la base de la línea Web3 con Avalanche Fuji, con Team1, y de la mención especial «Mejor uso de Avalanche Fuji».
 
 > **Antes de empezar con Fuji:** [Descargá Core Wallet](https://core.app/?utm_source=nodo-cero&utm_medium=github&utm_campaign=hackathon-n8n-bolivia-2026) y activá el modo testnet · [Pedí AVAX de prueba en el faucet](https://build.avax.network/console/primary-network/faucet) · [Aprendé en Avalanche Academy](https://build.avax.network/academy?utm_source=nodo-cero&utm_medium=github&utm_campaign=hackathon-n8n-bolivia-2026) · [Sumate a Team1](https://www.team1.network/?utm_source=nodo-cero&utm_medium=github&utm_campaign=hackathon-n8n-bolivia-2026) · [Explorá tus transacciones](https://build.avax.network/explorer/fuji/c-chain)
 >
 > Red: Avalanche Fuji C-Chain · chainId `43113` (`0xa869`) · RPC público `https://api.avax-test.network/ext/bc/C/rpc`
 
-| Workflow | Qué hace | Nivel | Credenciales | Estado |
-|---|---|---|---|---|
-| [`10-fuji-estado-de-la-red`](10-avalanche-fuji/10-fuji-estado-de-la-red) | **Estado de la red Fuji**<br>chainId, último bloque y precio del gas de Fuji, en números legibles. | inicial<br>10 min | ninguna | ![ejecutado](https://img.shields.io/badge/ejecutado-FF91AC?style=flat-square) |
-| [`11-fuji-saldo-wallet`](10-avalanche-fuji/11-fuji-saldo-wallet) | **Saldo de una wallet en Fuji**<br>Pasale una dirección y te devuelve su saldo en AVAX, por API o con un formulario. | inicial<br>15 min | ninguna | ![ejecutado](https://img.shields.io/badge/ejecutado-FF91AC?style=flat-square) |
-| [`12-fuji-leer-transaccion`](10-avalanche-fuji/12-fuji-leer-transaccion) | **Leer una transacción en Fuji**<br>El desafío del día: dado un hash, quién envió, a quién, cuánto, gas, estado, bloque, confirmaciones y enlace al explorador. | inicial<br>15 min | ninguna | ![ejecutado](https://img.shields.io/badge/ejecutado-FF91AC?style=flat-square) |
-| [`13-fuji-verificar-pago`](10-avalanche-fuji/13-fuji-verificar-pago) | **Verificar un pago en Fuji**<br>Valida estado, destino, monto y confirmaciones de un pago, y responde si está verificado. | intermedio<br>20 min | Supabase API (opcional) | ![ejecutado](https://img.shields.io/badge/ejecutado-FF91AC?style=flat-square) |
-| [`14-fuji-monitor-wallet`](10-avalanche-fuji/14-fuji-monitor-wallet) | **Monitor de una wallet en Fuji**<br>Revisa un saldo cada 5 minutos y arma un aviso cuando cambia. | intermedio<br>15 min | ninguna | ![ejecutado](https://img.shields.io/badge/ejecutado-FF91AC?style=flat-square) |
-| [`15-fuji-token-erc20`](10-avalanche-fuji/15-fuji-token-erc20) | **Saldo de un token ERC-20 en Fuji**<br>Nombre, símbolo, decimales y saldo de un token ERC-20 con eth_call, con el USDC de prueba de Circle. | intermedio<br>20 min | ninguna | ![ejecutado](https://img.shields.io/badge/ejecutado-FF91AC?style=flat-square) |
-| [`16-fuji-eventos-contrato`](10-avalanche-fuji/16-fuji-eventos-contrato) | **Leer eventos de un contrato en Fuji**<br>Trae eventos con eth_getLogs y los decodifica: transferencias de tokens y los registros de tu propio contrato. | avanzado<br>25 min | ninguna | ![ejecutado](https://img.shields.io/badge/ejecutado-FF91AC?style=flat-square) |
+| Workflow | Qué hace | Líneas | Nivel | Credenciales | Estado |
+|---|---|---|---|---|---|
+| [`10-fuji-estado-de-la-red`](10-avalanche-fuji/10-fuji-estado-de-la-red) | **Estado de la red Fuji**<br>chainId, último bloque y precio del gas de Fuji, en números legibles. | Web3 | inicial<br>10 min | ninguna | ![ejecutado](https://img.shields.io/badge/ejecutado-FF91AC?style=flat-square) |
+| [`11-fuji-saldo-wallet`](10-avalanche-fuji/11-fuji-saldo-wallet) | **Saldo de una wallet en Fuji**<br>Pasale una dirección y te devuelve su saldo en AVAX, por API o con un formulario. | Web3 | inicial<br>15 min | ninguna | ![ejecutado](https://img.shields.io/badge/ejecutado-FF91AC?style=flat-square) |
+| [`12-fuji-leer-transaccion`](10-avalanche-fuji/12-fuji-leer-transaccion) | **Leer una transacción en Fuji**<br>El desafío del día: dado un hash, quién envió, a quién, cuánto, gas, estado, bloque, confirmaciones y enlace al explorador. | Web3 | inicial<br>15 min | ninguna | ![ejecutado](https://img.shields.io/badge/ejecutado-FF91AC?style=flat-square) |
+| [`13-fuji-verificar-pago`](10-avalanche-fuji/13-fuji-verificar-pago) | **Verificar un pago en Fuji**<br>Valida estado, destino, monto y confirmaciones de un pago, y responde si está verificado. | Web3<br>Apps | intermedio<br>20 min | Supabase API (opcional) | ![ejecutado](https://img.shields.io/badge/ejecutado-FF91AC?style=flat-square) |
+| [`14-fuji-monitor-wallet`](10-avalanche-fuji/14-fuji-monitor-wallet) | **Monitor de una wallet en Fuji**<br>Revisa un saldo cada 5 minutos y arma un aviso cuando cambia. | Web3 | intermedio<br>15 min | ninguna | ![ejecutado](https://img.shields.io/badge/ejecutado-FF91AC?style=flat-square) |
+| [`15-fuji-token-erc20`](10-avalanche-fuji/15-fuji-token-erc20) | **Saldo de un token ERC-20 en Fuji**<br>Nombre, símbolo, decimales y saldo de un token ERC-20 con eth_call, con el USDC de prueba de Circle. | Web3 | intermedio<br>20 min | ninguna | ![ejecutado](https://img.shields.io/badge/ejecutado-FF91AC?style=flat-square) |
+| [`16-fuji-eventos-contrato`](10-avalanche-fuji/16-fuji-eventos-contrato) | **Leer eventos de un contrato en Fuji**<br>Trae eventos con eth_getLogs y los decodifica: transferencias de tokens y los registros de tu propio contrato. | Web3 | avanzado<br>25 min | ninguna | ![ejecutado](https://img.shields.io/badge/ejecutado-FF91AC?style=flat-square) |
 
 ### [Clerk](20-clerk) · 3 workflows
 
-Login y usuarias con Clerk conectado a n8n: webhooks firmados, una API que exige sesión e invitaciones. Hay mención al mejor uso de Clerk.
+Login y usuarias con Clerk conectado a n8n: webhooks firmados, una API que exige sesión e invitaciones. Son la base de la línea Apps con login y datos, junto con Supabase.
 
-| Workflow | Qué hace | Nivel | Credenciales | Estado |
-|---|---|---|---|---|
-| [`20-clerk-webhook-a-supabase`](20-clerk/20-clerk-webhook-a-supabase) | **De Clerk a Supabase con un webhook**<br>Cada alta, cambio o baja de usuaria en Clerk llega firmada a n8n, que verifica la firma Svix y mantiene al día la tabla perfiles de Supabase. | intermedio<br>20 min | Supabase API | ![auditado](https://img.shields.io/badge/auditado-5A0026?style=flat-square) |
-| [`21-clerk-api-protegida`](20-clerk/21-clerk-api-protegida) | **Una API protegida con Clerk**<br>Una API de n8n que verifica el token de sesión de Clerk (RS256) y devuelve el perfil desde Supabase; sin sesión válida, responde 401. | avanzado<br>25 min | JWT Auth con la clave pública de Clerk, Supabase API | ![auditado](https://img.shields.io/badge/auditado-5A0026?style=flat-square) |
-| [`22-clerk-invitaciones`](20-clerk/22-clerk-invitaciones) | **Invitaciones con Clerk**<br>Pegá una lista de correos en un formulario y n8n invita a cada persona con la Backend API de Clerk, con un resumen de lo que salió bien y lo que no. | intermedio<br>15 min | Clerk Backend API | ![auditado](https://img.shields.io/badge/auditado-5A0026?style=flat-square) |
+| Workflow | Qué hace | Líneas | Nivel | Credenciales | Estado |
+|---|---|---|---|---|---|
+| [`20-clerk-webhook-a-supabase`](20-clerk/20-clerk-webhook-a-supabase) | **De Clerk a Supabase con un webhook**<br>Cada alta, cambio o baja de usuaria en Clerk llega firmada a n8n, que verifica la firma Svix y mantiene al día la tabla perfiles de Supabase. | Apps | intermedio<br>20 min | Supabase API | ![auditado](https://img.shields.io/badge/auditado-5A0026?style=flat-square) |
+| [`21-clerk-api-protegida`](20-clerk/21-clerk-api-protegida) | **Una API protegida con Clerk**<br>Una API de n8n que verifica el token de sesión de Clerk (RS256) y devuelve el perfil desde Supabase; sin sesión válida, responde 401. | Apps | avanzado<br>25 min | JWT Auth con la clave pública de Clerk, Supabase API | ![auditado](https://img.shields.io/badge/auditado-5A0026?style=flat-square) |
+| [`22-clerk-invitaciones`](20-clerk/22-clerk-invitaciones) | **Invitaciones con Clerk**<br>Pegá una lista de correos en un formulario y n8n invita a cada persona con la Backend API de Clerk, con un resumen de lo que salió bien y lo que no. | Apps | intermedio<br>15 min | Clerk Backend API | ![auditado](https://img.shields.io/badge/auditado-5A0026?style=flat-square) |
 
 ### [Supabase](30-supabase) · 5 workflows
 
 Postgres, tu propia API y búsqueda en tus documentos con pgvector. El esquema de las tablas está en [`supabase/sql/`](supabase/sql).
 
-| Workflow | Qué hace | Nivel | Credenciales | Estado |
-|---|---|---|---|---|
-| [`30-formulario-a-supabase`](30-supabase/30-formulario-a-supabase) | **Formulario a Supabase**<br>Lo que llega por un formulario queda guardado como fila en Supabase. | inicial<br>15 min | Supabase API | ![auditado](https://img.shields.io/badge/auditado-5A0026?style=flat-square) |
-| [`31-api-crud-supabase`](30-supabase/31-api-crud-supabase) | **Una API sobre Supabase**<br>Listá y creá filas de Supabase desde tu propia API. | intermedio<br>20 min | Supabase API | ![auditado](https://img.shields.io/badge/auditado-5A0026?style=flat-square) |
-| [`32-cargar-documentos-rag`](30-supabase/32-cargar-documentos-rag) | **Cargar documentos para RAG**<br>Subí un archivo, partilo en trozos y guardá sus embeddings en Supabase. | intermedio<br>25 min | Supabase API, Google Gemini(PaLM) Api | ![auditado](https://img.shields.io/badge/auditado-5A0026?style=flat-square) |
-| [`33-agente-con-memoria-y-rag`](30-supabase/33-agente-con-memoria-y-rag) | **Agente con memoria y tus documentos**<br>Un agente que recuerda la conversación y busca en tus documentos. | avanzado<br>30 min | Google Gemini(PaLM) Api, Postgres (Supabase), Supabase API | ![auditado](https://img.shields.io/badge/auditado-5A0026?style=flat-square) |
-| [`34-supabase-webhook-ia`](30-supabase/34-supabase-webhook-ia) | **La IA clasifica cada fila nueva**<br>Un Database Webhook avisa a n8n y la IA completa la fila. | intermedio<br>20 min | Supabase API, Google Gemini(PaLM) Api, Header Auth | ![auditado](https://img.shields.io/badge/auditado-5A0026?style=flat-square) |
+| Workflow | Qué hace | Líneas | Nivel | Credenciales | Estado |
+|---|---|---|---|---|---|
+| [`30-formulario-a-supabase`](30-supabase/30-formulario-a-supabase) | **Formulario a Supabase**<br>Lo que llega por un formulario queda guardado como fila en Supabase. | Apps<br>Impacto | inicial<br>15 min | Supabase API | ![auditado](https://img.shields.io/badge/auditado-5A0026?style=flat-square) |
+| [`31-api-crud-supabase`](30-supabase/31-api-crud-supabase) | **Una API sobre Supabase**<br>Listá y creá filas de Supabase desde tu propia API. | Apps | intermedio<br>20 min | Supabase API | ![auditado](https://img.shields.io/badge/auditado-5A0026?style=flat-square) |
+| [`32-cargar-documentos-rag`](30-supabase/32-cargar-documentos-rag) | **Cargar documentos para RAG**<br>Subí un archivo, partilo en trozos y guardá sus embeddings en Supabase. | IA | intermedio<br>25 min | Supabase API, Google Gemini(PaLM) Api | ![auditado](https://img.shields.io/badge/auditado-5A0026?style=flat-square) |
+| [`33-agente-con-memoria-y-rag`](30-supabase/33-agente-con-memoria-y-rag) | **Agente con memoria y tus documentos**<br>Un agente que recuerda la conversación y busca en tus documentos. | IA<br>Impacto | avanzado<br>30 min | Google Gemini(PaLM) Api, Postgres (Supabase), Supabase API | ![auditado](https://img.shields.io/badge/auditado-5A0026?style=flat-square) |
+| [`34-supabase-webhook-ia`](30-supabase/34-supabase-webhook-ia) | **La IA clasifica cada fila nueva**<br>Un Database Webhook avisa a n8n y la IA completa la fila. | IA<br>Apps<br>Impacto | intermedio<br>20 min | Supabase API, Google Gemini(PaLM) Api, Header Auth | ![auditado](https://img.shields.io/badge/auditado-5A0026?style=flat-square) |
 
 ### [Proyectos completos](40-proyectos) · 3 workflows
 
 Juntan varias piezas de punta a punta, para partir de algo grande y hacerlo tuyo.
 
-| Workflow | Qué hace | Nivel | Credenciales | Estado |
-|---|---|---|---|---|
-| [`40-agente-web3-fuji`](40-proyectos/40-agente-web3-fuji) | **Agente de IA para Fuji**<br>Un chat con IA que lee Avalanche Fuji en vivo: saldos, transacciones y el último bloque, explicados en español. | avanzado<br>30 min | Google Gemini(PaLM) Api | ![auditado](https://img.shields.io/badge/auditado-5A0026?style=flat-square) |
-| [`41-pagos-fuji-con-login`](40-proyectos/41-pagos-fuji-con-login) | **Pagos en Fuji con login**<br>Login con Clerk, la persona manda el hash de su pago, n8n lo verifica en Fuji y lo registra en Supabase a su nombre. | avanzado<br>40 min | Supabase API | ![auditado](https://img.shields.io/badge/auditado-5A0026?style=flat-square) |
-| [`42-reporte-kpis`](40-proyectos/42-reporte-kpis) | **Reporte de KPIs del evento**<br>Cuenta los proyectos por tecnología, trae el tráfico de los repos y verifica los hashes en Fuji: un informe listo para los aliados. | intermedio<br>20 min | GitHub API | ![auditado](https://img.shields.io/badge/auditado-5A0026?style=flat-square) |
+| Workflow | Qué hace | Líneas | Nivel | Credenciales | Estado |
+|---|---|---|---|---|---|
+| [`40-agente-web3-fuji`](40-proyectos/40-agente-web3-fuji) | **Agente de IA para Fuji**<br>Un chat con IA que lee Avalanche Fuji en vivo: saldos, transacciones y el último bloque, explicados en español. | IA<br>Web3 | avanzado<br>30 min | Google Gemini(PaLM) Api | ![auditado](https://img.shields.io/badge/auditado-5A0026?style=flat-square) |
+| [`41-pagos-fuji-con-login`](40-proyectos/41-pagos-fuji-con-login) | **Pagos en Fuji con login**<br>Login con Clerk, la persona manda el hash de su pago, n8n lo verifica en Fuji y lo registra en Supabase a su nombre. | Web3<br>Apps | avanzado<br>40 min | Supabase API | ![auditado](https://img.shields.io/badge/auditado-5A0026?style=flat-square) |
+| [`42-reporte-kpis`](40-proyectos/42-reporte-kpis) | **Reporte de KPIs del evento**<br>Cuenta los proyectos por tecnología, línea y mención especial, trae el tráfico de los repos y verifica los hashes en Fuji: un informe listo para los aliados. | Apps | intermedio<br>20 min | GitHub API | ![auditado](https://img.shields.io/badge/auditado-5A0026?style=flat-square) |
+
+### [Google Cloud](50-google-cloud) · 5 workflows
+
+Gemini en Vertex AI, sentimiento con Cloud Natural Language, traducción con Cloud Translation, archivos en Cloud Storage y respuestas en BigQuery. Usan los créditos de Google Cloud si tu equipo los recibió, o el nivel gratuito. Desde el 16 de noviembre de 2026, el crédito de bienvenida de la prueba gratis no paga Vertex AI ni la API de Gemini: para IA gratis, usá Gemini con la [clave de Google AI Studio](https://github.com/nodo-cero-bo/guias/blob/main/00-empezar/07-clave-gemini.md), como en el workflow 05. Antes de empezar, seguí la [guía de Google Cloud y créditos](https://github.com/nodo-cero-bo/guias/blob/main/00-empezar/08-google-cloud.md): crear el proyecto, la cuenta de servicio y las alertas de presupuesto, y cómo apagar todo al terminar. Sirven para la mención especial «Mejor uso de Google Cloud».
+
+| Workflow | Qué hace | Líneas | Nivel | Credenciales | Estado |
+|---|---|---|---|---|---|
+| [`50-vertex-ai-asistente`](50-google-cloud/50-vertex-ai-asistente) | **Asistente con Gemini en Vertex AI**<br>Un asistente que conversa en el chat de n8n con Gemini en Vertex AI, la IA de Google Cloud, recuerda la conversación y ayuda a tu equipo a armar su proyecto. | IA<br>Impacto | intermedio<br>30 min | Google Service Account API | ![auditado](https://img.shields.io/badge/auditado-5A0026?style=flat-square) |
+| [`51-sentimiento-natural-language`](50-google-cloud/51-sentimiento-natural-language) | **Opiniones con Cloud Natural Language**<br>Un formulario de opiniones que Google Cloud Natural Language analiza: el tono (positivo, negativo, neutral o mixto) y de qué o de quién se habla. | IA<br>Impacto | inicial<br>20 min | Google Service Account API | ![auditado](https://img.shields.io/badge/auditado-5A0026?style=flat-square) |
+| [`52-traducir-y-resumir`](50-google-cloud/52-traducir-y-resumir) | **Resumir y traducir con Google Cloud**<br>Pegás un aviso en español y te devuelve un resumen simple hecho por Gemini en Vertex AI y su traducción con Cloud Translation al quechua, al aimara, al guaraní, al inglés o al portugués. | IA<br>Impacto | intermedio<br>30 min | Google Service Account API | ![auditado](https://img.shields.io/badge/auditado-5A0026?style=flat-square) |
+| [`53-archivos-a-cloud-storage`](50-google-cloud/53-archivos-a-cloud-storage) | **Archivos a Cloud Storage**<br>Un formulario para subir un archivo que queda guardado en un bucket de Cloud Storage, con un nombre ordenado y un enlace para abrirlo. | Apps<br>Impacto | inicial<br>25 min | Google Service Account API | ![auditado](https://img.shields.io/badge/auditado-5A0026?style=flat-square) |
+| [`54-bigquery-respuestas`](50-google-cloud/54-bigquery-respuestas) | **Respuestas en BigQuery**<br>Una encuesta que guarda cada respuesta como fila en BigQuery y enseguida consulta con SQL cuántas respuestas hay por línea y su promedio. | Apps<br>Impacto | intermedio<br>30 min | Google Service Account API | ![auditado](https://img.shields.io/badge/auditado-5A0026?style=flat-square) |
+
+### [Casos de uso](60-casos-de-uso) · 8 workflows
+
+Automatizaciones de todos los días para problemas reales: el clima de Santa Cruz, el tipo de cambio, noticias, páginas web, listas, mensajes, un bot de Telegram y reportes ambientales. 5 de 8 corren sin credenciales.
+
+| Workflow | Qué hace | Líneas | Nivel | Credenciales | Estado |
+|---|---|---|---|---|---|
+| [`60-alerta-del-clima`](60-casos-de-uso/60-alerta-del-clima) | **Alerta del clima en Santa Cruz**<br>Cada mañana lee el pronóstico de Santa Cruz de la Sierra y arma una alerta si viene lluvia fuerte, tormenta o calor extremo. | Impacto | inicial<br>15 min | ninguna | ![ejecutado](https://img.shields.io/badge/ejecutado-FF91AC?style=flat-square) |
+| [`61-tipo-de-cambio`](60-casos-de-uso/61-tipo-de-cambio) | **Tipo de cambio: dólar a bolivianos**<br>La cotización del día del dólar en bolivianos desde una API pública sin clave, con tu propia API para convertir montos. | Apps<br>Impacto | inicial<br>15 min | ninguna | ![ejecutado](https://img.shields.io/badge/ejecutado-FF91AC?style=flat-square) |
+| [`62-noticias-rss`](60-casos-de-uso/62-noticias-rss) | **Noticias por RSS: tu resumen del día**<br>Lee un RSS de noticias en español, se queda con las que hablan de lo que te importa y arma un resumen con enlaces. | IA<br>Impacto | inicial<br>15 min | Google Gemini(PaLM) Api (opcional) | ![ejecutado](https://img.shields.io/badge/ejecutado-FF91AC?style=flat-square) |
+| [`63-leer-una-pagina-web`](60-casos-de-uso/63-leer-una-pagina-web) | **Leer una página web**<br>Descarga una página de práctica, encuentra cada producto con selectores CSS y arma una tabla limpia con título, precio y estrellas. | Apps<br>Impacto | intermedio<br>20 min | ninguna | ![ejecutado](https://img.shields.io/badge/ejecutado-FF91AC?style=flat-square) |
+| [`64-limpiar-una-lista`](60-casos-de-uso/64-limpiar-una-lista) | **Limpiar una lista (CSV)**<br>Subí un CSV desordenado y descargalo limpio: nombres prolijos, correos revisados, sin repetidos y ordenado. | Apps<br>Impacto | inicial<br>20 min | ninguna | ![ejecutado](https://img.shields.io/badge/ejecutado-FF91AC?style=flat-square) |
+| [`65-clasificar-mensajes-con-ia`](60-casos-de-uso/65-clasificar-mensajes-con-ia) | **Clasificar mensajes con IA**<br>La IA lee cada mensaje y decide si es una consulta, un reclamo o una idea, y cada tipo sigue su propio camino. | IA<br>Impacto | inicial<br>20 min | Google Gemini(PaLM) Api | ![auditado](https://img.shields.io/badge/auditado-5A0026?style=flat-square) |
+| [`66-bot-de-telegram-con-ia`](60-casos-de-uso/66-bot-de-telegram-con-ia) | **Bot de Telegram con IA**<br>Tu propio bot de Telegram que responde con un agente de IA y recuerda la conversación de cada chat. | IA<br>Impacto | intermedio<br>25 min | Telegram API, Google Gemini(PaLM) Api | ![auditado](https://img.shields.io/badge/auditado-5A0026?style=flat-square) |
+| [`67-reportes-ambientales`](60-casos-de-uso/67-reportes-ambientales) | **Reportes ambientales ciudadanos**<br>Un formulario ciudadano con foto: la IA clasifica el reporte y le pone urgencia, Supabase lo guarda y, si es urgente, se avisa al equipo. | IA<br>Apps<br>Impacto | intermedio<br>35 min | Supabase API, Google Gemini(PaLM) Api, Telegram API (opcional) | ![auditado](https://img.shields.io/badge/auditado-5A0026?style=flat-square) |
 
 ### Material de apoyo
 

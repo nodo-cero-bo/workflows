@@ -54,7 +54,7 @@ Nada más que tu n8n ([n8n Cloud](https://app.n8n.cloud/register) o en tu compu)
 
 ## Cómo probarlo
 
-1. Tocá **Execute** (Execute), abajo del canvas.
+1. Tocá **Execute workflow**, abajo del canvas.
 2. Abrí **Clima en Santa Cruz** y mirá el OUTPUT en la vista **JSON**: así responde Open-Meteo. Los datos de ahora están dentro de `current`.
 3. Abrí **Último bloque de Fuji**: la respuesta es `{"result": "0x...", "id": 1, "jsonrpc": "2.0"}`.
 4. Abrí **Leer las respuestas**: cada campo es una expresión. Arrastrá otro campo del INPUT hasta un valor nuevo y mirá la expresión que escribe n8n.

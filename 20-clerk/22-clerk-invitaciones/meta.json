@@ -9,6 +9,9 @@
     "n8n",
     "clerk"
   ],
+  "lineas": [
+    "apps"
+  ],
   "credenciales": [
     {
       "nombre": "Clerk Backend API",

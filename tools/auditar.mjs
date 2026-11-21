@@ -16,9 +16,9 @@ import fs from 'node:fs';
 import path from 'node:path';
 import vm from 'node:vm';
 import { fileURLToPath } from 'node:url';
-import { cargarTipos, cargarN8nWorkflow, encontrarModulos } from './lib/n8n_tipos.mjs';
+import { cargarTipos, cargarPaqueteWorkflow, encontrarModulos } from './lib/n8n_tipos.mjs';
 import { crearValidador } from './lib/validar_nodos.mjs';
-import { revisarProsa, revisarCodigo, prosaDeMarkdown, codigoDeMarkdown, buscarSecretos, buscarCorreos, buscarTelefonos, buscarN8nMalEscrito, normalizar } from './lib/reglas_texto.mjs';
+import { revisarProsa, revisarCodigo, prosaDeMarkdown, codigoDeMarkdown, buscarSecretos, buscarCorreos, buscarTelefonos, buscarMarcaMalEscrita, normalizar } from './lib/reglas_texto.mjs';
 
 const AQUI = path.dirname(fileURLToPath(import.meta.url));
 const REPO = path.resolve(AQUI, '..');
@@ -35,9 +35,11 @@ function leerConfig() {
   return null;
 }
 
-const CATEGORIAS = ['fundamentos', 'ia', 'avalanche', 'clerk', 'supabase', 'proyectos'];
+const CATEGORIAS = ['fundamentos', 'ia', 'avalanche', 'clerk', 'supabase', 'proyectos', 'google-cloud', 'casos'];
 const NIVELES = ['inicial', 'intermedio', 'avanzado'];
-const TECNOLOGIAS = ['n8n', 'ia', 'avalanche', 'clerk', 'supabase'];
+const TECNOLOGIAS = ['n8n', 'ia', 'avalanche', 'clerk', 'supabase', 'google-cloud'];
+// Las 4 líneas de la hackathon (21-nov): ia = IA para tu comunidad, web3 = Web3 con Avalanche Fuji, apps = Apps con login y datos, impacto = Impacto social y ambiental.
+const LINEAS = ['ia', 'web3', 'apps', 'impacto'];
 const PROBADO = ['ejecutado', 'auditado'];
 // Carpeta de categoría -> categorías válidas en meta.json.
 const CARPETAS = {
@@ -46,6 +48,8 @@ const CARPETAS = {
   '20-clerk': ['clerk'],
   '30-supabase': ['supabase', 'ia'],
   '40-proyectos': ['proyectos'],
+  '50-google-cloud': ['google-cloud', 'ia'],
+  '60-casos-de-uso': ['casos'],
 };
 // Ids fijos de la especificación (la página y las guías los nombran así) y su carpeta.
 const IDS = {
@@ -54,6 +58,8 @@ const IDS = {
   '20-clerk': ['20-clerk-webhook-a-supabase', '21-clerk-api-protegida', '22-clerk-invitaciones'],
   '30-supabase': ['30-formulario-a-supabase', '31-api-crud-supabase', '32-cargar-documentos-rag', '33-agente-con-memoria-y-rag', '34-supabase-webhook-ia'],
   '40-proyectos': ['40-agente-web3-fuji', '41-pagos-fuji-con-login', '42-reporte-kpis'],
+  '50-google-cloud': ['50-vertex-ai-asistente', '51-sentimiento-natural-language', '52-traducir-y-resumir', '53-archivos-a-cloud-storage', '54-bigquery-respuestas'],
+  '60-casos-de-uso': ['60-alerta-del-clima', '61-tipo-de-cambio', '62-noticias-rss', '63-leer-una-pagina-web', '64-limpiar-una-lista', '65-clasificar-mensajes-con-ia', '66-bot-de-telegram-con-ia', '67-reportes-ambientales'],
 };
 const CONEXIONES = ['main', 'ai_languageModel', 'ai_memory', 'ai_tool', 'ai_embedding', 'ai_document', 'ai_textSplitter', 'ai_vectorStore', 'ai_outputParser', 'ai_retriever', 'ai_reranker'];
 const CLAVES_NODO = new Set(['id', 'name', 'type', 'typeVersion', 'position', 'parameters', 'credentials', 'webhookId', 'disabled', 'notes', 'notesInFlow', 'retryOnFail', 'maxTries', 'waitBetweenTries', 'alwaysOutputData', 'executeOnce', 'onError', 'continueOnFail', 'color']);
@@ -82,7 +88,7 @@ const modulos = encontrarModulos();
 let T, validarNodo;
 try {
   T = await cargarTipos(modulos);
-  validarNodo = crearValidador(cargarN8nWorkflow(modulos));
+  validarNodo = crearValidador(cargarPaqueteWorkflow(modulos));
 } catch (e) {
   console.error(e.message);
   process.exit(2);
@@ -132,7 +138,7 @@ function resolverIO(io, params, version) {
 
 function parametrosCompletos(node, desc) {
   try {
-    const w = cargarN8nWorkflow(modulos);
+    const w = cargarPaqueteWorkflow(modulos);
     return (w.getNodeParameters ?? w.NodeHelpers.getNodeParameters)(desc.properties, node.parameters ?? {}, true, false, node, desc) ?? node.parameters ?? {};
   } catch {
     return node.parameters ?? {};
@@ -230,7 +236,7 @@ function auditar(archivo) {
 
     const t = T.tipo(node.type);
     if (!t) {
-      err(donde, `el tipo "${node.type}" no existe en n8n ${T.versionN8n}`);
+      err(donde, `el tipo "${node.type}" no existe en n8n ${T.versionInstalada}`);
       continue;
     }
     if (typeof node.typeVersion !== 'number') {
@@ -241,7 +247,7 @@ function auditar(archivo) {
       err(donde, `typeVersion ${node.typeVersion} no existe para ${node.type} (válidas: ${t.versiones.join(', ')})`);
       continue;
     }
-    if (node.typeVersion !== t.maxima) avi(donde, `usa ${node.type} v${node.typeVersion}; la más alta en n8n ${T.versionN8n} es ${t.maxima}`);
+    if (node.typeVersion !== t.maxima) avi(donde, `usa ${node.type} v${node.typeVersion}; la más alta en n8n ${T.versionInstalada} es ${t.maxima}`);
     const desc = t.descripcion(node.typeVersion);
     const completos = parametrosCompletos(node, desc);
     info.set(node.name, { node, desc, completos, entradas: resolverIO(desc.inputs, completos, node.typeVersion), salidas: resolverIO(desc.outputs, completos, node.typeVersion) });
@@ -254,7 +260,7 @@ function auditar(archivo) {
     const credParametro = [];
     if (completos.authentication === 'predefinedCredentialType' && typeof completos.nodeCredentialType === 'string' && completos.nodeCredentialType) credParametro.push(completos.nodeCredentialType);
     if (completos.authentication === 'genericCredentialType' && typeof completos.genericAuthType === 'string' && completos.genericAuthType) credParametro.push(completos.genericAuthType);
-    for (const c of credParametro) if (!T.credenciales.has(c)) err(donde, `la credencial «${c}» no existe en n8n ${T.versionN8n}`);
+    for (const c of credParametro) if (!T.credenciales.has(c)) err(donde, `la credencial «${c}» no existe en n8n ${T.versionInstalada}`);
     const admitidas = [...(desc.credentials ?? []).map((c) => c.name), ...credParametro];
     if (node.credentials !== undefined) {
       if (!esObjeto(node.credentials)) err(donde, '"credentials" tiene que ser un objeto');
@@ -264,7 +270,7 @@ function auditar(archivo) {
           if (esObjeto(c) && c.id) err(`${donde} · credentials.${tipo}`, 'tiene "id": sacalo (n8n pide la credencial al importar)');
         }
     }
-    const w = cargarN8nWorkflow(modulos);
+    const w = cargarPaqueteWorkflow(modulos);
     const mostrar = w.displayParameter ?? w.NodeHelpers.displayParameter;
     const usadas = (desc.credentials ?? []).filter((c) => {
       try {
@@ -320,7 +326,7 @@ function auditar(archivo) {
       if (node.type === STICKY && clave === 'content') return; // se revisa abajo
       const codigo = CAMPOS_CODIGO.has(clave) || valor.startsWith('=') || /^\s*[{[]/.test(valor) || /^https?:\/\//.test(valor);
       const hallazgos = codigo ? revisarCodigo(valor) : revisarProsa(valor);
-      if (codigo) for (const m of buscarN8nMalEscrito(valor)) hallazgos.push({ regla: '«n8n» va en minúscula', detalle: m, nivel: 'error' });
+      if (codigo) for (const m of buscarMarcaMalEscrita(valor)) hallazgos.push({ regla: '«n8n» va en minúscula', detalle: m, nivel: 'error' });
       for (const x of hallazgos) (x.nivel === 'error' ? err : avi)(`${donde} · ${ruta}`, `${x.regla}: ${x.detalle}`);
       // Referencias a otros nodos: $('Nombre') y $node["Nombre"]
       for (const m of valor.matchAll(/\$\(\s*(['"`])((?:(?!\1).)+)\1\s*\)|\$node\[\s*(['"])((?:(?!\3).)+)\3\s*\]/g)) {
@@ -531,6 +537,8 @@ function auditarMeta(dir, id, carpetaCat, wf, credNecesarias, err, avi) {
   for (const k of ['titulo', 'resumen']) if (!texto(k)) err('meta.json', `falta "${k}"`);
   if (!CATEGORIAS.includes(m.categoria)) err('meta.json', `"categoria" tiene que ser una de: ${CATEGORIAS.join(', ')}`);
   else if (CARPETAS[carpetaCat] && !CARPETAS[carpetaCat].includes(m.categoria)) err('meta.json', `"categoria" «${m.categoria}» no corresponde a la carpeta ${carpetaCat}/ (${CARPETAS[carpetaCat].join(' o ')})`);
+  if (m.lineas === undefined) err('meta.json', 'falta "lineas" (ids de las líneas: ia, web3, apps, impacto)');
+  else if ((!Array.isArray(m.lineas) || !m.lineas.length || m.lineas.some((l) => !LINEAS.includes(l)))) err('meta.json', `"lineas" tiene que ser una lista con valores de: ${LINEAS.join(', ')}`);
   if (!NIVELES.includes(m.nivel)) err('meta.json', `"nivel" tiene que ser uno de: ${NIVELES.join(', ')}`);
   if (!Number.isInteger(m.minutos) || m.minutos < 1 || m.minutos > 240) err('meta.json', '"minutos" tiene que ser un entero entre 1 y 240');
   if (!Array.isArray(m.tecnologias) || !m.tecnologias.length) err('meta.json', '"tecnologias" tiene que ser una lista');
@@ -544,6 +552,7 @@ function auditarMeta(dir, id, carpetaCat, wf, credNecesarias, err, avi) {
       supabase: tipos.some((t) => /supabase/i.test(t)) || todo.includes('supabase.co'),
       avalanche: todo.includes('avax-test.network') || todo.includes('avax.network'),
       // Clerk: su API, la firma Svix de sus webhooks o la verificación de su JWT (nombrar a Clerk en un texto no cuenta).
+      'google-cloud': tipos.some((t) => /googleCloud|GoogleVertex|googleVertex/.test(t)) || /[a-z-]+\.googleapis\.com/.test(todo.replace(/generativelanguage\.googleapis\.com/g, '')),
       clerk: todo.includes('api.clerk.com') || todo.includes('svix-signature') || (todo.includes('clerk') && (tipos.some((t) => t === 'n8n-nodes-base.jwt') || todo.includes('rs256') || todo.includes('"azp"') || todo.includes('.azp'))),
     };
     for (const [t, si] of Object.entries(usa)) {
@@ -555,7 +564,7 @@ function auditarMeta(dir, id, carpetaCat, wf, credNecesarias, err, avi) {
   else {
     m.credenciales.forEach((c, i) => {
       if (!esObjeto(c) || !c.nombre || !c.tipo_n8n || !c.como) err('meta.json', `credenciales[${i}] necesita nombre, tipo_n8n y como`);
-      else if (!T.credenciales.has(c.tipo_n8n)) err('meta.json', `credenciales[${i}].tipo_n8n «${c.tipo_n8n}» no es un tipo de credencial de n8n ${T.versionN8n}`);
+      else if (!T.credenciales.has(c.tipo_n8n)) err('meta.json', `credenciales[${i}].tipo_n8n «${c.tipo_n8n}» no es un tipo de credencial de n8n ${T.versionInstalada}`);
     });
     const declarados = m.credenciales.map((c) => c?.tipo_n8n);
     for (const [nodo, tipos] of credNecesarias) {
@@ -567,7 +576,7 @@ function auditarMeta(dir, id, carpetaCat, wf, credNecesarias, err, avi) {
   if (!PROBADO.includes(m.probado)) err('meta.json', `"probado" tiene que ser ${PROBADO.join(' o ')}`);
   if (typeof m.orden !== 'number') err('meta.json', '"orden" tiene que ser un número');
   else if (Number(id.split('-')[0]) !== m.orden) avi('meta.json', `"orden" (${m.orden}) no coincide con el número del id (${id.split('-')[0]})`);
-  const conocidas = new Set(['id', 'titulo', 'resumen', 'categoria', 'nivel', 'minutos', 'tecnologias', 'credenciales', 'aprendes', 'probado', 'orden']);
+  const conocidas = new Set(['id', 'titulo', 'resumen', 'categoria', 'nivel', 'minutos', 'tecnologias', 'credenciales', 'aprendes', 'probado', 'orden', 'lineas']);
   for (const k of Object.keys(m)) if (!conocidas.has(k)) avi('meta.json', `campo extra "${k}" (la página no lo usa)`);
   if (texto('titulo') && wf.name && !wf.name.includes(m.titulo)) avi('meta.json', `el workflow se llama «${wf.name}» y el título es «${m.titulo}»`);
   // Textos
@@ -608,7 +617,7 @@ if (resultados.length) {
 }
 
 const C = process.stdout.isTTY && !process.env.NO_COLOR ? { r: '\x1b[31m', a: '\x1b[33m', v: '\x1b[32m', g: '\x1b[2m', x: '\x1b[0m' } : { r: '', a: '', v: '', g: '', x: '' };
-console.log(`Auditor de workflows · n8n ${T.versionN8n} (n8n-nodes-base ${T.paquetes['n8n-nodes-base'].version}, @n8n/n8n-nodes-langchain ${T.paquetes['@n8n/n8n-nodes-langchain'].version})`);
+console.log(`Auditor de workflows · n8n ${T.versionInstalada} (n8n-nodes-base ${T.paquetes['n8n-nodes-base'].version}, @n8n/n8n-nodes-langchain ${T.paquetes['@n8n/n8n-nodes-langchain'].version})`);
 console.log(`${C.g}paquetes: ${modulos}${C.x}`);
 console.log('');
 let totalErrores = 0;
@@ -631,6 +640,6 @@ console.log(`${resultados.length} workflow${resultados.length === 1 ? '' : 's'} 
 if (!resultados.length) console.log('No encontré ningún workflow.json.');
 console.log(fallas ? `${C.r}FALLAS: ${fallas}${C.x}` : `${C.v}APROBADO${C.x}`);
 if (opciones.json) {
-  fs.writeFileSync(opciones.json, JSON.stringify({ n8n: T.versionN8n, fecha: new Date().toISOString(), errores: totalErrores, avisos: totalAvisos, resultados }, null, 2));
+  fs.writeFileSync(opciones.json, JSON.stringify({ n8n: T.versionInstalada, fecha: new Date().toISOString(), errores: totalErrores, avisos: totalAvisos, resultados }, null, 2));
 }
 process.exit(fallas || !resultados.length ? 1 : 0);

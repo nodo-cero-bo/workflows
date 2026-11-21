@@ -71,7 +71,7 @@ Al importarlo, n8n no te pide nada: el nodo de Supabase está desactivado.
 
 ## Cómo probarlo
 
-**1. Sin publicar.** **Execute** verifica el pago de **Pedido de prueba** (una transacción real de 0.5 AVAX): abrí **Verificar el pago** y tiene que decir `verificado: true`. Después rompelo de a una cosa por vez, editando el JSON de **Pedido de prueba**:
+**1. Sin publicar.** **Execute workflow** verifica el pago de **Pedido de prueba** (una transacción real de 0.5 AVAX): abrí **Verificar el pago** y tiene que decir `verificado: true`. Después rompelo de a una cosa por vez, editando el JSON de **Pedido de prueba**:
 
 | Cambiá | Tiene que responder |
 |---|---|

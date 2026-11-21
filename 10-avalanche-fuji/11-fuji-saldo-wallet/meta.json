@@ -9,6 +9,9 @@
     "n8n",
     "avalanche"
   ],
+  "lineas": [
+    "web3"
+  ],
   "credenciales": [],
   "aprendes": [
     "Webhook GET con parámetros en la URL",

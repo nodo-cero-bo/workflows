@@ -3,7 +3,7 @@
   "nodes": [
     {
       "parameters": {
-        "content": "## Estado de la red Fuji\n\n### Qué hace\nLe pregunta al RPC público de Avalanche Fuji en qué red está (chainId), cuál es el último bloque y cuánto cuesta el gas. Las respuestas llegan en hexadecimal: el último nodo las pasa a números que se leen.\n\n### Qué necesitás\nNada más que tu n8n. No usa credenciales ni wallet: el RPC público de Fuji se lee sin clave.\n\n### Cómo probarlo\n1. Hacé clic en **Execute**.\n2. Abrí **Pasar a números legibles**: `chainId` tiene que ser 43113 y `ultimoBloque`, un número que crece cada uno o dos segundos.\n3. Abrí el enlace de `explorador` y compará con el bloque que muestra el explorador de Fuji.\n\n**Red:** Avalanche Fuji C-Chain · chainId 43113 (0xa869)\n**RPC público:** `https://api.avax-test.network/ext/bc/C/rpc`",
+        "content": "## Estado de la red Fuji\n\n### Qué hace\nLe pregunta al RPC público de Avalanche Fuji en qué red está (chainId), cuál es el último bloque y cuánto cuesta el gas. Las respuestas llegan en hexadecimal: el último nodo las pasa a números que se leen.\n\n### Qué necesitás\nNada más que tu n8n. No usa credenciales ni wallet: el RPC público de Fuji se lee sin clave.\n\n### Cómo probarlo\n1. Hacé clic en **Execute workflow**.\n2. Abrí **Pasar a números legibles**: `chainId` tiene que ser 43113 y `ultimoBloque`, un número que crece cada uno o dos segundos.\n3. Abrí el enlace de `explorador` y compará con el bloque que muestra el explorador de Fuji.\n\n**Red:** Avalanche Fuji C-Chain · chainId 43113 (0xa869)\n**RPC público:** `https://api.avax-test.network/ext/bc/C/rpc`",
         "height": 440,
         "width": 500,
         "color": 7

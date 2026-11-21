@@ -1,0 +1,483 @@
+{
+  "name": "Nodo Cero · Respuestas en BigQuery",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## Respuestas en BigQuery\n\nUna encuesta corta que guarda cada respuesta como una fila en **BigQuery**, el almacén de datos de Google Cloud, y enseguida consulta con SQL cuántas respuestas hay por línea y su promedio. Quien responde ve el resultado al instante.\n\n### Qué hace\n**Encuesta** recibe la respuesta. **Configuración** dice en qué proyecto, dataset y tabla guardar. **Armar la fila** valida y prepara los valores. **Guardar en BigQuery** corre un `INSERT` y **Consultar los resultados**, un `SELECT`. **Armar el resumen** y **Página final** muestran cómo va todo.\n\n### Qué necesitás\n- Un proyecto de Google Cloud **con facturación** y la API `bigquery.googleapis.com` (**BigQuery API**) habilitada. El sandbox sin tarjeta no sirve acá: no acepta `INSERT` (DML).\n- La tabla creada con el SQL de la nota de al lado.\n- Una **cuenta de servicio** con **BigQuery Data Editor** (`roles/bigquery.dataEditor`) sobre el dataset y **BigQuery Job User** (`roles/bigquery.jobUser`) en el proyecto, y su clave JSON.\n- La credencial **Google Service Account API** (tipo `googleApi`).\n\nPaso a paso, con lo que vas a ver en cada pantalla: guía **Google Cloud y créditos** del repo `github.com/nodo-cero-bo/guias` (archivo `00-empezar/08-google-cloud.md`).\n\n### Cómo probarlo\n1. Creá la tabla (nota de al lado) y escribí el ID de tu proyecto en **Configuración**, `proyecto_id`.\n2. Elegí tu credencial en **Guardar en BigQuery** y en **Consultar los resultados**.\n3. Tocá **Execute workflow**, respondé la encuesta y mandala.\n4. La página final muestra las respuestas por línea. En BigQuery Studio, consultá la tabla: tu fila ya está.",
+        "height": 1000,
+        "width": 640,
+        "color": 7
+      },
+      "id": "6b4a898e-87f7-4195-a9d3-4f567c32f003",
+      "name": "Nota de inicio",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -720,
+        -600
+      ]
+    },
+    {
+      "parameters": {
+        "formTitle": "¿Cómo te fue?",
+        "formDescription": "Una encuesta de un minuto. Tu respuesta se guarda en BigQuery, en Google Cloud, sin datos personales.",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "Tu equipo (opcional)",
+              "fieldName": "equipo",
+              "fieldType": "text",
+              "placeholder": "Por ejemplo: Las Automatizadoras"
+            },
+            {
+              "fieldLabel": "Tu línea",
+              "fieldName": "linea",
+              "fieldType": "dropdown",
+              "fieldOptions": {
+                "values": [
+                  {
+                    "option": "IA para tu comunidad"
+                  },
+                  {
+                    "option": "Web3 con Avalanche Fuji"
+                  },
+                  {
+                    "option": "Apps con login y datos"
+                  },
+                  {
+                    "option": "Impacto social y ambiental"
+                  }
+                ]
+              },
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "¿Cuánto te gustó? (1 a 5)",
+              "fieldName": "puntaje",
+              "fieldType": "dropdown",
+              "fieldOptions": {
+                "values": [
+                  {
+                    "option": "5"
+                  },
+                  {
+                    "option": "4"
+                  },
+                  {
+                    "option": "3"
+                  },
+                  {
+                    "option": "2"
+                  },
+                  {
+                    "option": "1"
+                  }
+                ]
+              },
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Un comentario (opcional)",
+              "fieldName": "comentario",
+              "fieldType": "textarea",
+              "placeholder": "Qué te gustó, qué mejorarías."
+            }
+          ]
+        },
+        "responseMode": "lastNode",
+        "options": {
+          "path": "nodo-cero-encuesta",
+          "buttonLabel": "Enviar"
+        }
+      },
+      "id": "5be673a6-9cd1-4ac6-bf5d-ac95418d7e2a",
+      "name": "Encuesta",
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.6,
+      "position": [
+        0,
+        0
+      ],
+      "webhookId": "7e3b5474-d0f0-4d04-a97a-f4bbdc82a313"
+    },
+    {
+      "parameters": {
+        "content": "### Creá la tabla (una vez)\nEn la consola, abrí **BigQuery** (BigQuery Studio), elegí tu proyecto, pegá esto en el editor de consultas y tocá **Run**:\n```sql\nCREATE SCHEMA IF NOT EXISTS nodo_cero OPTIONS (location = 'US');\nCREATE TABLE IF NOT EXISTS nodo_cero.respuestas (\n  fecha TIMESTAMP,\n  equipo STRING,\n  linea STRING,\n  puntaje INT64,\n  comentario STRING\n);\n```\nUn **dataset** (en SQL, `SCHEMA`) es una carpeta de tablas. Si usás otros nombres, cambialos también en **Configuración**.",
+        "height": 480,
+        "width": 520,
+        "color": 5
+      },
+      "id": "aa08a87c-09a0-4f93-8bb7-86cf877d3a77",
+      "name": "Nota: la tabla",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        100,
+        -640
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "manual",
+        "assignments": {
+          "assignments": [
+            {
+              "id": "a0c4b724-d17b-4df3-99f3-b441fff44561",
+              "name": "proyecto_id",
+              "value": "",
+              "type": "string"
+            },
+            {
+              "id": "6baae12f-92fb-43b9-bc92-124a349cfe8a",
+              "name": "dataset",
+              "value": "nodo_cero",
+              "type": "string"
+            },
+            {
+              "id": "4d6e31e8-0e71-46a6-9498-80bf861ee7ab",
+              "name": "tabla",
+              "value": "respuestas",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "id": "8a1813ba-c9aa-4c3f-84c9-9692929a1ee5",
+      "name": "Configuración",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        220,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "language": "javaScript",
+        "jsCode": "// Deja los valores listos para la consulta INSERT de BigQuery.\n// Van como texto porque el nodo manda los parámetros como STRING; la consulta convierte el puntaje a número.\nconst r = $input.item.json;\nconst puntaje = String(r.puntaje ?? '').trim();\nif (!/^[1-5]$/.test(puntaje)) throw new Error('El puntaje tiene que ser un número del 1 al 5.');\n\nreturn {\n  json: {\n    equipo: String(r.equipo ?? '').trim().slice(0, 100),\n    linea: String(r.linea ?? '').trim(),\n    puntaje,\n    comentario: String(r.comentario ?? '').trim().slice(0, 1000),\n  },\n};"
+      },
+      "id": "648d7d2a-85d9-4bb9-8789-4cb152c1b0af",
+      "name": "Armar la fila",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        440,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "content": "### Guardar con un INSERT y parámetros\nLa fila entra con una consulta `INSERT`. Lo que escribió la persona no se pega en el SQL: viaja aparte, en **Options → Query Parameters**, y la consulta lo usa como `@equipo`, `@linea`, `@puntaje` y `@comentario`. Así nadie puede colar SQL desde el formulario.\n\nUn `INSERT` cuenta como consulta y entra en el TiB gratis por mes. La operación **Insert** del nodo carga por streaming, que se cobra aparte.",
+        "height": 480,
+        "width": 340,
+        "color": 5
+      },
+      "id": "88efef69-fa68-405d-8717-e44faae9c73d",
+      "name": "Nota: guardar",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        640,
+        -640
+      ]
+    },
+    {
+      "parameters": {
+        "authentication": "serviceAccount",
+        "operation": "executeQuery",
+        "projectId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "={{ $('Configuración').first().json.proyecto_id }}"
+        },
+        "sqlQuery": "INSERT INTO `{{ $('Configuración').first().json.proyecto_id }}.{{ $('Configuración').first().json.dataset }}.{{ $('Configuración').first().json.tabla }}` (fecha, equipo, linea, puntaje, comentario)\nVALUES (CURRENT_TIMESTAMP(), NULLIF(@equipo, ''), @linea, CAST(@puntaje AS INT64), NULLIF(@comentario, ''))",
+        "options": {
+          "maximumBytesBilled": "1000000000",
+          "queryParameters": {
+            "namedParameters": [
+              {
+                "name": "equipo",
+                "value": "={{ $json.equipo }}"
+              },
+              {
+                "name": "linea",
+                "value": "={{ $json.linea }}"
+              },
+              {
+                "name": "puntaje",
+                "value": "={{ $json.puntaje }}"
+              },
+              {
+                "name": "comentario",
+                "value": "={{ $json.comentario }}"
+              }
+            ]
+          }
+        }
+      },
+      "id": "8acd386e-14ce-4596-88d0-52dbc16c6df5",
+      "name": "Guardar en BigQuery",
+      "type": "n8n-nodes-base.googleBigQuery",
+      "typeVersion": 2.1,
+      "position": [
+        660,
+        0
+      ],
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "content": "### Consultar con SQL\nLa consulta agrupa por línea, cuenta las respuestas y saca el promedio. Las partes entre `{{ }}` las completa n8n con **Configuración** antes de mandarla.\n\n**Options → Maximum Bytes Billed** = 1 GB: si una consulta fuera a leer más que eso, BigQuery la rechaza en vez de cobrarla. Es un freno de seguridad para los costos.\n\n**Return Integers as Numbers** devuelve los conteos como números y no como texto.",
+        "height": 480,
+        "width": 380,
+        "color": 5
+      },
+      "id": "51d2ff4d-86a8-46b2-b077-40b5427767b3",
+      "name": "Nota: consultar",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1000,
+        -640
+      ]
+    },
+    {
+      "parameters": {
+        "authentication": "serviceAccount",
+        "operation": "executeQuery",
+        "projectId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "={{ $('Configuración').first().json.proyecto_id }}"
+        },
+        "sqlQuery": "SELECT linea, COUNT(*) AS respuestas, ROUND(AVG(puntaje), 1) AS promedio\nFROM `{{ $('Configuración').first().json.proyecto_id }}.{{ $('Configuración').first().json.dataset }}.{{ $('Configuración').first().json.tabla }}`\nGROUP BY linea\nORDER BY respuestas DESC",
+        "options": {
+          "returnAsNumbers": true,
+          "maximumBytesBilled": "1000000000"
+        }
+      },
+      "id": "f5efc9ff-fe12-45ef-87cf-1f7d154a7edc",
+      "name": "Consultar los resultados",
+      "type": "n8n-nodes-base.googleBigQuery",
+      "typeVersion": 2.1,
+      "position": [
+        900,
+        -120
+      ],
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "// La consulta devuelve una fila por línea con cuántas respuestas hay y su promedio.\nconst filas = $input.all().map((i) => i.json).filter((f) => f.linea);\nconst total = filas.reduce((s, f) => s + Number(f.respuestas ?? 0), 0);\nconst lista = filas.map((f) => `<li><b>${f.linea}</b>: ${f.respuestas} ${Number(f.respuestas) === 1 ? 'respuesta' : 'respuestas'}, promedio ${f.promedio} de 5</li>`).join('');\nreturn [\n  {\n    json: {\n      total,\n      total_texto: total === 1 ? '1 respuesta' : `${total} respuestas`,\n      filas,\n      html: lista ? `<ul>${lista}</ul>` : '<p>Todavía no hay respuestas.</p>',\n    },\n  },\n];"
+      },
+      "id": "4a40112c-5611-4667-b27a-9179971f315a",
+      "name": "Armar el resumen",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1140,
+        -120
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "completion",
+        "respondWith": "showText",
+        "responseText": "=<h2>Gracias, tu respuesta quedó guardada</h2>\n<p>Hasta ahora hay {{ $json.total_texto }}. Por línea:</p>\n{{ $json.html }}"
+      },
+      "id": "80be6614-6836-4ee6-800f-2becea49905a",
+      "name": "Página final",
+      "type": "n8n-nodes-base.form",
+      "typeVersion": 2.5,
+      "position": [
+        1380,
+        -120
+      ],
+      "webhookId": "e2080060-0f21-4cc1-bd9c-646bf67b8b3e"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "language": "javaScript",
+        "jsCode": "// Llega acá cuando Google rechazó el pedido (la salida de error del nodo anterior).\n// Busca el código y el mensaje de Google, y suma una pista según el caso.\nconst e = $json.error ?? {};\nconst d = $json.details ?? {};\nconst texto = typeof e === 'string' ? e : [e.message, e.description ?? d.description].filter(Boolean).join(' · ');\nlet codigo = String(d.httpCode ?? e.httpCode ?? (String(e.cause?.message ?? '').match(/^(\\d{3})\\b/) ?? [])[1] ?? (texto.match(/\\b(400|401|403|404|429)\\b/) ?? [])[1] ?? '');\n// Algunos nodos no traen el número: se deduce del mensaje.\nif (!codigo) codigo = /not found/i.test(texto) ? '404' : /access denied|permission|forbidden/i.test(texto) ? '403' : /quota|rate limit/i.test(texto) ? '429' : '';\n\nconst PISTAS = {\n  400: 'El pedido está mal armado o falta un dato. Revisá lo que mandaste.',\n  401: 'La credencial no sirve: revisá el correo de la cuenta de servicio y la clave privada (copiala entera).',\n  403: 'Falta permiso: habilitá la API en tu proyecto y revisá el rol de la cuenta de servicio. En HTTP Request, la credencial necesita el scope cloud-platform.',\n  404: 'No existe lo que pediste: revisá el nombre del bucket, del proyecto, del dataset o de la tabla.',\n  429: 'Llegaste a un límite de uso. Esperá un minuto y probá de nuevo.',\n};\nconst pista = /billing/i.test(texto)\n  ? 'El proyecto no tiene facturación activa: vinculá una cuenta de facturación en Billing.'\n  : PISTAS[codigo] ?? 'Abrí la ejecución en la pestaña Executions para ver la respuesta completa de Google.';\nreturn {\n  json: {\n    codigo: codigo || 'sin código',\n    pista,\n    detalle: texto.slice(0, 400) || 'Google no mandó detalle.',\n  },\n};"
+      },
+      "id": "b759ae93-c1e4-4520-9c46-b19b7d0daadd",
+      "name": "Explicar el error",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1140,
+        140
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "completion",
+        "respondWith": "showText",
+        "responseText": "=<h2>No se pudo guardar la respuesta</h2>\n<p>{{ $json.pista }}</p>\n<p><small>Respuesta de Google ({{ $json.codigo }}): {{ $json.detalle }}</small></p>"
+      },
+      "id": "2c8aa056-af3c-43dd-a58d-aa0be399fd0c",
+      "name": "Página de error",
+      "type": "n8n-nodes-base.form",
+      "typeVersion": 2.5,
+      "position": [
+        1380,
+        140
+      ],
+      "webhookId": "72bfcd50-0a5b-49e0-9e91-ce7aa1cbd08a"
+    },
+    {
+      "parameters": {
+        "content": "### Cuánto cuesta\nBigQuery no cobra el primer TiB de consultas ni los primeros 10 GiB de almacenamiento de cada mes. Cada consulta, también cada `INSERT`, cuenta como mínimo 10 MB: entran unas 100.000 por mes en lo gratis.\n\n**Maximum Bytes Billed** (1 GB) está en los dos nodos: una consulta que fuera a leer más, BigQuery la rechaza sin cobrarla.\n\nIgual, creá la **alerta de presupuesto** antes de probar.",
+        "height": 340,
+        "width": 440,
+        "color": 3
+      },
+      "id": "acf0c9b6-b221-4dcf-bff0-c6223dbd9999",
+      "name": "Nota: costos",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        400,
+        260
+      ]
+    },
+    {
+      "parameters": {
+        "content": "### Si Google responde con un error\nLos dos nodos de BigQuery tienen **On Error → Continue (using error output)**: **Explicar el error** cuenta en la página qué pasó.\n\nLo más común: la tabla no existe o tiene otro nombre (404), a la cuenta de servicio le falta un rol (403) o el proyecto no tiene facturación (el sandbox no acepta `INSERT`).",
+        "height": 300,
+        "width": 440,
+        "color": 3
+      },
+      "id": "d491e523-234f-42cc-bde2-dca8f7602fe1",
+      "name": "Nota: si falla",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1080,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "content": "### Para llevarlo más lejos\n- Armá un tablero en **Looker Studio** conectado a la tabla, sin escribir código.\n- Guardá en BigQuery el tono de cada opinión de **51-sentimiento-natural-language** y medí cómo cambia por día.\n- Consultá la tabla desde un agente: el nodo de BigQuery también sirve como herramienta de un **AI Agent**.\n- Programá un resumen diario con **Schedule Trigger** y mandalo por Telegram.",
+        "height": 480,
+        "width": 340,
+        "color": 5
+      },
+      "id": "e8af9acc-8b97-48e3-93e7-36a2eff11134",
+      "name": "Nota: más lejos",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1400,
+        -640
+      ]
+    }
+  ],
+  "connections": {
+    "Encuesta": {
+      "main": [
+        [
+          {
+            "node": "Configuración",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Configuración": {
+      "main": [
+        [
+          {
+            "node": "Armar la fila",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Armar la fila": {
+      "main": [
+        [
+          {
+            "node": "Guardar en BigQuery",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Guardar en BigQuery": {
+      "main": [
+        [
+          {
+            "node": "Consultar los resultados",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Explicar el error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Consultar los resultados": {
+      "main": [
+        [
+          {
+            "node": "Armar el resumen",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Explicar el error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Armar el resumen": {
+      "main": [
+        [
+          {
+            "node": "Página final",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Explicar el error": {
+      "main": [
+        [
+          {
+            "node": "Página de error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "pinData": {},
+  "meta": {
+    "templateCredsSetupCompleted": false
+  }
+}

@@ -1,0 +1,350 @@
+{
+  "name": "Nodo Cero · Tipo de cambio: dólar a bolivianos",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## Tipo de cambio: dólar a bolivianos\n\nTrae la cotización del día del dólar en bolivianos (y de otras monedas) desde una API pública sin clave, hace la cuenta y te la devuelve lista para usar. También es tu propia API: `/webhook/tipo-de-cambio?monto=50&de=USD&a=BOB`.\n\n### Qué hace\n1. Tres formas de arrancar: **Cada mañana a las 8** (publicado), **Al tocar Execute** (para probar) y **Pedido a tu API** (un Webhook GET).\n2. **Qué convertir** junta el pedido: monto, moneda de origen (`de`) y de destino (`a`). Si no llegan, usa 100 USD a BOB.\n3. **Cotización del día** pide las tasas a ExchangeRate-API (sin clave).\n4. **Calcular la conversión** hace la cuenta y suma referencias del día.\n5. **Responder a la API** contesta el JSON a quien llamó, y **Mensaje para compartir** deja un texto listo.\n\n### Qué necesitás\nNada más que tu n8n. No usa credenciales.\n\n### Cómo probarlo\n1. Tocá **Execute workflow** y abrí **Calcular la conversión**: vas a ver cuántos bolivianos son 100 dólares hoy.\n2. Cambiá `monto`, `de` o `a` en **Qué convertir** (por ejemplo `BOB` a `USD`) y ejecutá de nuevo.\n3. Para la API: tocá **Publish**, copiá la **Production URL** de **Pedido a tu API** y abrila en el navegador con `?monto=50&de=USD&a=BOB` al final.\n\nEs una cotización de referencia: para trámites, mirá la oficial del Banco Central de Bolivia.",
+        "height": 1040,
+        "width": 640,
+        "color": 4
+      },
+      "id": "3c263292-55cc-434e-8004-a3bc8a8d587c",
+      "name": "Nota de inicio",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -760,
+        -560
+      ]
+    },
+    {
+      "parameters": {
+        "content": "### 1. Tres formas de arrancar\nUn workflow puede tener varios disparadores: cada uno arranca el mismo camino.\n- **Schedule**: todos los días a las 8 (revisá la zona horaria en **Settings** → **Timezone**).\n- **Manual**: para probar.\n- **Webhook GET**: los datos llegan en la URL y quedan en `$json.query`.",
+        "height": 400,
+        "width": 340,
+        "color": 7
+      },
+      "id": "b4f3277c-7faf-4df8-90e0-32bac258944c",
+      "name": "Nota: tres disparadores",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -100,
+        -560
+      ]
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "days",
+              "daysInterval": 1,
+              "triggerAtHour": 8,
+              "triggerAtMinute": 0
+            }
+          ]
+        }
+      },
+      "id": "9498ef2d-8db2-4e5c-b42c-bd89ec19fb51",
+      "name": "Cada mañana a las 8",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        0,
+        -120
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "41785a3b-092b-4d96-9164-81c5e821cbf9",
+      "name": "Al tocar Execute",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        60
+      ]
+    },
+    {
+      "parameters": {
+        "httpMethod": "GET",
+        "path": "tipo-de-cambio",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "8ad1bde8-3498-424b-91d3-50cf5c783e5e",
+      "name": "Pedido a tu API",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.2,
+      "position": [
+        0,
+        240
+      ],
+      "webhookId": "78c433f8-6a20-4735-a440-b367a147fbd9"
+    },
+    {
+      "parameters": {
+        "content": "### 2. Un nodo para los tres caminos\nLas expresiones leen el pedido si existe y, si no, ponen un valor por defecto:\n`$json.query?.monto ?? '100'`\n\n- `?.` no falla si `query` no existe (cuando arrancás con **Execute workflow** o con el horario).\n- `??` elige el valor de la derecha cuando el de la izquierda está vacío.\n- `.toUpperCase()` acepta `usd` o `USD`.",
+        "height": 400,
+        "width": 360,
+        "color": 7
+      },
+      "id": "be4f77de-e985-414f-9106-b29288995d6f",
+      "name": "Nota: qué convertir",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        160,
+        400
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "manual",
+        "assignments": {
+          "assignments": [
+            {
+              "id": "5eab1418-8dc9-4767-bc53-20c8166dc100",
+              "name": "monto",
+              "value": "={{ $json.query?.monto ?? '100' }}",
+              "type": "string"
+            },
+            {
+              "id": "6af9b625-5f64-4824-b1bf-2bb2d5e95dfc",
+              "name": "de",
+              "value": "={{ String($json.query?.de ?? 'USD').trim().toUpperCase() }}",
+              "type": "string"
+            },
+            {
+              "id": "9dc61280-4ff7-47df-b2e9-c27a3557148e",
+              "name": "a",
+              "value": "={{ String($json.query?.a ?? 'BOB').trim().toUpperCase() }}",
+              "type": "string"
+            },
+            {
+              "id": "bfaa9cb3-a689-4935-bd19-f67126f770f0",
+              "name": "origen",
+              "value": "={{ $json.query ? 'api' : 'prueba' }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "dc88fd66-a723-490c-a900-c0035c51119e",
+      "name": "Qué convertir",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        260,
+        60
+      ]
+    },
+    {
+      "parameters": {
+        "content": "### 3. Una API pública sin clave\n`open.er-api.com/v6/latest/USD` devuelve cuántas unidades de cada moneda vale 1 dólar: en `rates.BOB` están los bolivianos.\n\nReglas de esta API abierta: se actualiza una vez por día, así que pedila como mucho una vez por hora (si te pasás, responde 429 y te deja esperar 20 minutos), y pide nombrarla: «Rates By Exchange Rate API».",
+        "height": 400,
+        "width": 420,
+        "color": 7
+      },
+      "id": "98b4d170-8392-4716-bdea-71b5fc41a7e7",
+      "name": "Nota: la API",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        280,
+        -560
+      ]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "https://open.er-api.com/v6/latest/USD",
+        "options": {}
+      },
+      "id": "89f0bad4-37bb-404b-9b69-e1fb6749b5f5",
+      "name": "Cotización del día",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        520,
+        60
+      ]
+    },
+    {
+      "parameters": {
+        "content": "### 4. La cuenta\nTodas las tasas son contra el dólar, así que para cualquier par de monedas la cuenta es la misma:\n`resultado = monto × tasa[a] ÷ tasa[de]`\n\nEl Code también revisa el pedido (un monto que no es número o una moneda que no existe) y devuelve `ok: false` con un mensaje claro, en vez de romperse.",
+        "height": 400,
+        "width": 380,
+        "color": 7
+      },
+      "id": "aaf69674-f42f-469c-b6ef-57a32c229453",
+      "name": "Nota: la cuenta",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        560,
+        400
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "// La API devuelve { result: 'success', rates: { USD: 1, BOB: ..., EUR: ... }, time_last_update_utc, ... }\nconst api = $input.first().json;\nconst pedido = $('Qué convertir').first().json;\n\nconst fuente = 'Rates By Exchange Rate API (https://www.exchangerate-api.com)';\nif (api.result !== 'success' || !api.rates) {\n  return [{ json: { ok: false, error: 'La API de cotizaciones no respondió bien: ' + (api['error-type'] ?? 'sin detalle') + '. Probá de nuevo en unos minutos.', fuente } }];\n}\nconst tasas = api.rates;\n\n// El monto puede venir como «1.500,50», «1500.5» o «100»: lo pasamos a número.\nconst texto = String(pedido.monto ?? '').trim();\nconst normalizado = texto.includes(',') ? texto.replace(/\\./g, '').replace(',', '.') : texto;\nconst monto = Number(normalizado);\n\nconst errores = [];\nif (!texto || !Number.isFinite(monto) || monto < 0) errores.push(`el monto «${texto}» no es un número válido`);\nif (!tasas[pedido.de]) errores.push(`la moneda «${pedido.de}» no está en la lista (usá códigos de 3 letras, como USD, BOB, EUR, BRL)`);\nif (!tasas[pedido.a]) errores.push(`la moneda «${pedido.a}» no está en la lista`);\nif (errores.length) return [{ json: { ok: false, error: 'Revisá el pedido: ' + errores.join('; ') + '.', fuente } }];\n\nconst redondear = (n, d = 2) => Math.round(n * 10 ** d) / 10 ** d;\nconst tasa = tasas[pedido.a] / tasas[pedido.de]; // cuánto vale 1 «de» en «a»\nconst resultado = monto * tasa;\n\n// Fecha de la cotización, en hora de Bolivia.\nconst actualizada = DateTime.fromSeconds(api.time_last_update_unix).setZone('America/La_Paz').setLocale('es');\n\n// Referencias del día: cuántos bolivianos vale 1 unidad de cada moneda.\nconst referencias = {};\nfor (const m of ['USD', 'EUR', 'BRL', 'ARS', 'PEN', 'CLP']) {\n  if (tasas[m]) referencias[m] = redondear(tasas.BOB / tasas[m], 4);\n}\n\nreturn [{\n  json: {\n    ok: true,\n    monto,\n    de: pedido.de,\n    a: pedido.a,\n    resultado: redondear(resultado),\n    tasa: redondear(tasa, 6),\n    dolar_en_bolivianos: redondear(tasas.BOB, 4),\n    referencias_en_bolivianos: referencias,\n    cotizacion_del: actualizada.toFormat(\"d 'de' LLLL 'de' yyyy, HH:mm\"),\n    origen: pedido.origen,\n    fuente,\n  },\n}];"
+      },
+      "id": "9dab653b-5f5a-47fa-b4ea-753352e3c395",
+      "name": "Calcular la conversión",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        780,
+        60
+      ]
+    },
+    {
+      "parameters": {
+        "content": "### 5. Responder y compartir\n**Respond to Webhook** le contesta el JSON a quien llamó la API (código 200, o 400 si el pedido estaba mal). Cuando el workflow arranca con **Execute workflow** o con el horario no hay a quién responder: el nodo deja pasar los datos y listo.\n\n**Mensaje para compartir** arma una frase para mandar por Telegram o Gmail, como en el workflow 60.",
+        "height": 400,
+        "width": 420,
+        "color": 7
+      },
+      "id": "7762b482-3731-403e-ba56-6184e6f99ca8",
+      "name": "Nota: responder",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        940,
+        -560
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "firstIncomingItem",
+        "options": {
+          "responseCode": "={{ $json.ok ? 200 : 400 }}"
+        }
+      },
+      "id": "bc197317-754e-4366-9b16-727f5ce2ef29",
+      "name": "Responder a la API",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        1040,
+        60
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "manual",
+        "assignments": {
+          "assignments": [
+            {
+              "id": "c020244f-3460-4988-9cd7-0108c0fb0d9b",
+              "name": "mensaje",
+              "value": "={{ $json.ok ? `Cotización del ${$json.cotizacion_del}: 1 USD = ${$json.dolar_en_bolivianos} Bs. ${$json.monto} ${$json.de} son ${$json.resultado} ${$json.a}. Fuente: Rates By Exchange Rate API.` : $json.error }}",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "id": "966a3217-2473-4f04-9f9f-27a395eb3374",
+      "name": "Mensaje para compartir",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        1300,
+        60
+      ]
+    }
+  ],
+  "connections": {
+    "Cada mañana a las 8": {
+      "main": [
+        [
+          {
+            "node": "Qué convertir",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Al tocar Execute": {
+      "main": [
+        [
+          {
+            "node": "Qué convertir",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Pedido a tu API": {
+      "main": [
+        [
+          {
+            "node": "Qué convertir",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Qué convertir": {
+      "main": [
+        [
+          {
+            "node": "Cotización del día",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Cotización del día": {
+      "main": [
+        [
+          {
+            "node": "Calcular la conversión",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Calcular la conversión": {
+      "main": [
+        [
+          {
+            "node": "Responder a la API",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Responder a la API": {
+      "main": [
+        [
+          {
+            "node": "Mensaje para compartir",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "pinData": {},
+  "meta": {
+    "templateCredsSetupCompleted": false
+  }
+}

@@ -54,7 +54,7 @@ No pide credenciales: el RPC público de Fuji se lee sin clave y n8n nunca toca 
 
 ## Cómo probarlo
 
-1. Hacé clic en **Execute** y abrí **Armar el resumen**.
+1. Hacé clic en **Execute workflow** y abrí **Armar el resumen**.
 2. Abrí el enlace de `explorador`: son los mismos datos, leídos por n8n.
 3. Pegá tu hash en **Tu hash** (66 caracteres: `0x` y 64 más) y ejecutá de nuevo.
 4. Probá los casos raros:
