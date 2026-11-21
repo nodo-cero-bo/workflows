@@ -1,0 +1,21 @@
+{
+  "id": "11-fuji-saldo-wallet",
+  "titulo": "Saldo de una wallet en Fuji",
+  "resumen": "Pasale una dirección y te devuelve su saldo en AVAX, por API o con un formulario.",
+  "categoria": "avalanche",
+  "nivel": "inicial",
+  "minutos": 15,
+  "tecnologias": [
+    "n8n",
+    "avalanche"
+  ],
+  "credenciales": [],
+  "aprendes": [
+    "Webhook GET con parámetros en la URL",
+    "Respond to Webhook con el código HTTP calculado",
+    "Formulario de n8n con página final",
+    "Pasar de wei a AVAX con BigInt"
+  ],
+  "probado": "ejecutado",
+  "orden": 11
+}

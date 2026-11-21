@@ -1,0 +1,276 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Nodo Cero · Login con Clerk y n8n</title>
+  <meta name="description" content="Página mínima: iniciás sesión con Clerk, la página le manda el token de sesión a un webhook de n8n y n8n devuelve tu perfil desde Supabase.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500&family=Inter+Tight:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --fondo: #191919;
+      --tarjeta: #242424;
+      --borde: #333333;
+      --texto: #fafafa;
+      --suave: #b9b9b9;
+      --rosa: #ff91ac;
+      --rosa-claro: #ffd0d9;
+      --bordo: #5a0026;
+      --error: #ff8a8a;
+      --ok: #9be7b4;
+      --mono: 'Geist Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background-color: var(--fondo);
+      background-image: radial-gradient(rgba(250, 250, 250, 0.08) 1px, transparent 1px);
+      background-size: 22px 22px;
+      color: var(--texto);
+      font: 16px/1.55 'Inter Tight', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+    }
+    main { max-width: 760px; margin: 0 auto; padding: 40px 16px 64px; }
+    .capsula {
+      display: inline-block;
+      font: 500 12px/1 var(--mono);
+      letter-spacing: 0.04em;
+      color: var(--rosa);
+      border: 1px solid var(--bordo);
+      background: rgba(90, 0, 38, 0.35);
+      padding: 7px 10px;
+      border-radius: 999px;
+    }
+    h1 { font-size: clamp(28px, 5vw, 40px); line-height: 1.1; margin: 16px 0 8px; }
+    h1 span { color: var(--rosa); }
+    .bajada { color: var(--suave); margin: 0 0 28px; }
+    .circuito { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; margin: 0 0 28px; font: 13px/1 var(--mono); }
+    .circuito .nodo { background: var(--tarjeta); border: 1px solid var(--borde); border-radius: 10px; padding: 10px 12px; position: relative; }
+    .circuito .nodo::before, .circuito .nodo::after { content: ''; position: absolute; top: 50%; width: 7px; height: 7px; margin-top: -3.5px; background: var(--texto); border-radius: 50%; }
+    .circuito .nodo::before { left: -4px; }
+    .circuito .nodo::after { right: -4px; }
+    .circuito .linea { width: 26px; height: 2px; background: var(--rosa); }
+    .tarjeta { background: var(--tarjeta); border: 1px solid var(--borde); border-radius: 16px; padding: 22px; margin-bottom: 18px; }
+    .tarjeta h2 { font-size: 18px; margin: 0 0 6px; }
+    .tarjeta p { margin: 0 0 14px; color: var(--suave); }
+    .fila { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+    button {
+      font: 600 15px/1 'Inter Tight', system-ui, sans-serif;
+      border: 0;
+      border-radius: 10px;
+      padding: 12px 18px;
+      cursor: pointer;
+      background: var(--rosa);
+      color: #191919;
+    }
+    button.secundario { background: transparent; color: var(--texto); border: 1px solid var(--borde); }
+    button:disabled { opacity: 0.5; cursor: not-allowed; }
+    button:focus-visible { outline: 2px solid var(--rosa-claro); outline-offset: 2px; }
+    .aviso { border-color: var(--bordo); background: rgba(90, 0, 38, 0.25); }
+    .aviso code, code { font-family: var(--mono); font-size: 0.9em; color: var(--rosa-claro); }
+    .perfil { display: flex; gap: 16px; align-items: center; }
+    .perfil img { width: 64px; height: 64px; border-radius: 50%; border: 2px solid var(--rosa); object-fit: cover; background: var(--fondo); }
+    .perfil .nombre { font-size: 20px; font-weight: 700; }
+    .perfil .dato { color: var(--suave); font-size: 14px; word-break: break-all; }
+    dl { display: grid; grid-template-columns: max-content 1fr; gap: 6px 14px; margin: 16px 0 0; font-size: 14px; }
+    dt { color: var(--suave); font-family: var(--mono); }
+    dd { margin: 0; word-break: break-all; }
+    pre {
+      background: var(--fondo);
+      border: 1px solid var(--borde);
+      border-radius: 10px;
+      padding: 14px;
+      overflow-x: auto;
+      font: 13px/1.5 var(--mono);
+      color: var(--rosa-claro);
+      margin: 12px 0 0;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+    .estado { font: 500 13px/1 var(--mono); padding: 6px 9px; border-radius: 6px; background: var(--fondo); }
+    .estado.ok { color: var(--ok); }
+    .estado.mal { color: var(--error); }
+    .oculto { display: none; }
+    footer { color: var(--suave); font-size: 13px; margin-top: 32px; }
+    footer a { color: var(--rosa); }
+  </style>
+</head>
+<body>
+<main>
+  <span class="capsula">Nodo Cero · Clerk + n8n + Supabase</span>
+  <h1>Iniciá sesión y pedile <span>tu perfil</span> a n8n</h1>
+  <p class="bajada">Clerk resuelve el login. La página le pide a Clerk un token de sesión y lo manda a tu webhook de n8n, que lo verifica y busca tu fila en Supabase.</p>
+
+  <div class="circuito" aria-label="Circuito: página, Clerk, n8n, Supabase">
+    <span class="nodo">esta página</span><span class="linea"></span>
+    <span class="nodo">Clerk</span><span class="linea"></span>
+    <span class="nodo">n8n · /mi-perfil</span><span class="linea"></span>
+    <span class="nodo">Supabase</span>
+  </div>
+
+  <section id="falta-config" class="tarjeta aviso oculto">
+    <h2>Falta completar dos datos</h2>
+    <p>Abrí <code>index.html</code> y, arriba de todo en el script, completá <code>PUBLISHABLE_KEY</code> (la Publishable key de Clerk, empieza con <code>pk_</code>) y <code>URL_MI_PERFIL</code> (la Production URL del webhook del workflow 21). El README de esta carpeta explica dónde está cada una.</p>
+  </section>
+
+  <section id="paso-login" class="tarjeta oculto">
+    <h2>1. Iniciá sesión</h2>
+    <p>Se abre la ventana de Clerk. Si todavía no tenés cuenta en tu aplicación, creala desde ahí.</p>
+    <button id="boton-entrar" type="button">Iniciar sesión</button>
+  </section>
+
+  <section id="paso-api" class="tarjeta oculto">
+    <h2>2. Llamá a tu API de n8n</h2>
+    <p>La página pide el token con <code>Clerk.session.getToken()</code> y lo manda en el encabezado <code>Authorization: Bearer &lt;token&gt;</code>.</p>
+    <div class="fila">
+      <button id="boton-perfil" type="button">Ver mi perfil</button>
+      <button id="boton-sin-token" type="button" class="secundario">Probar sin token</button>
+      <div id="boton-usuaria"></div>
+      <button id="boton-salir" type="button" class="secundario">Cerrar sesión</button>
+    </div>
+  </section>
+
+  <section id="resultado" class="tarjeta oculto" aria-live="polite">
+    <div class="fila"><h2 style="margin:0">Respuesta de n8n</h2><span id="estado" class="estado"></span></div>
+    <div id="perfil" class="oculto" style="margin-top:16px">
+      <div class="perfil">
+        <img id="perfil-foto" alt="" src="data:image/gif;base64,R0lGODlhAQABAAAAACw=">
+        <div>
+          <div id="perfil-nombre" class="nombre"></div>
+          <div id="perfil-email" class="dato"></div>
+        </div>
+      </div>
+      <dl>
+        <dt>clerk_id</dt><dd id="perfil-id"></dd>
+        <dt>creado_en</dt><dd id="perfil-creado"></dd>
+        <dt>actualizado_en</dt><dd id="perfil-actualizado"></dd>
+        <dt>sesión vence</dt><dd id="perfil-vence"></dd>
+      </dl>
+    </div>
+    <p id="mensaje" style="margin:14px 0 0"></p>
+    <pre id="crudo"></pre>
+  </section>
+
+  <section id="token" class="tarjeta oculto">
+    <h2>Qué dice tu token</h2>
+    <p>Los datos del token de sesión, decodificados (no hace falta ninguna clave para leerlos; para confiar en ellos, n8n verifica la firma). Vence en un minuto: Clerk lo renueva por su cuenta cada vez que llamás a <code>getToken()</code>.</p>
+    <pre id="token-datos"></pre>
+  </section>
+
+  <footer>
+    Ejemplo de <a href="https://github.com/nodo-cero-bo/workflows/tree/main/clerk/app-ejemplo">workflows de Nodo Cero</a> · Licencia MIT · Clerk, n8n y Supabase son marcas de sus dueños.
+  </footer>
+</main>
+
+<script>
+  // ---------------------------------------------------------------------------------
+  // Completá estos dos datos (el README de esta carpeta dice dónde está cada uno).
+  // La Publishable key no es secreta: está hecha para ir en una página.
+  // La Secret key (sk_...) NUNCA va acá.
+  // ---------------------------------------------------------------------------------
+  const PUBLISHABLE_KEY = 'pk_test_COMPLETAR';
+  const URL_MI_PERFIL = 'https://TU-INSTANCIA.app.n8n.cloud/webhook/mi-perfil';
+
+  const $ = (id) => document.getElementById(id);
+  const mostrar = (id, si) => $(id).classList.toggle('oculto', !si);
+
+  // Carga un script y espera a que termine (como los <script> de la guía de Clerk, en orden).
+  function cargarScript(src, atributos = {}) {
+    return new Promise((resolver, rechazar) => {
+      const s = document.createElement('script');
+      s.src = src;
+      s.crossOrigin = 'anonymous';
+      for (const [k, v] of Object.entries(atributos)) s.setAttribute(k, v);
+      s.onload = resolver;
+      s.onerror = () => rechazar(new Error('No se pudo cargar ' + src));
+      document.head.appendChild(s);
+    });
+  }
+
+  // El token es un JWT: la parte del medio son los datos, en base64url.
+  function datosDelToken(token) {
+    const medio = token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/');
+    const json = decodeURIComponent(atob(medio).split('').map((c) => '%' + c.charCodeAt(0).toString(16).padStart(2, '0')).join(''));
+    return JSON.parse(json);
+  }
+
+  function pintarRespuesta(status, cuerpo) {
+    mostrar('resultado', true);
+    const ok = status >= 200 && status < 300;
+    $('estado').textContent = status ? 'HTTP ' + status : 'sin respuesta';
+    $('estado').className = 'estado ' + (ok ? 'ok' : 'mal');
+    $('crudo').textContent = typeof cuerpo === 'string' ? cuerpo : JSON.stringify(cuerpo, null, 2);
+    const p = ok && cuerpo && cuerpo.perfil;
+    mostrar('perfil', !!p);
+    if (p) {
+      $('perfil-nombre').textContent = p.nombre || '(sin nombre)';
+      $('perfil-email').textContent = p.email || '';
+      $('perfil-id').textContent = p.clerk_id || '';
+      $('perfil-creado').textContent = p.creado_en || '';
+      $('perfil-actualizado').textContent = p.actualizado_en || '';
+      $('perfil-vence').textContent = (cuerpo.sesion && cuerpo.sesion.vence) || '';
+      if (p.avatar_url && /^https:\/\//.test(p.avatar_url)) $('perfil-foto').src = p.avatar_url;
+    }
+    const explicaciones = {
+      401: 'n8n no aceptó la sesión: mirá el motivo. Si dice azp, sumá la dirección de esta página en el workflow 21.',
+      404: 'La sesión es válida, pero todavía no hay fila en perfiles: publicá el workflow 20 y conectá el webhook de Clerk.',
+    };
+    $('mensaje').textContent = ok ? 'Listo: n8n verificó tu sesión y trajo tu fila de Supabase.' : explicaciones[status] || (cuerpo && cuerpo.error) || '';
+  }
+
+  async function llamarApi(conToken) {
+    const headers = {};
+    if (conToken) {
+      const token = await window.Clerk.session.getToken();
+      headers.Authorization = 'Bearer ' + token;
+      $('token-datos').textContent = JSON.stringify(datosDelToken(token), null, 2);
+      mostrar('token', true);
+    }
+    try {
+      const r = await fetch(URL_MI_PERFIL, { headers });
+      const texto = await r.text();
+      let cuerpo = texto;
+      try { cuerpo = JSON.parse(texto); } catch (e) { /* queda como texto */ }
+      pintarRespuesta(r.status, cuerpo);
+    } catch (e) {
+      pintarRespuesta(0, 'El navegador no pudo llamar a ' + URL_MI_PERFIL + '. Si la URL está bien, casi siempre es CORS: en el Webhook del workflow 21, la opción Allowed Origins (CORS) tiene que incluir ' + location.origin + '. Detalle: ' + e.message);
+    }
+  }
+
+  function pintarSesion() {
+    const conSesion = !!window.Clerk.isSignedIn;
+    mostrar('paso-login', !conSesion);
+    mostrar('paso-api', conSesion);
+    if (!conSesion) { mostrar('resultado', false); mostrar('token', false); }
+    else if (!$('boton-usuaria').hasChildNodes()) window.Clerk.mountUserButton($('boton-usuaria'));
+  }
+
+  async function iniciar() {
+    if (!/^pk_(test|live)_/.test(PUBLISHABLE_KEY) || PUBLISHABLE_KEY.endsWith('COMPLETAR') || URL_MI_PERFIL.includes('TU-INSTANCIA')) {
+      mostrar('falta-config', true);
+      return;
+    }
+    // Igual que la guía oficial: el dominio del Frontend API sale de la Publishable key.
+    const dominio = atob(PUBLISHABLE_KEY.split('_')[2]).slice(0, -1);
+    await cargarScript('https://' + dominio + '/npm/@clerk/ui@1/dist/ui.browser.js');
+    await cargarScript('https://' + dominio + '/npm/@clerk/clerk-js@6/dist/clerk.browser.js', { 'data-clerk-publishable-key': PUBLISHABLE_KEY });
+    await window.Clerk.load({ ui: { ClerkUI: window.__internal_ClerkUICtor } });
+
+    $('boton-entrar').onclick = () => window.Clerk.openSignIn();
+    $('boton-perfil').onclick = () => llamarApi(true);
+    $('boton-sin-token').onclick = () => llamarApi(false);
+    $('boton-salir').onclick = () => window.Clerk.signOut();
+    window.Clerk.addListener(pintarSesion);
+    pintarSesion();
+  }
+
+  iniciar().catch((e) => {
+    mostrar('falta-config', true);
+    $('falta-config').querySelector('h2').textContent = 'Clerk no arrancó';
+    $('falta-config').querySelector('p').textContent = e.message + ' Revisá que la Publishable key esté completa y que abras la página desde http://localhost (no como archivo).';
+  });
+</script>
+</body>
+</html>

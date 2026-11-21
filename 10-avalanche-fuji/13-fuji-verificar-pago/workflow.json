@@ -1,0 +1,504 @@
+{
+  "name": "Nodo Cero · Verificar un pago en Fuji",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## Verificar un pago en Fuji\n\n### Qué hace\nRecibe un POST con `{ txHash, destino, montoMinimo, confirmacionesMinimas }`, lee la transacción en Fuji y revisa cuatro reglas: que haya salido bien, que haya ido a tu dirección, que el monto alcance y que tenga las confirmaciones pedidas. Responde `{ verificado, motivo, detalle }`.\n\n### Qué necesitás\nNada más que tu n8n para verificar. Para registrar los pagos (opcional): Supabase con la tabla `pagos_fuji` y una credencial **Supabase API** (`supabaseApi`).\n\n### Cómo probarlo\n1. **Execute** verifica el pago de **Pedido de prueba**, una transacción real de 0.5 AVAX: tiene que dar `verificado: true`.\n2. Rompelo de a una cosa por vez: subí `montoMinimo` a 1, cambiá `destino` o una letra del hash. Cada vez tiene que decir por qué no.\n3. Hacé **Publish** y mandale un POST a `/webhook/fuji-verificar-pago` con el mismo JSON.\n\n`montoMinimo` va en AVAX, por ejemplo `\"0.5\"`.\n\n**Red:** Avalanche Fuji C-Chain · chainId 43113 (0xa869)\n**RPC público:** `https://api.avax-test.network/ext/bc/C/rpc`",
+        "height": 540,
+        "width": 500,
+        "color": 7
+      },
+      "id": "5d19453c-6a01-4b7d-8942-30ad8bb21d48",
+      "name": "Nota de inicio",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -620,
+        -360
+      ]
+    },
+    {
+      "parameters": {
+        "content": "### Primero, revisar el pedido\nAntes de gastar llamadas al RPC, **Revisar el pedido** mira que el hash y la dirección tengan el formato correcto y pasa `montoMinimo` de AVAX a wei con texto y `BigInt` (con los decimales de JavaScript, 0.1 + 0.2 no da 0.3).\n\nSi falta algo, responde 400 con la lista de errores.",
+        "height": 160,
+        "width": 620,
+        "color": 5
+      },
+      "id": "b0d20caa-883d-46cd-a4d7-c03008b6f5f8",
+      "name": "Nota pedido",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        180,
+        -320
+      ]
+    },
+    {
+      "parameters": {
+        "content": "### Tres lecturas que no cortan la respuesta\nTransacción, recibo y último bloque, como en el workflow 12.\n\nEstos HTTP Request tienen **Settings → On Error: Continue**: si el RPC falla o limita los pedidos, el flujo sigue y la API responde igual, con `detalle.regla: \"rpc\"`, en vez de dejar sin respuesta a quien llama.",
+        "height": 160,
+        "width": 640,
+        "color": 5
+      },
+      "id": "8aa861b0-b486-47f3-8d25-26554c880d31",
+      "name": "Nota lecturas",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        880,
+        -320
+      ]
+    },
+    {
+      "parameters": {
+        "content": "### Las cuatro reglas\n1. **Estado** `0x1`: una transacción puede existir y haber fallado.\n2. **Destino**: `to` igual a tu dirección, las dos en minúsculas.\n3. **Monto**: `value` mayor o igual al mínimo, en wei y con `BigInt`.\n4. **Confirmaciones**: bloques desde la transacción hasta el último.\n\nResponde con la primera que no se cumple.",
+        "height": 200,
+        "width": 440,
+        "color": 5
+      },
+      "id": "2a84fba0-cbbd-4436-a237-5023fe231714",
+      "name": "Nota reglas",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1560,
+        -360
+      ]
+    },
+    {
+      "parameters": {
+        "content": "### Opcional: registrar el pago en Supabase\nEsta rama está desactivada. Para usarla:\n1. Corré el SQL de `supabase/sql` de este repo: crea la tabla `pagos_fuji`, con tx_hash, desde, hacia, monto_avax, monto_wei, bloque y verificado.\n2. Abrí **Registrar en pagos_fuji**, creá la credencial **Supabase API** (Host: la URL del proyecto; Secret Key: la clave secreta) y revisá que las columnas coincidan.\n3. Seleccioná el nodo y apretá **D** (o clic derecho → **Activate**). Guardá y publicá de nuevo.\n\nSi `tx_hash` es única en la tabla, un mismo pago no se registra dos veces: el segundo intento da error.",
+        "height": 260,
+        "width": 560,
+        "color": 2
+      },
+      "id": "d1e0250f-d86d-4d96-8aa3-ae214eaea84a",
+      "name": "Nota Supabase",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1820,
+        260
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "9f812a65-64c3-416e-95e0-dedf2a8f78d4",
+      "name": "Al hacer clic en Probar",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        -120
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "raw",
+        "jsonOutput": "{\n  \"body\": {\n    \"txHash\": \"0xe3f00c7d004c3219b867f2349e528be962712ea328b9e7007b233b58af655150\",\n    \"destino\": \"0x74e3ce84499e0fe6c951878e48f610d61d24a520\",\n    \"montoMinimo\": \"0.1\",\n    \"confirmacionesMinimas\": 1\n  }\n}",
+        "options": {}
+      },
+      "id": "5b190aff-0ecd-4010-aca9-bb6c19c1725c",
+      "name": "Pedido de prueba",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        240,
+        -120
+      ]
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "fuji-verificar-pago",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "28a85402-48ea-4dd5-bab7-a95d4ee4522b",
+      "name": "Recibir el pago a verificar",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.2,
+      "position": [
+        240,
+        80
+      ],
+      "webhookId": "66b990cd-5f37-4888-b520-b3e776528858"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "// Revisa el pedido antes de gastar llamadas al RPC. Llega del Webhook (en «body») o de «Pedido de prueba».\nconst b = $input.first().json.body || {};\nconst errores = [];\n\n// El hash va en minúsculas, como lo devuelve la red: así un mismo pago no se registra dos veces en pagos_fuji\n// por llegar una vez con mayúsculas y otra sin.\nconst txHash = String(b.txHash ?? '').trim().toLowerCase();\nif (!/^0x[0-9a-f]{64}$/.test(txHash)) errores.push('txHash tiene que ser el hash de la transacción: 0x y 64 caracteres hexadecimales.');\n\n// Las direcciones se comparan en minúsculas: la misma dirección puede venir con mayúsculas mezcladas.\nconst destino = String(b.destino ?? '').trim().toLowerCase();\nif (!/^0x[0-9a-f]{40}$/.test(destino)) errores.push('destino tiene que ser una dirección de la C-Chain: 0x y 40 caracteres hexadecimales.');\n\n// montoMinimo va en AVAX («0.5» o 0.5) y se pasa a wei como texto, sin la imprecisión de los decimales de JavaScript.\nconst montoMinimo = String(b.montoMinimo ?? '').trim().replace(',', '.');\nlet montoMinimoWei = null;\nif (/^\\d+(\\.\\d{1,18})?$/.test(montoMinimo)) {\n  const [entero, decimales = ''] = montoMinimo.split('.');\n  montoMinimoWei = (BigInt(entero) * 10n ** 18n + BigInt(decimales.padEnd(18, '0'))).toString();\n} else {\n  errores.push('montoMinimo tiene que ser un monto en AVAX, por ejemplo \"0.5\" (hasta 18 decimales).');\n}\n\nconst confirmacionesMinimas = Number(b.confirmacionesMinimas ?? 1);\nif (!Number.isInteger(confirmacionesMinimas) || confirmacionesMinimas < 0) errores.push('confirmacionesMinimas tiene que ser un número entero, 0 o más.');\n\nreturn [{ json: { valido: errores.length === 0, errores, txHash, destino, montoMinimo, montoMinimoWei, confirmacionesMinimas } }];"
+      },
+      "id": "42ef4b96-e0a5-41a6-8825-6489c2e51358",
+      "name": "Revisar el pedido",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        480,
+        -20
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 4
+          },
+          "conditions": [
+            {
+              "id": "6e6da9d7-32ec-49bf-94d9-e5e9ca594370",
+              "leftValue": "={{ $json.valido }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": false,
+        "options": {}
+      },
+      "id": "9b015301-f207-4767-a264-152c22060372",
+      "name": "¿Pedido completo?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.4,
+      "position": [
+        720,
+        -20
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.avax-test.network/ext/bc/C/rpc",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"jsonrpc\": \"2.0\",\n  \"id\": 1,\n  \"method\": \"eth_getTransactionByHash\",\n  \"params\": [{{ JSON.stringify($json.txHash) }}]\n}",
+        "options": {}
+      },
+      "id": "57e9d5bc-69ad-451a-9039-97dcfc49dc95",
+      "name": "Leer la transacción",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        960,
+        -120
+      ],
+      "retryOnFail": true,
+      "maxTries": 2,
+      "waitBetweenTries": 1500,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.avax-test.network/ext/bc/C/rpc",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"jsonrpc\": \"2.0\",\n  \"id\": 1,\n  \"method\": \"eth_getTransactionReceipt\",\n  \"params\": [{{ JSON.stringify($('Revisar el pedido').first().json.txHash) }}]\n}",
+        "options": {}
+      },
+      "id": "ad15afd7-8b47-4d4b-b47b-6532f3ba7132",
+      "name": "Leer el recibo",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        1200,
+        -120
+      ],
+      "retryOnFail": true,
+      "maxTries": 2,
+      "waitBetweenTries": 1500,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.avax-test.network/ext/bc/C/rpc",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "{\n  \"jsonrpc\": \"2.0\",\n  \"id\": 1,\n  \"method\": \"eth_blockNumber\",\n  \"params\": []\n}",
+        "options": {}
+      },
+      "id": "f2b3b950-a49a-4896-b1fb-7612aa104330",
+      "name": "Leer el último bloque",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        1440,
+        -120
+      ],
+      "retryOnFail": true,
+      "maxTries": 2,
+      "waitBetweenTries": 1500,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "// Aplica las cuatro reglas en orden y responde con la primera que no se cumple.\n// Respuesta: { verificado, motivo, detalle }. detalle.regla dice qué regla falló («ninguna» si se cumplen todas).\nconst pedido = $('Revisar el pedido').first().json;\nconst tx = $('Leer la transacción').first().json;\nconst recibo = $('Leer el recibo').first().json;\nconst ultimo = $('Leer el último bloque').first().json;\n\nfunction enAVAX(wei) {\n  const base = 10n ** 18n;\n  const resto = (wei % base).toString().padStart(18, '0').replace(/0+$/, '');\n  return resto ? `${wei / base}.${resto}` : `${wei / base}`;\n}\n\nconst base = {\n  hash: pedido.txHash,\n  pedido: { destino: pedido.destino, montoMinimo: pedido.montoMinimo, confirmacionesMinimas: pedido.confirmacionesMinimas },\n  explorador: `https://build.avax.network/explorer/fuji/c-chain/tx/${pedido.txHash}`,\n};\nconst responder = (verificado, regla, motivo, datos = {}) => [{ json: { verificado, motivo, detalle: { regla, ...base, ...datos } } }];\n\n// 0. ¿Respondió el RPC? Los HTTP Request siguen aunque fallen (Settings → On Error), así siempre hay respuesta.\nfor (const [que, r] of [['la transacción', tx], ['el recibo', recibo], ['el último bloque', ultimo]]) {\n  if (r.error) return responder(false, 'rpc', `No se pudo leer ${que} en Fuji (${r.error.message ?? JSON.stringify(r.error)}). Esperá un momento y volvé a verificar.`);\n}\n\nconst t = tx.result;\nif (!t) return responder(false, 'existe', 'No hay ninguna transacción con ese hash en Fuji. Revisá que esté completo y que sea de Fuji, no de la red principal.');\nconst r = recibo.result;\nif (!r || !t.blockNumber) return responder(false, 'confirmaciones', 'La transacción todavía no entró en un bloque. Esperá unos segundos y volvé a verificar.');\n\nconst valor = BigInt(t.value);\nconst bloque = BigInt(t.blockNumber);\n// Ya está en un bloque, así que tiene por lo menos 1 confirmación: el RPC público reparte los pedidos\n// entre varios servidores y el «último bloque» a veces llega uno atrasado.\nlet confirmaciones = BigInt(ultimo.result) - bloque + 1n;\nif (confirmaciones < 1n) confirmaciones = 1n;\nconst datos = {\n  de: t.from,\n  para: t.to,\n  montoAVAX: enAVAX(valor),\n  montoWei: valor.toString(),\n  bloque: Number(bloque),\n  confirmaciones: Number(confirmaciones),\n  estado: r.status === '0x1' ? 'exitosa' : 'fallida',\n};\n\n// 1. Estado: 0x1 es éxito. Una transacción fallida existe, pero no movió el monto.\nif (r.status !== '0x1') return responder(false, 'estado', 'La transacción existe, pero falló (estado 0x0): no movió el monto.', datos);\n// 2. Destino: que el pago haya ido a tu dirección y no a otra.\nif (String(t.to ?? '').toLowerCase() !== pedido.destino) return responder(false, 'destino', `El pago fue a ${t.to ?? 'la creación de un contrato'} y no a ${pedido.destino}.`, datos);\n// 3. Monto: se comparan enteros en wei con BigInt.\nif (valor < BigInt(pedido.montoMinimoWei)) return responder(false, 'monto', `El monto (${enAVAX(valor)} AVAX) es menor que el mínimo pedido (${pedido.montoMinimo} AVAX).`, datos);\n// 4. Confirmaciones: bloques desde el de la transacción (incluido) hasta el último.\nif (confirmaciones < BigInt(pedido.confirmacionesMinimas)) return responder(false, 'confirmaciones', `Tiene ${confirmaciones} confirmaciones y se piden ${pedido.confirmacionesMinimas}. Esperá unos bloques y volvé a verificar.`, datos);\n\nreturn responder(true, 'ninguna', `Pago verificado: ${enAVAX(valor)} AVAX a ${pedido.destino}, con ${confirmaciones} confirmaciones.`, datos);"
+      },
+      "id": "0b7a89cb-625e-4bec-a05f-3a235b834d61",
+      "name": "Verificar el pago",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1680,
+        -120
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "firstIncomingItem",
+        "options": {
+          "responseCode": "={{ $json.detalle.regla === 'rpc' ? 502 : 200 }}"
+        }
+      },
+      "id": "e091fd00-1b48-40a7-8a7a-252e587931d8",
+      "name": "Responder con el resultado",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        1920,
+        -120
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ verificado: false, motivo: 'El pedido está incompleto: ' + $json.errores.join(' '), detalle: { regla: 'pedido', errores: $json.errores } }) }}",
+        "options": {
+          "responseCode": 400
+        }
+      },
+      "id": "317bc99d-d21b-4fd6-aaa6-97ec5998633a",
+      "name": "Responder: pedido incompleto",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        960,
+        160
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 4
+          },
+          "conditions": [
+            {
+              "id": "94b526b1-f5e9-4e66-9807-a9b378f73092",
+              "leftValue": "={{ $json.verificado }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": false,
+        "options": {}
+      },
+      "id": "8d113378-f257-4396-95d1-8613db3f4cab",
+      "name": "¿Registrar el pago?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.4,
+      "position": [
+        1920,
+        100
+      ]
+    },
+    {
+      "parameters": {
+        "tableId": "pagos_fuji",
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "tx_hash",
+              "fieldValue": "={{ $json.detalle.hash }}"
+            },
+            {
+              "fieldId": "desde",
+              "fieldValue": "={{ $json.detalle.de }}"
+            },
+            {
+              "fieldId": "hacia",
+              "fieldValue": "={{ $json.detalle.para }}"
+            },
+            {
+              "fieldId": "monto_avax",
+              "fieldValue": "={{ $json.detalle.montoAVAX }}"
+            },
+            {
+              "fieldId": "monto_wei",
+              "fieldValue": "={{ $json.detalle.montoWei }}"
+            },
+            {
+              "fieldId": "bloque",
+              "fieldValue": "={{ $json.detalle.bloque }}"
+            },
+            {
+              "fieldId": "verificado",
+              "fieldValue": "={{ $json.verificado }}"
+            }
+          ]
+        }
+      },
+      "id": "ef79a7e0-107b-4c44-9218-687a2fee28df",
+      "name": "Registrar en pagos_fuji",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        2160,
+        100
+      ],
+      "disabled": true
+    }
+  ],
+  "connections": {
+    "Al hacer clic en Probar": {
+      "main": [
+        [
+          {
+            "node": "Pedido de prueba",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Pedido de prueba": {
+      "main": [
+        [
+          {
+            "node": "Revisar el pedido",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Recibir el pago a verificar": {
+      "main": [
+        [
+          {
+            "node": "Revisar el pedido",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Revisar el pedido": {
+      "main": [
+        [
+          {
+            "node": "¿Pedido completo?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "¿Pedido completo?": {
+      "main": [
+        [
+          {
+            "node": "Leer la transacción",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Responder: pedido incompleto",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Leer la transacción": {
+      "main": [
+        [
+          {
+            "node": "Leer el recibo",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Leer el recibo": {
+      "main": [
+        [
+          {
+            "node": "Leer el último bloque",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Leer el último bloque": {
+      "main": [
+        [
+          {
+            "node": "Verificar el pago",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Verificar el pago": {
+      "main": [
+        [
+          {
+            "node": "Responder con el resultado",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "¿Registrar el pago?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "¿Registrar el pago?": {
+      "main": [
+        [
+          {
+            "node": "Registrar en pagos_fuji",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "pinData": {},
+  "meta": {
+    "templateCredsSetupCompleted": false
+  }
+}

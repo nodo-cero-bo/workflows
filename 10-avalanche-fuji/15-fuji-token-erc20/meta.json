@@ -1,0 +1,21 @@
+{
+  "id": "15-fuji-token-erc20",
+  "titulo": "Saldo de un token ERC-20 en Fuji",
+  "resumen": "Nombre, símbolo, decimales y saldo de un token ERC-20 con eth_call, con el USDC de prueba de Circle.",
+  "categoria": "avalanche",
+  "nivel": "intermedio",
+  "minutos": 20,
+  "tecnologias": [
+    "n8n",
+    "avalanche"
+  ],
+  "credenciales": [],
+  "aprendes": [
+    "eth_call para leer un contrato sin gastar gas",
+    "Armar la llamada con el selector y los parámetros de la ABI",
+    "Decodificar números y textos de la ABI",
+    "Un HTTP Request que hace un pedido por ítem, con Batching"
+  ],
+  "probado": "ejecutado",
+  "orden": 15
+}

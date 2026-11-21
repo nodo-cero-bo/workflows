@@ -1,0 +1,28 @@
+{
+  "id": "22-clerk-invitaciones",
+  "titulo": "Invitaciones con Clerk",
+  "resumen": "Pegá una lista de correos en un formulario y n8n invita a cada persona con la Backend API de Clerk, con un resumen de lo que salió bien y lo que no.",
+  "categoria": "clerk",
+  "nivel": "intermedio",
+  "minutos": 15,
+  "tecnologias": [
+    "n8n",
+    "clerk"
+  ],
+  "credenciales": [
+    {
+      "nombre": "Clerk Backend API",
+      "tipo_n8n": "httpHeaderAuth",
+      "como": "En Clerk, API keys: copiá la Secret key. En n8n, una credencial Header Auth con Name Authorization y Value Bearer sk_test_... (con un espacio después de Bearer)."
+    }
+  ],
+  "aprendes": [
+    "Limpiar y validar una lista de correos en el Code node",
+    "Split Out: un ítem por elemento de una lista",
+    "HTTP Request POST con credencial Header Auth",
+    "Seguir aunque la API responda un error (Never Error)",
+    "Página final de un formulario con un resumen"
+  ],
+  "probado": "auditado",
+  "orden": 22
+}

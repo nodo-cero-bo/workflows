@@ -1,0 +1,221 @@
+{
+  "name": "Nodo Cero · Saldo de un token ERC-20 en Fuji",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## Saldo de un token ERC-20 en Fuji\n\n### Qué hace\nLee el nombre, el símbolo, los decimales y el saldo de una wallet en un token ERC-20, con `eth_call` y la llamada armada a mano. El ejemplo es el USDC de prueba de Circle en Fuji.\n\n### Qué necesitás\nNada más que tu n8n. Para tener USDC de prueba en tu wallet, el faucet de Circle (faucet.circle.com, red Avalanche Fuji).\n\n### Cómo probarlo\n1. Hacé clic en **Execute** y abrí **Decodificar las respuestas**: tiene que decir USDC, 6 decimales y el saldo de la wallet de ejemplo.\n2. Poné tu dirección en `wallet` de **Token y wallet** y ejecutá de nuevo.\n3. Probá con otro token de Fuji: cambiá `token` por su dirección.\n\n**Red:** Avalanche Fuji C-Chain · chainId 43113 (0xa869)\n**RPC público:** `https://api.avax-test.network/ext/bc/C/rpc`",
+        "height": 420,
+        "width": 500,
+        "color": 7
+      },
+      "id": "cac56fa3-41df-4b56-be21-cf12aa2c1eaf",
+      "name": "Nota de inicio",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -620,
+        -320
+      ]
+    },
+    {
+      "parameters": {
+        "content": "### Qué token y qué wallet\n`token`: el contrato del token. El del ejemplo es el USDC de Circle en Fuji, verificado en vivo: symbol() devuelve USDC y decimals(), 6.\n\n`wallet`: de quién querés el saldo. La del ejemplo es un contrato que guarda USDC de prueba: cambiala por la tuya.",
+        "height": 200,
+        "width": 380,
+        "color": 4
+      },
+      "id": "109845c6-736a-4c8e-8567-6357e729f176",
+      "name": "Nota token",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        100,
+        -240
+      ]
+    },
+    {
+      "parameters": {
+        "content": "### Una llamada por dato, armada a mano\n`eth_call` ejecuta una función de lectura del contrato sin gastar gas y sin firmar nada. En `data` va el **selector** (4 bytes que dicen qué función) y después los parámetros, de 32 bytes cada uno:\n- `name()` 0x06fdde03 · `symbol()` 0x95d89b41\n- `decimals()` 0x313ce567\n- `balanceOf(address)` 0x70a08231 + la dirección con ceros a la izquierda\n\nEl Code devuelve 4 ítems y el HTTP Request hace un pedido por ítem, de a uno (**Options → Batching**), para cuidar el RPC.",
+        "height": 280,
+        "width": 500,
+        "color": 5
+      },
+      "id": "f10f18aa-eb76-42b7-8024-e8e9a5f67397",
+      "name": "Nota llamadas",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        520,
+        -320
+      ]
+    },
+    {
+      "parameters": {
+        "content": "### Decodificar la ABI\n- Un número (`decimals`, `balanceOf`) es una palabra de 32 bytes: `BigInt` la lee directo.\n- Un texto (`name`, `symbol`) viene en partes: dónde empieza, cuántos bytes tiene y los bytes en UTF-8.\n- El saldo está en la unidad más chica del token: se divide por 10^decimales (USDC usa 6; AVAX, 18).",
+        "height": 200,
+        "width": 400,
+        "color": 5
+      },
+      "id": "afe91462-2b0c-4a4c-acad-512f22338968",
+      "name": "Nota ABI",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1060,
+        -240
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "74ce4699-f510-4043-a256-47d6658339b2",
+      "name": "Al hacer clic en Probar",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "manual",
+        "assignments": {
+          "assignments": [
+            {
+              "id": "49434e6c-2e3c-4c2b-af58-b2e21cefccfe",
+              "name": "token",
+              "value": "0x5425890298aed601595a70ab815c96711a31bc65",
+              "type": "string"
+            },
+            {
+              "id": "bab48ce2-94a4-470d-b481-866c5e54f01f",
+              "name": "wallet",
+              "value": "0x93083f60f1877a6ba974d5ed88bb74943deb8390",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "5585d97f-fa29-41d6-b0b1-26f8f9f09710",
+      "name": "Token y wallet",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        240,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "// Arma una llamada eth_call por cada dato que queremos del token. Cada ítem que sale de acá\n// es un pedido: el HTTP Request siguiente se ejecuta una vez por ítem.\n//\n// «data» es la llamada codificada con la ABI: 4 bytes que dicen qué función (el selector) y\n// después los parámetros, cada uno rellenado con ceros hasta 32 bytes (64 caracteres hex).\n// El selector son los primeros 4 bytes del keccak256 de la firma: keccak256(\"decimals()\") = 0x313ce567...\nconst config = $input.first().json;\nconst token = String(config.token || '').trim().toLowerCase();\nconst wallet = String(config.wallet || '').trim().toLowerCase();\nfor (const [campo, valor] of [['token', token], ['wallet', wallet]]) {\n  if (!/^0x[0-9a-f]{40}$/.test(valor)) throw new Error(`En «Token y wallet», ${campo} tiene que ser 0x y 40 caracteres hexadecimales.`);\n}\n\nconst SELECTORES = {\n  nombre: '0x06fdde03', // name()\n  simbolo: '0x95d89b41', // symbol()\n  decimales: '0x313ce567', // decimals()\n  saldo: '0x70a08231', // balanceOf(address)\n};\n// balanceOf recibe una dirección: se le saca el 0x y se rellena con ceros a la izquierda.\nconst parametroWallet = wallet.slice(2).padStart(64, '0');\n\nreturn [\n  { json: { campo: 'nombre', to: token, data: SELECTORES.nombre } },\n  { json: { campo: 'simbolo', to: token, data: SELECTORES.simbolo } },\n  { json: { campo: 'decimales', to: token, data: SELECTORES.decimales } },\n  { json: { campo: 'saldo', to: token, data: SELECTORES.saldo + parametroWallet } },\n];"
+      },
+      "id": "9d61806d-c264-4532-b7cc-2cf02689a486",
+      "name": "Armar las llamadas",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        480,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.avax-test.network/ext/bc/C/rpc",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'eth_call', params: [{ to: $json.to, data: $json.data }, 'latest'] }) }}",
+        "options": {
+          "batching": {
+            "batch": {
+              "batchSize": 1,
+              "batchInterval": 250
+            }
+          }
+        }
+      },
+      "id": "0c533063-0ce6-4506-87bb-48423be7c4bc",
+      "name": "Llamar al contrato (eth_call)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        720,
+        0
+      ],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "// Decodifica las cuatro respuestas. El HTTP Request devuelve un ítem por pedido, en el mismo orden,\n// así que la respuesta i corresponde a la llamada i de «Armar las llamadas».\nconst config = $('Token y wallet').first().json;\nconst llamadas = $('Armar las llamadas').all();\nconst r = {};\n$input.all().forEach((item, i) => {\n  const campo = llamadas[i].json.campo;\n  if (item.json.error) throw new Error(`eth_call de ${campo} falló: ${item.json.error.message ?? JSON.stringify(item.json.error)}`);\n  if (!item.json.result || item.json.result === '0x') {\n    throw new Error(`${campo} volvió vacío (0x): esa dirección no tiene un contrato ERC-20 en Fuji o no tiene esa función.`);\n  }\n  r[campo] = item.json.result;\n});\n\n// Un número de la ABI ocupa 32 bytes: con BigInt se lee tal cual, aunque sea enorme.\nconst numero = (hex) => BigInt(hex);\n\n// Un texto de la ABI viene en tres partes de 32 bytes: dónde empieza, cuántos bytes tiene y los bytes.\n// Algunos tokens viejos devuelven el símbolo como bytes32 (una sola parte, rellena con ceros).\nfunction texto(hex) {\n  const d = hex.slice(2);\n  if (d.length === 64) return Buffer.from(d, 'hex').toString('utf8').replace(/\\u0000+$/, '');\n  const inicio = Number(BigInt('0x' + d.slice(0, 64))) * 2;\n  const largo = Number(BigInt('0x' + d.slice(inicio, inicio + 64)));\n  return Buffer.from(d.slice(inicio + 64, inicio + 64 + largo * 2), 'hex').toString('utf8');\n}\n\n// El saldo viene en la unidad más chica del token: se divide por 10^decimales sin perder precisión.\nfunction conDecimales(valor, decimales) {\n  if (decimales === 0) return valor.toString();\n  const base = 10n ** BigInt(decimales);\n  const resto = (valor % base).toString().padStart(decimales, '0').replace(/0+$/, '');\n  return resto ? `${valor / base}.${resto}` : `${valor / base}`;\n}\n\nconst decimales = Number(numero(r.decimales));\nconst saldoCrudo = numero(r.saldo);\nconst token = String(config.token).trim().toLowerCase();\nconst wallet = String(config.wallet).trim().toLowerCase();\n\nreturn [\n  {\n    json: {\n      token,\n      nombre: texto(r.nombre),\n      simbolo: texto(r.simbolo),\n      decimales,\n      wallet,\n      saldo: conDecimales(saldoCrudo, decimales),\n      saldoCrudo: saldoCrudo.toString(),\n      exploradorToken: `https://build.avax.network/explorer/fuji/c-chain/address/${token}`,\n      exploradorWallet: `https://build.avax.network/explorer/fuji/c-chain/address/${wallet}`,\n    },\n  },\n];"
+      },
+      "id": "c55077f7-5e78-46d4-9086-c88d30e5b245",
+      "name": "Decodificar las respuestas",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        960,
+        0
+      ]
+    }
+  ],
+  "connections": {
+    "Al hacer clic en Probar": {
+      "main": [
+        [
+          {
+            "node": "Token y wallet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Token y wallet": {
+      "main": [
+        [
+          {
+            "node": "Armar las llamadas",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Armar las llamadas": {
+      "main": [
+        [
+          {
+            "node": "Llamar al contrato (eth_call)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Llamar al contrato (eth_call)": {
+      "main": [
+        [
+          {
+            "node": "Decodificar las respuestas",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "pinData": {},
+  "meta": {
+    "templateCredsSetupCompleted": false
+  }
+}

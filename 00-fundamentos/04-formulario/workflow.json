@@ -1,0 +1,194 @@
+{
+  "name": "Nodo Cero · Un formulario de n8n",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## Un formulario de n8n\n\nUn formulario con una URL propia, que cualquiera abre desde el celular. n8n procesa la respuesta y muestra una página final hecha para cada persona.\n\n### Qué hace\n1. **Formulario de bienvenida** pregunta el nombre, qué querés construir y tu nivel con n8n.\n2. **Elegir por dónde seguir** (JavaScript) busca palabras clave en la idea y arma una recomendación.\n3. **Página final** muestra un mensaje con esa recomendación.\n\n### Qué necesitás\nNada más que tu n8n. No usa credenciales.\n\n### Cómo probarlo\n1. Tocá **Execute**, abajo del canvas: se abre el formulario de prueba en una pestaña nueva.\n2. Completalo (por ejemplo: «un asistente que responda las preguntas de mi curso») y tocá **Enviar**.\n3. Mirá la página final y, en el canvas, lo que salió de cada nodo.\n4. Para compartirlo: tocá **Publish** y usá la **Production URL** del formulario. Cada respuesta queda en **Executions**.",
+        "height": 500,
+        "width": 520,
+        "color": 3
+      },
+      "id": "a7bc8868-57a8-4fd9-ae14-e0c483f0d78b",
+      "name": "Nota de inicio",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -620,
+        -320
+      ]
+    },
+    {
+      "parameters": {
+        "content": "### 1. El formulario\n**n8n Form Trigger** arma la página y su URL. Cada campo tiene:\n- **Label**: lo que ve la persona.\n- **Field Name**: el nombre del dato en la salida (`nombre`, `idea`, `nivel`).\n- **Required Field**: si es obligatorio.\n\n**Options → Custom Form Styling** le pone los colores de Nodo Cero con CSS. **Respond When: Workflow Finishes** hace que la página final la muestre el último nodo.",
+        "height": 480,
+        "width": 320,
+        "color": 7
+      },
+      "id": "b4ae1645-2fd7-4e3e-ae30-15bd366f36e6",
+      "name": "Nota: formulario",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -60,
+        -320
+      ]
+    },
+    {
+      "parameters": {
+        "formTitle": "¿Qué vas a construir hoy?",
+        "formDescription": "Contanos tu idea y te sugerimos por dónde empezar con n8n.",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "Tu nombre",
+              "fieldName": "nombre",
+              "fieldType": "text",
+              "placeholder": "Ada",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "¿Qué querés construir?",
+              "fieldName": "idea",
+              "fieldType": "textarea",
+              "placeholder": "Un asistente que responda las preguntas de mi comunidad",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Tu nivel con n8n",
+              "fieldName": "nivel",
+              "fieldType": "dropdown",
+              "fieldOptions": {
+                "values": [
+                  {
+                    "option": "Es mi primera vez"
+                  },
+                  {
+                    "option": "Ya armé algún workflow"
+                  },
+                  {
+                    "option": "Lo uso seguido"
+                  }
+                ]
+              },
+              "requiredField": true
+            }
+          ]
+        },
+        "responseMode": "lastNode",
+        "options": {
+          "path": "nodo-cero-bienvenida",
+          "buttonLabel": "Enviar",
+          "customCss": ":root {\n  --font-family: 'Inter Tight', 'Inter', system-ui, sans-serif;\n  --color-background: #191919;\n  --color-card-bg: #242424;\n  --color-card-border: #5A0026;\n  --color-card-shadow: rgba(255, 145, 172, 0.12);\n  --color-header: #FAFAFA;\n  --color-header-subtext: #FFD0D9;\n  --color-label: #FAFAFA;\n  --color-link: #FFD0D9;\n  --color-input-bg: #191919;\n  --color-input-border: #5A0026;\n  --color-input-text: #FAFAFA;\n  --color-focus-border: #FF91AC;\n  --color-submit-btn-bg: #FF91AC;\n  --color-submit-btn-text: #191919;\n  --color-required: #FF91AC;\n  --color-html-text: #FAFAFA;\n  --color-html-link: #FF91AC;\n  --color-test-notice-bg: #242424;\n  --color-test-notice-border: #FF91AC;\n  --color-test-notice-text: #FFD0D9;\n  --border-radius-card: 12px;\n  --card-border-radius: 12px;\n  --border-radius-input: 8px;\n}\n/* Enlaces en rosa y el logo de n8n del pie en blanco, sobre el fondo oscuro */\na { color: #FF91AC; }\n.n8n-link svg path[fill='#101330'] { fill: #FAFAFA; }"
+        }
+      },
+      "id": "e71bfea3-4bc4-4aaa-be06-b2d77fbdb450",
+      "name": "Formulario de bienvenida",
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.6,
+      "position": [
+        50,
+        0
+      ],
+      "webhookId": "2264bb0a-6bd7-4aec-a472-0a4f96c3ec3b"
+    },
+    {
+      "parameters": {
+        "content": "### 2. Procesar la respuesta\nLo que mandó la persona llega como un ítem: `$json.nombre`, `$json.idea` y `$json.nivel` (más `submittedAt`, la hora del envío).\n\nEl Code node busca palabras como «chat», «pago» o «login» en la idea y elige un workflow del catálogo. Cambiá las palabras o los temas por los de tu proyecto.",
+        "height": 480,
+        "width": 320,
+        "color": 7
+      },
+      "id": "959bb3de-964a-4f76-be36-0f77e2d5e711",
+      "name": "Nota: procesar",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        300,
+        -320
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "// Lee las respuestas del formulario y arma una recomendación.\n// Los nombres de los campos (nombre, idea, nivel) son los «Field Name» del formulario.\nconst { nombre, idea, nivel } = $input.first().json;\n\n// Pasamos la idea a minúsculas y sin tildes para buscar palabras clave.\nconst texto = String(idea).toLowerCase().normalize('NFD').replace(/[\\u0300-\\u036f]/g, '');\n\n// Cada tema tiene palabras (o el comienzo de una palabra) y el workflow por donde seguir.\nconst temas = [\n  { tema: 'IA', palabras: ['ia', 'agente', 'chat', 'asistente', 'bot', 'pregunt'], workflow: '05-agente-ia' },\n  { tema: 'Avalanche Fuji', palabras: ['fuji', 'avalanche', 'blockchain', 'wallet', 'pago', 'token', 'cripto'], workflow: '12-fuji-leer-transaccion' },\n  { tema: 'login de usuarias', palabras: ['login', 'sesion', 'usuari', 'registr', 'cuenta'], workflow: '21-clerk-api-protegida' },\n  { tema: 'guardar datos', palabras: ['guardar', 'base de datos', 'tabla', 'inventario', 'lista'], workflow: '30-formulario-a-supabase' },\n];\n// \\b marca el comienzo de una palabra: así «ia» no aparece dentro de «familia».\nconst elegido = temas.find((t) => t.palabras.some((p) => new RegExp('\\\\b' + p).test(texto)));\n\n// El workflow del tema (o el de formularios, si la idea no nombra ningún tema).\nconst delTema = elegido ? elegido.workflow : '04-formulario';\n\n// El orden depende del nivel que eligió la persona.\nlet primerPaso = '01-hola-n8n';\nlet siguiente = delTema;\nif (nivel === 'Ya armé algún workflow') primerPaso = '03-http-request';\nif (nivel === 'Lo uso seguido') {\n  primerPaso = delTema;\n  siguiente = 'una guía de proyecto del repo «guias»';\n}\n\nreturn [\n  {\n    json: {\n      nombre: String(nombre).trim(),\n      idea,\n      nivel,\n      tema: elegido ? elegido.tema : 'automatización',\n      primer_paso: primerPaso,\n      siguiente,\n    },\n  },\n];"
+      },
+      "id": "84da14eb-050b-4128-8916-5c29925b41af",
+      "name": "Elegir por dónde seguir",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        410,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "content": "### 3. La página final\n**n8n Form** en la operación **Form Ending** muestra el cierre. El título y el mensaje usan expresiones con los datos del ítem, así cada persona ve el suyo.\n\nEl mensaje acepta HTML simple: `<b>`, `<a>`, `<br>`. También repite los colores con **Custom Form Styling**.\n\nOtra opción: **On n8n Form Submission → Redirect to URL**, para mandar a la persona a tu página.",
+        "height": 480,
+        "width": 340,
+        "color": 7
+      },
+      "id": "f0268f67-9a80-4977-afbf-df14d4d8c3af",
+      "name": "Nota: página final",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        660,
+        -320
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "completion",
+        "respondWith": "text",
+        "completionTitle": "=Gracias, {{ $json.nombre }}",
+        "completionMessage": "=Tu idea suena a <b>{{ $json.tema }}</b>.\n\nEmpezá por <b>{{ $json.primer_paso }}</b> y seguí con <b>{{ $json.siguiente }}</b>.\n\nTodos los workflows están en el <a href=\"https://nodo-cero-bo.github.io\" target=\"_blank\">catálogo de Nodo Cero</a>.",
+        "options": {
+          "formTitle": "Nodo Cero",
+          "customCss": ":root {\n  --font-family: 'Inter Tight', 'Inter', system-ui, sans-serif;\n  --color-background: #191919;\n  --color-card-bg: #242424;\n  --color-card-border: #5A0026;\n  --color-card-shadow: rgba(255, 145, 172, 0.12);\n  --color-header: #FAFAFA;\n  --color-header-subtext: #FFD0D9;\n  --color-label: #FAFAFA;\n  --color-link: #FFD0D9;\n  --color-input-bg: #191919;\n  --color-input-border: #5A0026;\n  --color-input-text: #FAFAFA;\n  --color-focus-border: #FF91AC;\n  --color-submit-btn-bg: #FF91AC;\n  --color-submit-btn-text: #191919;\n  --color-required: #FF91AC;\n  --color-html-text: #FAFAFA;\n  --color-html-link: #FF91AC;\n  --color-test-notice-bg: #242424;\n  --color-test-notice-border: #FF91AC;\n  --color-test-notice-text: #FFD0D9;\n  --border-radius-card: 12px;\n  --card-border-radius: 12px;\n  --border-radius-input: 8px;\n}\n/* Enlaces en rosa y el logo de n8n del pie en blanco, sobre el fondo oscuro */\na { color: #FF91AC; }\n.n8n-link svg path[fill='#101330'] { fill: #FAFAFA; }"
+        }
+      },
+      "id": "473d6d65-c669-4147-9729-b881b72f4bc5",
+      "name": "Página final",
+      "type": "n8n-nodes-base.form",
+      "typeVersion": 2.5,
+      "position": [
+        780,
+        0
+      ],
+      "webhookId": "12ac9653-83f5-4942-a8d2-bafe2af8e2e7"
+    }
+  ],
+  "connections": {
+    "Formulario de bienvenida": {
+      "main": [
+        [
+          {
+            "node": "Elegir por dónde seguir",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Elegir por dónde seguir": {
+      "main": [
+        [
+          {
+            "node": "Página final",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "pinData": {},
+  "meta": {
+    "templateCredsSetupCompleted": false
+  }
+}

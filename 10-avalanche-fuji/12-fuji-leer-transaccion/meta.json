@@ -1,0 +1,21 @@
+{
+  "id": "12-fuji-leer-transaccion",
+  "titulo": "Leer una transacción en Fuji",
+  "resumen": "El desafío del día: dado un hash, quién envió, a quién, cuánto, gas, estado, bloque, confirmaciones y enlace al explorador.",
+  "categoria": "avalanche",
+  "nivel": "inicial",
+  "minutos": 15,
+  "tecnologias": [
+    "n8n",
+    "avalanche"
+  ],
+  "credenciales": [],
+  "aprendes": [
+    "HTTP Request con JSON-RPC",
+    "La diferencia entre una transacción y su recibo",
+    "Convertir hexadecimal y wei con BigInt",
+    "Calcular el costo y las confirmaciones"
+  ],
+  "probado": "ejecutado",
+  "orden": 12
+}

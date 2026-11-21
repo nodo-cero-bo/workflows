@@ -1,0 +1,22 @@
+{
+  "id": "03-http-request",
+  "titulo": "Llamar a cualquier API con HTTP Request",
+  "resumen": "Consultá el clima de Santa Cruz y el último bloque de Avalanche Fuji, y leé cada respuesta.",
+  "categoria": "fundamentos",
+  "nivel": "inicial",
+  "minutos": 15,
+  "tecnologias": [
+    "n8n",
+    "avalanche"
+  ],
+  "credenciales": [],
+  "aprendes": [
+    "Método, URL, query parameters, headers y body JSON",
+    "GET a una API pública sin clave",
+    "POST con JSON-RPC al RPC público de Fuji",
+    "Leer datos anidados y de otro nodo con expresiones",
+    "Pasar un número hexadecimal a decimal"
+  ],
+  "probado": "ejecutado",
+  "orden": 3
+}

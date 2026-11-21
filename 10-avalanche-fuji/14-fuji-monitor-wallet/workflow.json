@@ -1,0 +1,319 @@
+{
+  "name": "Nodo Cero · Monitor de una wallet en Fuji",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## Monitor de una wallet en Fuji\n\n### Qué hace\nCada 5 minutos lee el saldo de una dirección, lo compara con el de la vuelta anterior y, si cambió, arma un mensaje de aviso: cuánto entró o salió y el saldo nuevo.\n\n### Qué necesitás\nNada más que tu n8n. Para recibir el aviso en el celular o por correo, una credencial de Telegram o de Gmail (mirá la nota de la derecha).\n\n### Cómo probarlo\n1. **Execute**: la primera vez sale `primeraRevision: true`, porque todavía no hay un saldo anterior.\n2. Para ver el aviso sin esperar, poné un monto cualquiera en `saldoAnteriorDePrueba` de **Wallet a vigilar** y ejecutá de nuevo: sale por la rama «true» con el mensaje.\n3. Dejá `saldoAnteriorDePrueba` vacío, poné tu dirección y hacé **Publish**. En **Executions** vas a ver cada vuelta: mandate AVAX de prueba y mirá cómo aparece el aviso.\n\n**Red:** Avalanche Fuji C-Chain · chainId 43113 (0xa869)\n**RPC público:** `https://api.avax-test.network/ext/bc/C/rpc`",
+        "height": 480,
+        "width": 500,
+        "color": 7
+      },
+      "id": "eaa89c3b-5e6b-4137-98d8-702147233ab4",
+      "name": "Nota de inicio",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -640,
+        -360
+      ]
+    },
+    {
+      "parameters": {
+        "content": "### El horario\n**Cada 5 minutos** dispara el workflow cuando está publicado. Podés cambiar el intervalo (minutos, horas o una expresión cron). Para cuidar el RPC público, no bajes de un minuto.",
+        "height": 160,
+        "width": 380,
+        "color": 4
+      },
+      "id": "6a9ccae0-e7a2-4f11-a5f1-7cf9d887911f",
+      "name": "Nota horario",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -60,
+        260
+      ]
+    },
+    {
+      "parameters": {
+        "content": "### La memoria del workflow\n`$getWorkflowStaticData('global')` es un objeto que n8n guarda junto con el workflow. Lo que escribís ahí sigue estando en la próxima ejecución: así se compara el saldo de ahora con el anterior.\n\nSe guarda cuando el workflow corre publicado. En las ejecuciones manuales no se guarda: para eso está `saldoAnteriorDePrueba`.",
+        "height": 180,
+        "width": 560,
+        "color": 5
+      },
+      "id": "e608848a-8cbf-470e-be62-8744e5e79010",
+      "name": "Nota memoria",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        420,
+        -220
+      ]
+    },
+    {
+      "parameters": {
+        "content": "### Mandá el aviso a tu celular o a tu correo\n**Mensaje de aviso** deja el texto listo en `mensaje`. Conectale un nodo más a la derecha:\n- **Telegram → Send a text message**: creá un bot con @BotFather, cargá su token en la credencial **Telegram API** (`telegramApi`), poné tu Chat ID y en Text `{{ $json.mensaje }}`.\n- **Gmail → Send a message**: credencial **Gmail OAuth2** (`gmailOAuth2`), tu correo en To, un asunto y en Message `{{ $json.mensaje }}`.",
+        "height": 220,
+        "width": 520,
+        "color": 2
+      },
+      "id": "7853f7cb-aeb6-4ed1-9b6a-ac71cf50da4b",
+      "name": "Nota aviso",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1100,
+        -360
+      ]
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "minutes",
+              "minutesInterval": 5
+            }
+          ]
+        }
+      },
+      "id": "8ace63ca-ac5a-415c-8c69-aef39e5f59f2",
+      "name": "Cada 5 minutos",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        0,
+        -100
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "b8a108c7-cf10-4265-bebb-21adf8dffd69",
+      "name": "Al hacer clic en Probar",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        100
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "manual",
+        "assignments": {
+          "assignments": [
+            {
+              "id": "6955c0a5-e9e8-4567-aa03-8c14ecddfaa8",
+              "name": "direccion",
+              "value": "0xd00ae08403b9bbb9124bb305c09058e32c39a48c",
+              "type": "string"
+            },
+            {
+              "id": "0c7d0f34-2460-4dbc-98db-61721091e8ba",
+              "name": "saldoAnteriorDePrueba",
+              "value": "",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "6542d65c-8911-4dbe-b029-238030bb0cc9",
+      "name": "Wallet a vigilar",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        240,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.avax-test.network/ext/bc/C/rpc",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"jsonrpc\": \"2.0\",\n  \"id\": 1,\n  \"method\": \"eth_getBalance\",\n  \"params\": [{{ JSON.stringify(String($json.direccion || '').trim().toLowerCase()) }}, \"latest\"]\n}",
+        "options": {}
+      },
+      "id": "374200da-d640-4b17-b932-c4fc578d0d65",
+      "name": "Leer el saldo",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        480,
+        0
+      ],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "// Compara el saldo de ahora con el de la vuelta anterior.\n// Los datos estáticos del workflow ($getWorkflowStaticData) se guardan entre ejecuciones cuando el\n// workflow corre publicado (por el horario). En las pruebas manuales no se guardan.\nconst memoria = $getWorkflowStaticData('global');\nmemoria.saldos = memoria.saldos || {};\n\nconst config = $('Wallet a vigilar').first().json;\nconst direccion = String(config.direccion || '').trim().toLowerCase();\nconst respuesta = $input.first().json;\nif (!/^0x[0-9a-f]{40}$/.test(direccion)) throw new Error('En «Wallet a vigilar», direccion tiene que ser 0x y 40 caracteres hexadecimales.');\nif (respuesta.error || typeof respuesta.result !== 'string') throw new Error(`El RPC de Fuji no devolvió el saldo: ${JSON.stringify(respuesta.error ?? respuesta)}`);\n\nfunction enAVAX(wei) {\n  const signo = wei < 0n ? '-' : '';\n  const abs = wei < 0n ? -wei : wei;\n  const base = 10n ** 18n;\n  const resto = (abs % base).toString().padStart(18, '0').replace(/0+$/, '');\n  return signo + (resto ? `${abs / base}.${resto}` : `${abs / base}`);\n}\nfunction aWei(avax) {\n  const t = String(avax).trim().replace(',', '.');\n  if (!/^\\d+(\\.\\d{1,18})?$/.test(t)) throw new Error('saldoAnteriorDePrueba tiene que ser un monto en AVAX, por ejemplo \"12.5\".');\n  const [entero, decimales = ''] = t.split('.');\n  return BigInt(entero) * 10n ** 18n + BigInt(decimales.padEnd(18, '0'));\n}\n\nconst actual = BigInt(respuesta.result);\n// Para ver el aviso en una prueba manual, completá saldoAnteriorDePrueba: se usa en lugar de la memoria.\nconst prueba = String(config.saldoAnteriorDePrueba ?? '').trim();\nconst guardado = memoria.saldos[direccion];\nconst anterior = prueba ? aWei(prueba) : guardado ? BigInt(guardado.wei) : null;\nconst diferencia = anterior === null ? 0n : actual - anterior;\nconst ahora = $now.setZone('America/La_Paz').toFormat('dd/MM/yyyy HH:mm:ss');\n\n// Guardamos el saldo de esta vuelta para compararlo en la próxima.\nmemoria.saldos[direccion] = { wei: actual.toString(), revisado: ahora };\n\nreturn [\n  {\n    json: {\n      direccion,\n      cambio: anterior !== null && diferencia !== 0n,\n      primeraRevision: anterior === null,\n      entro: diferencia > 0n,\n      saldoAVAX: enAVAX(actual),\n      saldoAnteriorAVAX: anterior === null ? null : enAVAX(anterior),\n      diferenciaAVAX: enAVAX(diferencia),\n      movimientoAVAX: enAVAX(diferencia < 0n ? -diferencia : diferencia),\n      revisadoAnterior: prueba ? 'saldo de prueba' : guardado?.revisado ?? null,\n      revisado: ahora,\n      explorador: `https://build.avax.network/explorer/fuji/c-chain/address/${direccion}`,\n    },\n  },\n];"
+      },
+      "id": "40c52f32-57da-4287-8819-8ff341bd858e",
+      "name": "Comparar con el saldo anterior",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        720,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 4
+          },
+          "conditions": [
+            {
+              "id": "afc1545e-41b8-4050-bcb5-cb3664b38675",
+              "leftValue": "={{ $json.cambio }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": false,
+        "options": {}
+      },
+      "id": "36fd22c0-7f3c-47d6-a9b1-ef2d326e07d2",
+      "name": "¿Cambió el saldo?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.4,
+      "position": [
+        960,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "manual",
+        "assignments": {
+          "assignments": [
+            {
+              "id": "080e429f-e064-4704-85de-c3611165bb32",
+              "name": "mensaje",
+              "value": "={{ ($json.entro ? 'Entraron ' : 'Salieron ') + $json.movimientoAVAX + ' AVAX en ' + $json.direccion + ' (Fuji). Saldo nuevo: ' + $json.saldoAVAX + ' AVAX; antes: ' + $json.saldoAnteriorAVAX + ' AVAX. ' + $json.explorador }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {},
+        "includeOtherFields": true
+      },
+      "id": "be393496-496f-4d9c-8e27-838f68583008",
+      "name": "Mensaje de aviso",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        1200,
+        -100
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "048310cc-a0f4-4a45-aef3-737cab554ac1",
+      "name": "Sin cambios",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        1200,
+        100
+      ]
+    }
+  ],
+  "connections": {
+    "Cada 5 minutos": {
+      "main": [
+        [
+          {
+            "node": "Wallet a vigilar",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Al hacer clic en Probar": {
+      "main": [
+        [
+          {
+            "node": "Wallet a vigilar",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wallet a vigilar": {
+      "main": [
+        [
+          {
+            "node": "Leer el saldo",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Leer el saldo": {
+      "main": [
+        [
+          {
+            "node": "Comparar con el saldo anterior",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Comparar con el saldo anterior": {
+      "main": [
+        [
+          {
+            "node": "¿Cambió el saldo?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "¿Cambió el saldo?": {
+      "main": [
+        [
+          {
+            "node": "Mensaje de aviso",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Sin cambios",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "pinData": {},
+  "meta": {
+    "templateCredsSetupCompleted": false
+  }
+}

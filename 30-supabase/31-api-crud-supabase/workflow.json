@@ -1,0 +1,345 @@
+{
+  "name": "Nodo Cero · Una API sobre Supabase",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## Una API sobre Supabase\n\n### Qué hace\nArma tu propia API para la tabla `ideas`, con una sola URL y dos métodos:\n- `GET /webhook/ideas?limite=10` devuelve las últimas ideas (200).\n- `POST /webhook/ideas` con un JSON `{ \"nombre\", \"idea\", \"nivel\" }` crea una (201). Si falta algo, responde 400 con los errores.\n\n### Qué necesitás\n- El esquema de `supabase/sql/00_esquema.sql` corrido en el **SQL Editor** de tu proyecto (crea las tablas, la búsqueda y la seguridad).\n- Una credencial **Supabase API** (`supabaseApi`). En Supabase: **Project Settings → API Keys**. Host = la URL del proyecto (`https://<tu-proyecto>.supabase.co`, sin `/rest/v1`). Secret Key = una clave secreta `sb_secret_...` (o la `service_role` de antes).\n\n### Cómo probarlo\n1. Elegí tu credencial en **Listar ideas** y en **Crear la idea**.\n2. **Publicá** el workflow y abrí **API de ideas** para copiar la URL de producción.\n3. Probá desde una terminal (cambiá la URL por la tuya):\n```\ncurl \"https://<tu-n8n>/webhook/ideas?limite=5\"\ncurl -X POST \"https://<tu-n8n>/webhook/ideas\" \\\n  -H \"Content-Type: application/json\" \\\n  -d '{\"nombre\":\"Equipo Ada\",\"idea\":\"Un bot de turnos\",\"nivel\":\"inicial\"}'\n```\n4. Mandá un POST sin `idea` y mirá la respuesta 400.",
+        "height": 760,
+        "width": 580,
+        "color": 7
+      },
+      "id": "bf1d05ed-b12c-415e-aa7c-2a4a7362b4f3",
+      "name": "Nota de inicio",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -680,
+        -200
+      ]
+    },
+    {
+      "parameters": {
+        "content": "### Un webhook, dos métodos\nCon **Allow Multiple HTTP Methods** activado, el mismo path atiende GET y POST, y el nodo tiene una salida por método: la de arriba es GET y la de abajo, POST.\n\n**Respond: Using Respond to Webhook Node** deja que cada rama arme su respuesta con su código.",
+        "height": 280,
+        "width": 300,
+        "color": 5
+      },
+      "id": "026a86f6-16b5-4285-afb2-33cbaccc627e",
+      "name": "Nota: un webhook, dos métodos",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -60,
+        340
+      ]
+    },
+    {
+      "parameters": {
+        "content": "### Listar (GET)\n**Get Many** con **Limit** desde la URL (`?limite=`, entre 1 y 100; si no viene, 20) y **Order By** `creado_en.desc`: las más nuevas primero. El orden se escribe como en la API de Supabase: `columna.desc` o `columna.asc`.",
+        "height": 220,
+        "width": 520,
+        "color": 5
+      },
+      "id": "7afbdaa3-1758-4fba-b342-0b444ddc0fba",
+      "name": "Nota: listar",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        280,
+        -260
+      ]
+    },
+    {
+      "parameters": {
+        "content": "### Crear (POST)\nPrimero se valida en JavaScript y después se escribe: la base nunca recibe datos a medias y quien llama sabe qué corregir.\n\nLos códigos dicen qué pasó: **201** (Created) cuando la fila se creó, **400** (Bad Request) cuando el pedido está mal. La tabla además tiene sus propias reglas (`check`) por si algo se escapa.",
+        "height": 240,
+        "width": 820,
+        "color": 5
+      },
+      "id": "9ac72b5e-8b71-40a2-851d-0261a0f966d3",
+      "name": "Nota: crear",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        280,
+        680
+      ]
+    },
+    {
+      "parameters": {
+        "multipleMethods": true,
+        "httpMethod": [
+          "GET",
+          "POST"
+        ],
+        "path": "ideas",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "af77b79c-94d3-414d-98a5-92b215f8c40b",
+      "name": "API de ideas",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.2,
+      "position": [
+        0,
+        200
+      ],
+      "webhookId": "fca8ea27-b08b-4eec-ad38-d446bb91ee50"
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "tableId": "ideas",
+        "returnAll": false,
+        "limit": "={{ Math.min(Math.max(parseInt($json.query.limite, 10) || 20, 1), 100) }}",
+        "orderBy": "creado_en.desc",
+        "filterType": "none"
+      },
+      "id": "dd633cbb-e76e-489d-b483-59a4d3dadb8f",
+      "name": "Listar ideas",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        300,
+        0
+      ],
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "// Supabase devuelve un ítem por fila. Si la tabla está vacía llega un ítem vacío,\n// porque «Listar ideas» tiene activado Always Output Data: así la API responde igual.\nconst ideas = $input.all().map((item) => item.json).filter((fila) => fila.id !== undefined);\nreturn [{ json: { cantidad: ideas.length, ideas } }];"
+      },
+      "id": "35f08f8c-3a41-4a0b-abf2-541e502707c2",
+      "name": "Armar la lista",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        520,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify($json) }}",
+        "options": {
+          "responseCode": 200
+        }
+      },
+      "id": "aef06365-19a7-4e5d-af03-6a2887e5c3a2",
+      "name": "Responder 200",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        740,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "// Revisamos el pedido antes de tocar la base: si falta algo, la API responde 400\n// con la lista de errores, y en Supabase entran nada más filas completas.\nconst NIVELES = ['inicial', 'intermedio', 'avanzado'];\nlet cuerpo = $input.first().json.body ?? {};\nif (typeof cuerpo === 'string') {\n  try {\n    cuerpo = JSON.parse(cuerpo);\n  } catch {\n    cuerpo = {};\n  }\n}\nconst texto = (valor) => (typeof valor === 'string' ? valor.trim() : '');\n\nconst nombre = texto(cuerpo.nombre);\nconst idea = texto(cuerpo.idea);\nconst nivel = texto(cuerpo.nivel).toLowerCase() || 'inicial';\n\nconst errores = [];\nif (!nombre) errores.push('Falta «nombre».');\nelse if (nombre.length > 120) errores.push('«nombre» tiene más de 120 caracteres.');\nif (!idea) errores.push('Falta «idea».');\nelse if (idea.length > 2000) errores.push('«idea» tiene más de 2000 caracteres.');\nif (!NIVELES.includes(nivel)) errores.push(`«nivel» tiene que ser ${NIVELES.join(', ')}.`);\n\nreturn [{ json: { valido: errores.length === 0, errores, fila: { nombre, idea, nivel } } }];"
+      },
+      "id": "22bfad00-142b-47f9-8460-4a075eb996df",
+      "name": "Validar la idea",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        300,
+        400
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 4
+          },
+          "conditions": [
+            {
+              "id": "0f550925-6ee3-4573-9537-a02e1556a142",
+              "leftValue": "={{ $json.valido }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": false,
+        "options": {}
+      },
+      "id": "bfe437a4-ddc1-481b-beb4-30fd5a7fd5cf",
+      "name": "¿Datos válidos?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.4,
+      "position": [
+        520,
+        400
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "create",
+        "tableId": "ideas",
+        "dataToSend": "defineBelow",
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "nombre",
+              "fieldValue": "={{ $json.fila.nombre }}"
+            },
+            {
+              "fieldId": "idea",
+              "fieldValue": "={{ $json.fila.idea }}"
+            },
+            {
+              "fieldId": "nivel",
+              "fieldValue": "={{ $json.fila.nivel }}"
+            }
+          ]
+        }
+      },
+      "id": "bfbdb101-611d-45b7-9fcd-ce6b45b00d2b",
+      "name": "Crear la idea",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        760,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ ok: true, idea: $json }) }}",
+        "options": {
+          "responseCode": 201
+        }
+      },
+      "id": "8fb3d3d4-bfdf-4b22-ba5d-a06e226bd1d2",
+      "name": "Responder 201",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        980,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ ok: false, errores: $json.errores }) }}",
+        "options": {
+          "responseCode": 400
+        }
+      },
+      "id": "5a333f6a-682f-47d0-9bbb-f7c10b97a6a5",
+      "name": "Responder 400",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        760,
+        500
+      ]
+    }
+  ],
+  "connections": {
+    "API de ideas": {
+      "main": [
+        [
+          {
+            "node": "Listar ideas",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Validar la idea",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Listar ideas": {
+      "main": [
+        [
+          {
+            "node": "Armar la lista",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Armar la lista": {
+      "main": [
+        [
+          {
+            "node": "Responder 200",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validar la idea": {
+      "main": [
+        [
+          {
+            "node": "¿Datos válidos?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "¿Datos válidos?": {
+      "main": [
+        [
+          {
+            "node": "Crear la idea",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Responder 400",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Crear la idea": {
+      "main": [
+        [
+          {
+            "node": "Responder 201",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "pinData": {},
+  "meta": {
+    "templateCredsSetupCompleted": false
+  }
+}

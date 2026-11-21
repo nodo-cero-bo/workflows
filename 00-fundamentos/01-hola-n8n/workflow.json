@@ -1,0 +1,297 @@
+{
+  "name": "Nodo Cero · Hola n8n: datos, expresiones y decisiones",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## Hola n8n: datos, expresiones y decisiones\n\nTu primer workflow. Tocás un botón y ves cómo viajan los datos de nodo en nodo.\n\n### Qué hace\n1. **Datos de ejemplo** arma un evento con tres equipos.\n2. **Separar y calcular** (JavaScript) convierte esa lista en tres ítems, uno por equipo, y calcula cuántos lugares libres tiene cada uno.\n3. **¿Equipo completo?** manda cada ítem por su camino.\n4. Cada camino arma un mensaje con una expresión.\n\n### Qué necesitás\nNada más que tu n8n (Cloud o en tu compu). No usa credenciales ni cuentas externas.\n\n### Cómo probarlo\n1. Tocá **Execute** (Execute), abajo del canvas.\n2. Abrí cada nodo con doble clic: a la izquierda está lo que entra (INPUT) y a la derecha lo que sale (OUTPUT).\n3. Cambiá la vista entre **Schema**, **Table** y **JSON**: son los mismos datos, mostrados de tres formas.\n4. En **Datos de ejemplo**, cambiá los integrantes de un equipo y ejecutá de nuevo: mirá cómo cambia de camino.\n\n### Dos palabras clave\n- **Ítem**: cada paquete de datos que pasa por el workflow. Casi todos los nodos se ejecutan una vez por cada ítem que les llega.\n- **Expresión**: lo que va entre `{{ }}`. Es JavaScript corto que lee los datos, como `{{ $json.equipo }}`.",
+        "height": 660,
+        "width": 520,
+        "color": 3
+      },
+      "id": "ee7cd3fb-24a8-4d49-a660-6ab01e2bed90",
+      "name": "Nota de inicio",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -620,
+        -400
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "58132867-9637-4399-abb5-64951388410b",
+      "name": "Al tocar Execute",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "content": "### 1. Armar datos\n**Edit Fields (Set)** crea o cambia campos. Acá arma un ítem con el evento, el cupo por equipo y una lista de equipos (un campo de tipo Array).\n\n`fecha` es una **expresión**: `$now` es la fecha y hora de ahora, `.setZone('America/La_Paz')` la pasa a la hora de Bolivia y `.toFormat('dd/MM/yyyy')` la escribe como día, mes y año.\n\nProbá: cambiá un nombre o sumá un equipo a la lista.",
+        "height": 580,
+        "width": 300,
+        "color": 7
+      },
+      "id": "ee529d01-e30e-4de6-87e5-caa90367768d",
+      "name": "Nota: datos de ejemplo",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        240,
+        -400
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "manual",
+        "assignments": {
+          "assignments": [
+            {
+              "id": "03221a58-6b6f-47c1-b072-ca908a40cdb3",
+              "name": "evento",
+              "value": "Nodo Cero",
+              "type": "string"
+            },
+            {
+              "id": "1f598e96-66a0-4ad4-8c35-02fdf77ee2bd",
+              "name": "fecha",
+              "value": "={{ $now.setZone('America/La_Paz').toFormat('dd/MM/yyyy') }}",
+              "type": "string"
+            },
+            {
+              "id": "9fe0ede6-ddb9-4c2e-b5ac-1c1e774b162c",
+              "name": "cupo_por_equipo",
+              "value": 4,
+              "type": "number"
+            },
+            {
+              "id": "5c1a45ea-a5db-48cc-adc2-0afd65be315f",
+              "name": "equipos",
+              "value": "[\n  {\n    \"nombre\": \"Equipo Tajibo\",\n    \"integrantes\": 4,\n    \"tecnologias\": [\n      \"n8n\",\n      \"IA\",\n      \"Supabase\"\n    ]\n  },\n  {\n    \"nombre\": \"Equipo Motacú\",\n    \"integrantes\": 3,\n    \"tecnologias\": [\n      \"n8n\",\n      \"Avalanche Fuji\"\n    ]\n  },\n  {\n    \"nombre\": \"Equipo Guapurú\",\n    \"integrantes\": 2,\n    \"tecnologias\": [\n      \"n8n\",\n      \"Supabase\"\n    ]\n  }\n]",
+              "type": "array"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "1c047a4d-bc2a-4f2a-9623-bb2e30decb8e",
+      "name": "Datos de ejemplo",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        340,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "content": "### 2. Un poco de JavaScript\nEl **Code** node corre JavaScript. En el modo **Run Once for All Items** recibe todos los ítems juntos y devuelve una lista nueva.\n\nAcá entra **1 ítem** con la lista de equipos y salen **3 ítems**, uno por equipo. Mirá el número que aparece sobre la conexión.\n\nCada ítem que devolvés tiene la forma `{ json: { ... } }`. Los comentarios del código explican cada paso.",
+        "height": 580,
+        "width": 300,
+        "color": 7
+      },
+      "id": "761a3ab5-0ccb-4d73-8939-46e99603c93c",
+      "name": "Nota: JavaScript",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        580,
+        -400
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "// El Code node corre JavaScript. En el modo «Run Once for All Items»\n// recibe todos los ítems juntos y devuelve una lista nueva de ítems.\n\n// Acá llega 1 ítem: el que armó «Datos de ejemplo».\nconst datos = $input.first().json;\nconst cupo = datos.cupo_por_equipo; // 4 personas por equipo\n\n// Por cada equipo de la lista devolvemos un ítem nuevo: entra 1 ítem y salen 3.\nreturn datos.equipos.map((equipo) => {\n  const lugaresLibres = cupo - equipo.integrantes;\n\n  // Cada ítem de n8n es un objeto con la clave «json» (y «binary» si lleva archivos).\n  return {\n    json: {\n      evento: datos.evento,\n      fecha: datos.fecha,\n      equipo: equipo.nombre,\n      integrantes: equipo.integrantes,\n      lugares_libres: lugaresLibres,\n      // join arma un texto con la lista: «n8n, IA, Supabase»\n      tecnologias: equipo.tecnologias.join(', '),\n      usa_ia: equipo.tecnologias.includes('IA'),\n    },\n  };\n});"
+      },
+      "id": "dedfceaa-8313-4adc-a81c-b4e34abd9228",
+      "name": "Separar y calcular",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        680,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "content": "### 3. Una decisión\n**If** revisa la condición **en cada ítem**: los que la cumplen salen por **true** y el resto por **false**.\n\nLa condición es `{{ $json.lugares_libres }}` menor o igual que 0. Los equipos son de hasta 4 personas.\n\nProbá: cambiá el operador o el número y ejecutá de nuevo.",
+        "height": 580,
+        "width": 300,
+        "color": 7
+      },
+      "id": "ca95d191-dc57-4384-95a8-1e9e79bdd720",
+      "name": "Nota: decisión",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        920,
+        -400
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 4
+          },
+          "conditions": [
+            {
+              "id": "e4f71b88-c929-4a57-8f63-0de0a4f6a98f",
+              "leftValue": "={{ $json.lugares_libres }}",
+              "rightValue": 0,
+              "operator": {
+                "type": "number",
+                "operation": "lte"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": false,
+        "options": {}
+      },
+      "id": "5533d310-2428-4d3f-9f2e-af42463b86a2",
+      "name": "¿Equipo completo?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.4,
+      "position": [
+        1020,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "content": "### 4. Un mensaje por camino\nCada rama suma el campo `mensaje` con una expresión que mezcla texto fijo y datos del ítem:\n`{{ $json.equipo }} tiene {{ $json.lugares_libres }} ...`\n\nAdentro de `{{ }}` vale JavaScript: la rama de abajo usa `condición ? 'sí' : 'no'` para escribir «lugar» o «lugares».\n\n**Include Other Input Fields** está activado: el ítem conserva los campos que ya traía.\n\nLo que sigue: **02-mi-primera-api**, para recibir datos desde afuera.",
+        "height": 820,
+        "width": 340,
+        "color": 7
+      },
+      "id": "f7fee855-edac-47f0-9282-8e2c48d6a400",
+      "name": "Nota: mensajes",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1260,
+        -400
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "manual",
+        "assignments": {
+          "assignments": [
+            {
+              "id": "6dd8ae99-60d6-4f49-b3d4-be498325d084",
+              "name": "mensaje",
+              "value": "={{ $json.equipo }} está completo: {{ $json.integrantes }} personas listas para construir con {{ $json.tecnologias }}.",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "id": "29875010-7c76-4d51-82b2-acaa95c71edc",
+      "name": "Mensaje: equipo completo",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        1380,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "manual",
+        "assignments": {
+          "assignments": [
+            {
+              "id": "e6126182-b69b-49a5-a9e6-fa74cf458066",
+              "name": "mensaje",
+              "value": "={{ $json.equipo }} tiene {{ $json.lugares_libres }} {{ $json.lugares_libres === 1 ? 'lugar libre' : 'lugares libres' }}. ¿Te sumás?",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "id": "082d3a7c-531f-4643-a0ff-7d51a67d04c0",
+      "name": "Mensaje: buscan integrantes",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        1380,
+        240
+      ]
+    }
+  ],
+  "connections": {
+    "Al tocar Execute": {
+      "main": [
+        [
+          {
+            "node": "Datos de ejemplo",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Datos de ejemplo": {
+      "main": [
+        [
+          {
+            "node": "Separar y calcular",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Separar y calcular": {
+      "main": [
+        [
+          {
+            "node": "¿Equipo completo?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "¿Equipo completo?": {
+      "main": [
+        [
+          {
+            "node": "Mensaje: equipo completo",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Mensaje: buscan integrantes",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "pinData": {},
+  "meta": {
+    "templateCredsSetupCompleted": false
+  }
+}

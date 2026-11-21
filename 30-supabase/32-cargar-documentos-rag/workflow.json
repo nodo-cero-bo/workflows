@@ -1,0 +1,312 @@
+{
+  "name": "Nodo Cero · Cargar documentos para RAG",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## Cargar documentos para RAG\n\n### Qué hace\nUn formulario para subir un PDF o un TXT. n8n lee el texto, lo parte en pedazos, calcula el **embedding** de cada uno con Gemini (una lista de números que representa su significado) y guarda todo en la tabla `documentos` de Supabase. Así el agente del workflow 33 puede buscar en tus documentos por significado y no por palabras exactas: eso es RAG.\n\n### Qué necesitás\n- El esquema de `supabase/sql/00_esquema.sql` corrido en el **SQL Editor** de tu proyecto (crea las tablas, la búsqueda y la seguridad).\n- **Supabase API** (`supabaseApi`). En Supabase: **Project Settings → API Keys**. Host = la URL del proyecto (`https://<tu-proyecto>.supabase.co`, sin `/rest/v1`). Secret Key = una clave secreta `sb_secret_...` (o la `service_role` de antes).\n- **Google Gemini(PaLM) Api** (`googlePalmApi`). La clave es gratis: creala en Google AI Studio → **Get API key** y pegala en API Key. El Host queda como viene.\n\n### Cómo probarlo\n1. Elegí la credencial de Supabase en **Guardar en Supabase** y la de Gemini en **Embeddings Gemini**.\n2. Tocá **Execute**, subí un archivo corto (un par de páginas) y envialo.\n3. En Supabase, **Table Editor → documentos**: hay una fila por pedazo, con su texto, su metadata y su embedding.\n4. Seguí con el workflow 33 y preguntale al agente algo que esté en el archivo.",
+        "height": 760,
+        "width": 580,
+        "color": 7
+      },
+      "id": "c9f66b05-3c1d-46fc-a35a-3d947681e42a",
+      "name": "Nota de inicio",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -680,
+        -340
+      ]
+    },
+    {
+      "parameters": {
+        "content": "### El archivo\nEl campo **Archivo** es de tipo `file` y acepta `.pdf` y `.txt`. Llega como dato binario con el nombre `archivo` (su **Field Name**), que es el que lee el cargador.\n\nPara un Markdown, guardalo como `.txt` antes de subirlo.",
+        "height": 300,
+        "width": 300,
+        "color": 5
+      },
+      "id": "799a6ef7-a7c0-49d2-a3b6-08ba6064d09f",
+      "name": "Nota: el formulario",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -60,
+        -340
+      ]
+    },
+    {
+      "parameters": {
+        "content": "### Guardar en Supabase\nModo **Insert Documents** en la tabla `documentos`. Usa la función `match_documents` del esquema (opción **Query Name**).\n\n**Embedding Batch Size** en 50: cada envío a Supabase lleva 50 pedazos con 3072 números cada uno, un tamaño cómodo para la API.",
+        "height": 300,
+        "width": 300,
+        "color": 5
+      },
+      "id": "b607d5d2-f5fd-467e-af12-911fa7f8fd62",
+      "name": "Nota: guardar",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        260,
+        -340
+      ]
+    },
+    {
+      "parameters": {
+        "content": "### Leer y partir\n**Leer el archivo** saca el texto del binario `archivo` (PDF o texto, lo detecta solito) y le suma metadata: el nombre del archivo y el tema. Con esa metadata después se puede filtrar la búsqueda.\n\n**Partir en pedazos** corta el texto en trozos de unos 1000 caracteres que se pisan 150: así una idea que cae en el corte no se pierde. Pedazos chicos dan respuestas más precisas; grandes, más contexto.",
+        "height": 340,
+        "width": 400,
+        "color": 5
+      },
+      "id": "845ce813-20bf-4b21-89cb-6296b6478633",
+      "name": "Nota: pedazos",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        440,
+        420
+      ]
+    },
+    {
+      "parameters": {
+        "content": "### El mismo modelo en los dos lados\n`models/gemini-embedding-001` devuelve vectores de **3072** dimensiones: por eso la columna es `vector(3072)`.\n\nEl agente del workflow 33 tiene que usar **el mismo modelo** para buscar: vectores de modelos distintos no se pueden comparar. Si cambiás de modelo, cambiá la dimensión en el SQL y volvé a cargar los documentos.",
+        "height": 340,
+        "width": 480,
+        "color": 3
+      },
+      "id": "7aec7e29-73d3-46be-964d-b8c4407c8576",
+      "name": "Nota: embeddings",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -60,
+        420
+      ]
+    },
+    {
+      "parameters": {
+        "formTitle": "Subí un documento",
+        "formDescription": "PDF o TXT. Se parte en pedazos y se guarda en Supabase para que el agente pueda buscar en él.",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "Archivo (PDF o TXT)",
+              "fieldName": "archivo",
+              "fieldType": "file",
+              "multipleFiles": false,
+              "acceptFileTypes": ".pdf,.txt",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Tema",
+              "fieldName": "tema",
+              "fieldType": "text",
+              "placeholder": "Por ejemplo: agenda, reglas, guía de Fuji"
+            }
+          ]
+        },
+        "responseMode": "lastNode",
+        "options": {
+          "path": "nodo-cero-documentos",
+          "buttonLabel": "Subir y guardar"
+        }
+      },
+      "id": "5b5b0899-dcfc-4b8e-82e2-f02ab389cc96",
+      "name": "Subir documento",
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.6,
+      "position": [
+        0,
+        0
+      ],
+      "webhookId": "5e1e4236-3b7b-4e17-98f2-2bed7de2dc18"
+    },
+    {
+      "parameters": {
+        "mode": "insert",
+        "tableName": {
+          "__rl": true,
+          "mode": "id",
+          "value": "documentos"
+        },
+        "embeddingBatchSize": 50,
+        "options": {
+          "queryName": "match_documents"
+        }
+      },
+      "id": "94b7a933-29db-482e-80e0-df622aaa9ee4",
+      "name": "Guardar en Supabase",
+      "type": "@n8n/n8n-nodes-langchain.vectorStoreSupabase",
+      "typeVersion": 1.4,
+      "position": [
+        300,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "// El Vector Store devuelve un ítem por cada pedazo que guardó. Los contamos para la página final.\nconst archivo = $('Subir documento').first().json.archivo ?? {};\nconst pedazos = $input.all().length;\nreturn [{\n  json: {\n    pedazos,\n    pedazos_texto: pedazos === 1 ? '1 pedazo' : `${pedazos} pedazos`,\n    archivo: archivo.filename ?? archivo.fileName ?? 'tu archivo',\n  },\n}];"
+      },
+      "id": "31cda8ee-47e1-49ba-aa6a-f11bc571eb01",
+      "name": "Contar los pedazos",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        640,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "completion",
+        "respondWith": "text",
+        "completionTitle": "Listo, ya está en Supabase",
+        "completionMessage": "=Guardamos {{ $json.pedazos_texto }} de {{ $json.archivo }}. Ahora el agente del workflow 33 puede buscar en este documento.",
+        "options": {}
+      },
+      "id": "761b08a7-1a40-4b7c-8046-5cdc2d5f85ea",
+      "name": "Página final",
+      "type": "n8n-nodes-base.form",
+      "typeVersion": 2.5,
+      "position": [
+        880,
+        0
+      ],
+      "webhookId": "677e9a46-3140-4193-b62a-a724ea4469c2"
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-embedding-001"
+      },
+      "id": "b69d955f-f697-46f0-8697-75645e0ba013",
+      "name": "Embeddings Gemini",
+      "type": "@n8n/n8n-nodes-langchain.embeddingsGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        300,
+        220
+      ]
+    },
+    {
+      "parameters": {
+        "dataType": "binary",
+        "binaryMode": "specificField",
+        "binaryDataKey": "archivo",
+        "loader": "auto",
+        "textSplittingMode": "custom",
+        "options": {
+          "metadata": {
+            "metadataValues": [
+              {
+                "name": "archivo",
+                "value": "={{ $json.archivo.filename ?? $json.archivo.fileName ?? 'sin nombre' }}"
+              },
+              {
+                "name": "tema",
+                "value": "={{ ($json.tema || 'general').trim().toLowerCase() }}"
+              }
+            ]
+          }
+        }
+      },
+      "id": "51576fa3-211e-4887-ace3-0bcbfc88e770",
+      "name": "Leer el archivo",
+      "type": "@n8n/n8n-nodes-langchain.documentDefaultDataLoader",
+      "typeVersion": 1.1,
+      "position": [
+        480,
+        220
+      ]
+    },
+    {
+      "parameters": {
+        "chunkSize": 1000,
+        "chunkOverlap": 150,
+        "options": {}
+      },
+      "id": "98855e6c-23c4-42ad-8021-64ec28a90fb6",
+      "name": "Partir en pedazos",
+      "type": "@n8n/n8n-nodes-langchain.textSplitterRecursiveCharacterTextSplitter",
+      "typeVersion": 1,
+      "position": [
+        660,
+        220
+      ]
+    }
+  ],
+  "connections": {
+    "Subir documento": {
+      "main": [
+        [
+          {
+            "node": "Guardar en Supabase",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Guardar en Supabase": {
+      "main": [
+        [
+          {
+            "node": "Contar los pedazos",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Contar los pedazos": {
+      "main": [
+        [
+          {
+            "node": "Página final",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Embeddings Gemini": {
+      "ai_embedding": [
+        [
+          {
+            "node": "Guardar en Supabase",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Leer el archivo": {
+      "ai_document": [
+        [
+          {
+            "node": "Guardar en Supabase",
+            "type": "ai_document",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Partir en pedazos": {
+      "ai_textSplitter": [
+        [
+          {
+            "node": "Leer el archivo",
+            "type": "ai_textSplitter",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "pinData": {},
+  "meta": {
+    "templateCredsSetupCompleted": false
+  }
+}

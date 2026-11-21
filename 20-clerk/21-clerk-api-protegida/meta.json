@@ -1,0 +1,34 @@
+{
+  "id": "21-clerk-api-protegida",
+  "titulo": "Una API protegida con Clerk",
+  "resumen": "Una API de n8n que verifica el token de sesión de Clerk (RS256) y devuelve el perfil desde Supabase; sin sesión válida, responde 401.",
+  "categoria": "clerk",
+  "nivel": "avanzado",
+  "minutos": 25,
+  "tecnologias": [
+    "n8n",
+    "clerk",
+    "supabase"
+  ],
+  "credenciales": [
+    {
+      "nombre": "JWT Auth con la clave pública de Clerk",
+      "tipo_n8n": "jwtAuth",
+      "como": "En Clerk, API keys → JWKS Public Key en formato PEM. En n8n: Key Type PEM Key, la clave en Public Key y algoritmo RS256."
+    },
+    {
+      "nombre": "Supabase API",
+      "tipo_n8n": "supabaseApi",
+      "como": "En Supabase, Project Settings → API Keys: la URL del proyecto va en Host y una clave secreta (sb_secret_...) en Secret Key."
+    }
+  ],
+  "aprendes": [
+    "Leer el encabezado Authorization: Bearer",
+    "Verificar un JWT RS256 con el nodo JWT y una clave PEM",
+    "Revisar exp, nbf y azp del token de sesión",
+    "CORS con Allowed Origins en el Webhook",
+    "Responder 200, 401 o 404 según el caso"
+  ],
+  "probado": "auditado",
+  "orden": 21
+}

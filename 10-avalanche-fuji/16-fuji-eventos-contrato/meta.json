@@ -1,0 +1,21 @@
+{
+  "id": "16-fuji-eventos-contrato",
+  "titulo": "Leer eventos de un contrato en Fuji",
+  "resumen": "Trae eventos con eth_getLogs y los decodifica: transferencias de tokens y los registros de tu propio contrato.",
+  "categoria": "avalanche",
+  "nivel": "avanzado",
+  "minutos": 25,
+  "tecnologias": [
+    "n8n",
+    "avalanche"
+  ],
+  "credenciales": [],
+  "aprendes": [
+    "eth_getLogs con filtro por contrato, topic0 y rango de bloques",
+    "Respetar el límite del RPC partiendo el rango en tramos",
+    "Qué son topic0, los parámetros indexed y data",
+    "Decodificar direcciones, montos y textos de la ABI"
+  ],
+  "probado": "ejecutado",
+  "orden": 16
+}

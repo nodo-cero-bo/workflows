@@ -1,0 +1,28 @@
+{
+  "id": "13-fuji-verificar-pago",
+  "titulo": "Verificar un pago en Fuji",
+  "resumen": "Valida estado, destino, monto y confirmaciones de un pago, y responde si está verificado.",
+  "categoria": "avalanche",
+  "nivel": "intermedio",
+  "minutos": 20,
+  "tecnologias": [
+    "n8n",
+    "avalanche",
+    "supabase"
+  ],
+  "credenciales": [
+    {
+      "nombre": "Supabase API (opcional)",
+      "tipo_n8n": "supabaseApi",
+      "como": "Nada más para la rama desactivada que registra en pagos_fuji. En Supabase: Project Settings → API Keys, la URL del proyecto (Host) y la clave secreta (Secret Key)."
+    }
+  ],
+  "aprendes": [
+    "Una API que valida un pedido y responde 400 si falta algo",
+    "Reglas de verificación en orden, con el motivo de cada rechazo",
+    "Comparar montos en wei con BigInt",
+    "Que un HTTP Request siga aunque falle (On Error: Continue)"
+  ],
+  "probado": "ejecutado",
+  "orden": 13
+}

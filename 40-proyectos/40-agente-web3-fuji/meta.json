@@ -1,0 +1,29 @@
+{
+  "id": "40-agente-web3-fuji",
+  "titulo": "Agente de IA para Fuji",
+  "resumen": "Un chat con IA que lee Avalanche Fuji en vivo: saldos, transacciones y el último bloque, explicados en español.",
+  "categoria": "proyectos",
+  "nivel": "avanzado",
+  "minutos": 30,
+  "tecnologias": [
+    "n8n",
+    "ia",
+    "avalanche"
+  ],
+  "credenciales": [
+    {
+      "nombre": "Google Gemini(PaLM) Api",
+      "tipo_n8n": "googlePalmApi",
+      "como": "Google AI Studio → Get API key: creá una clave gratis y pegala en API Key. Host queda como viene."
+    }
+  ],
+  "aprendes": [
+    "AI Agent con herramientas HTTP",
+    "$fromAI: el modelo completa la dirección o el hash",
+    "Lotes JSON-RPC contra Fuji",
+    "Code Tool con BigInt para pasar de wei a AVAX",
+    "Memoria por conversación"
+  ],
+  "probado": "auditado",
+  "orden": 40
+}

@@ -1,0 +1,348 @@
+{
+  "name": "Nodo Cero · Saldo de una wallet en Fuji",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## Saldo de una wallet en Fuji\n\n### Qué hace\nTe dice cuántos AVAX tiene una dirección de Avalanche Fuji. La misma consulta tiene tres entradas: una prueba manual, una API (Webhook GET con `?address=`) y un formulario para cualquier persona.\n\n### Qué necesitás\nNada más que tu n8n. No usa credenciales ni wallet: el saldo es un dato público de la red.\n\n### Cómo probarlo\n1. **Execute** consulta la dirección de **Dirección de ejemplo** (el contrato WAVAX de Fuji, que guarda mucho AVAX). Cambiala por la tuya de Core, la que empieza con 0x.\n2. Hacé **Publish** y abrí en el navegador la URL de producción de **Consulta por URL** con tu dirección al final: `.../webhook/fuji-saldo?address=0x...`\n3. Abrí la URL de producción de **Formulario de saldo**, pegá una dirección y mirá la página final.\n\n**Red:** Avalanche Fuji C-Chain · chainId 43113 (0xa869)\n**RPC público:** `https://api.avax-test.network/ext/bc/C/rpc`",
+        "height": 480,
+        "width": 500,
+        "color": 7
+      },
+      "id": "0cc48565-3b25-4737-ab25-757045cd706d",
+      "name": "Nota de inicio",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -620,
+        -380
+      ]
+    },
+    {
+      "parameters": {
+        "content": "### Una API en tres nodos\n**Consulta por URL** recibe `GET /webhook/fuji-saldo?address=0x...`. Lo que va después del `?` llega en `$json.query`.\n\n**Leer saldo en Fuji** le pide al RPC `eth_getBalance` con la dirección y `\"latest\"` (el último bloque). `JSON.stringify` le pone las comillas: así una dirección mal escrita no rompe el JSON del pedido.\n\n**Responder con el saldo** devuelve el JSON. El código HTTP sale de una expresión: 200 si salió bien, 400 si la dirección no sirve y 502 si el RPC no respondió.",
+        "height": 220,
+        "width": 560,
+        "color": 5
+      },
+      "id": "6d07ef80-0908-48aa-a8b9-ba192bd24ec2",
+      "name": "Nota API",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        180,
+        -380
+      ]
+    },
+    {
+      "parameters": {
+        "content": "### De wei a AVAX, sin perder decimales\nEl saldo llega en wei (1 AVAX = 10^18 wei) y en hexadecimal. Con `Number` se perderían decimales: `BigInt` divide enteros exactos y el resto se arma como texto.\n\n`$('Consulta por URL').isExecuted` dice si la ejecución empezó por el Webhook o por la prueba manual.",
+        "height": 220,
+        "width": 400,
+        "color": 5
+      },
+      "id": "6adcf927-75b7-4fcf-8fbd-c112afa621e8",
+      "name": "Nota wei",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        780,
+        -280
+      ]
+    },
+    {
+      "parameters": {
+        "content": "### La misma consulta, con un formulario\nUn formulario de n8n no puede terminar en Respond to Webhook: termina en un nodo **n8n Form** de tipo **Form Ending**, que muestra la página final. Por eso esta fila repite la consulta con sus propios nodos.\n\nEl campo tiene Field Name `address`: así llega en `$json.address`.",
+        "height": 160,
+        "width": 620,
+        "color": 4
+      },
+      "id": "1092554a-53ca-4338-bc91-c4e405fbe8c8",
+      "name": "Nota formulario",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        180,
+        580
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "4db4d598-77ae-4961-b237-c14d2b2ff6c6",
+      "name": "Al hacer clic en Probar",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        -120
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "raw",
+        "jsonOutput": "{\n  \"query\": {\n    \"address\": \"0xd00ae08403b9bbb9124bb305c09058e32c39a48c\"\n  }\n}",
+        "options": {}
+      },
+      "id": "04e2796a-2733-4bf8-a7c6-94b56b19b9c7",
+      "name": "Dirección de ejemplo",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        240,
+        -120
+      ]
+    },
+    {
+      "parameters": {
+        "httpMethod": "GET",
+        "path": "fuji-saldo",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "93001c38-4097-42f3-ab1b-90d3a9fe9185",
+      "name": "Consulta por URL",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.2,
+      "position": [
+        240,
+        80
+      ],
+      "webhookId": "3be5034f-a5eb-491d-977b-30527764097d"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.avax-test.network/ext/bc/C/rpc",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"jsonrpc\": \"2.0\",\n  \"id\": 1,\n  \"method\": \"eth_getBalance\",\n  \"params\": [{{ JSON.stringify(String(($json.query || {}).address || '').trim().toLowerCase()) }}, \"latest\"]\n}",
+        "options": {}
+      },
+      "id": "535814a3-7db8-4243-bebd-f6e04a5aa9d7",
+      "name": "Leer saldo en Fuji",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        480,
+        -20
+      ],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "// Arma la respuesta de la API: el saldo en AVAX de la dirección pedida.\n// La dirección llega en la URL (?address=0x...) o, en la prueba manual, desde «Dirección de ejemplo».\nconst pedido = $('Consulta por URL').isExecuted\n  ? $('Consulta por URL').first().json\n  : $('Dirección de ejemplo').first().json;\nconst direccion = String((pedido.query || {}).address || '').trim().toLowerCase();\nconst respuesta = $input.first().json;\n\n// 1 AVAX = 10^18 wei. BigInt divide sin perder decimales (Number los perdería).\nfunction enAVAX(wei) {\n  const base = 10n ** 18n;\n  const resto = (wei % base).toString().padStart(18, '0').replace(/0+$/, '');\n  return resto ? `${wei / base}.${resto}` : `${wei / base}`;\n}\n\nif (!/^0x[0-9a-f]{40}$/.test(direccion)) {\n  return [{ json: { ok: false, tipoError: 'direccion', error: 'Mandá una dirección de la C-Chain en ?address= : 0x y 40 caracteres hexadecimales.', direccion } }];\n}\nif (respuesta.error || typeof respuesta.result !== 'string') {\n  const detalle = respuesta.error?.message ?? JSON.stringify(respuesta.error ?? respuesta);\n  return [{ json: { ok: false, tipoError: 'rpc', error: `El RPC de Fuji no respondió bien (${detalle}). Esperá un momento y probá de nuevo.`, direccion } }];\n}\n\nconst wei = BigInt(respuesta.result);\nreturn [\n  {\n    json: {\n      ok: true,\n      red: 'Avalanche Fuji C-Chain',\n      direccion,\n      saldoAVAX: enAVAX(wei),\n      saldoWei: wei.toString(),\n      consultado: $now.setZone('America/La_Paz').toFormat('dd/MM/yyyy HH:mm:ss'),\n      explorador: `https://build.avax.network/explorer/fuji/c-chain/address/${direccion}`,\n    },\n  },\n];"
+      },
+      "id": "92c1a8d4-b005-42ad-84ad-23e7949e0c1b",
+      "name": "Pasar de wei a AVAX",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        720,
+        -20
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "firstIncomingItem",
+        "options": {
+          "responseCode": "={{ $json.ok ? 200 : ($json.tipoError === 'rpc' ? 502 : 400) }}"
+        }
+      },
+      "id": "eb7b69d4-2560-41a3-a11e-b9eed182ac6c",
+      "name": "Responder con el saldo",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        960,
+        -20
+      ]
+    },
+    {
+      "parameters": {
+        "formTitle": "Saldo en Avalanche Fuji",
+        "formDescription": "Pegá una dirección de la C-Chain de Fuji (empieza con 0x) y te mostramos cuántos AVAX de prueba tiene.",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "Dirección",
+              "fieldName": "address",
+              "fieldType": "text",
+              "placeholder": "0x...",
+              "requiredField": true
+            }
+          ]
+        },
+        "responseMode": "lastNode",
+        "options": {
+          "path": "fuji-saldo-formulario",
+          "buttonLabel": "Ver saldo"
+        }
+      },
+      "id": "e131d446-eac9-42d8-9a42-964fc3a5bf02",
+      "name": "Formulario de saldo",
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.6,
+      "position": [
+        240,
+        420
+      ],
+      "webhookId": "da046c00-34dd-4ce1-86d8-fe05ea59b605"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.avax-test.network/ext/bc/C/rpc",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"jsonrpc\": \"2.0\",\n  \"id\": 1,\n  \"method\": \"eth_getBalance\",\n  \"params\": [{{ JSON.stringify(String($json.address || '').trim().toLowerCase()) }}, \"latest\"]\n}",
+        "options": {}
+      },
+      "id": "0fe0857d-844d-4a14-9aed-4decfd589745",
+      "name": "Leer saldo (formulario)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        480,
+        420
+      ],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "// La misma cuenta que en la API, pero el resultado se arma para la página final del formulario.\nconst direccion = String($('Formulario de saldo').first().json.address || '').trim().toLowerCase();\nconst respuesta = $input.first().json;\n\nfunction enAVAX(wei) {\n  const base = 10n ** 18n;\n  const resto = (wei % base).toString().padStart(18, '0').replace(/0+$/, '');\n  return resto ? `${wei / base}.${resto}` : `${wei / base}`;\n}\n\nif (!/^0x[0-9a-f]{40}$/.test(direccion)) {\n  return [{ json: { ok: false, titulo: 'Revisá la dirección', mensaje: 'Una dirección de la C-Chain empieza con 0x y tiene 40 caracteres más (números y letras de la a a la f). Volvé atrás y probá de nuevo.' } }];\n}\nif (respuesta.error || typeof respuesta.result !== 'string') {\n  return [{ json: { ok: false, titulo: 'Fuji no respondió', mensaje: 'El RPC público de Fuji no respondió bien. Esperá un momento y probá de nuevo.' } }];\n}\n\nconst saldo = enAVAX(BigInt(respuesta.result));\nreturn [\n  {\n    json: {\n      ok: true,\n      direccion,\n      saldoAVAX: saldo,\n      titulo: `${saldo} AVAX`,\n      mensaje: `Es el saldo de ${direccion} en Avalanche Fuji, la red de prueba (son AVAX sin valor real). Miralo en el explorador: https://build.avax.network/explorer/fuji/c-chain/address/${direccion}`,\n    },\n  },\n];"
+      },
+      "id": "26e7868f-e3a1-4bd1-a514-7d5dc25cfb3c",
+      "name": "Pasar a AVAX (formulario)",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        720,
+        420
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "completion",
+        "respondWith": "text",
+        "completionTitle": "={{ $json.titulo }}",
+        "completionMessage": "={{ $json.mensaje }}",
+        "options": {}
+      },
+      "id": "1176d22e-2fe6-4611-9638-8d1965e4686e",
+      "name": "Mostrar el saldo",
+      "type": "n8n-nodes-base.form",
+      "typeVersion": 2.5,
+      "position": [
+        960,
+        420
+      ],
+      "webhookId": "9f9fafd2-0d89-4fd3-9328-4c690458afe8"
+    }
+  ],
+  "connections": {
+    "Al hacer clic en Probar": {
+      "main": [
+        [
+          {
+            "node": "Dirección de ejemplo",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Dirección de ejemplo": {
+      "main": [
+        [
+          {
+            "node": "Leer saldo en Fuji",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Consulta por URL": {
+      "main": [
+        [
+          {
+            "node": "Leer saldo en Fuji",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Leer saldo en Fuji": {
+      "main": [
+        [
+          {
+            "node": "Pasar de wei a AVAX",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Pasar de wei a AVAX": {
+      "main": [
+        [
+          {
+            "node": "Responder con el saldo",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Formulario de saldo": {
+      "main": [
+        [
+          {
+            "node": "Leer saldo (formulario)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Leer saldo (formulario)": {
+      "main": [
+        [
+          {
+            "node": "Pasar a AVAX (formulario)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Pasar a AVAX (formulario)": {
+      "main": [
+        [
+          {
+            "node": "Mostrar el saldo",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "pinData": {},
+  "meta": {
+    "templateCredsSetupCompleted": false
+  }
+}

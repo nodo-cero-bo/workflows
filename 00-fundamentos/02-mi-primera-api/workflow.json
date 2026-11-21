@@ -1,0 +1,277 @@
+{
+  "name": "Nodo Cero · Tu primera API",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## Tu primera API\n\nUn Webhook te da una URL propia: recibe datos y contesta en JSON, como cualquier API.\n\n### Qué hace\nRecibe un `POST` en `/webhook/hola-n8n` con un JSON como `{\"nombre\": \"Ada\"}` y responde:\n```\n{\n  \"saludo\": \"Hola, Ada. Te damos la bienvenida a Nodo Cero.\",\n  \"hora\": \"10:30\",\n  \"fecha\": \"2026-11-21\",\n  \"zona_horaria\": \"America/La_Paz\"\n}\n```\nSi falta el nombre, responde con el código **400** y te dice qué mandar.\n\n### Qué necesitás\nNada más que tu n8n. No usa credenciales. Para mandar el pedido, una terminal: curl (Mac, Linux o Git Bash) o PowerShell (Windows).\n\n### Cómo probarlo\n1. Abrí **Recibir el pedido** y copiá la **Test URL**.\n2. Tocá **Execute**: n8n se queda escuchando.\n3. Mandá el pedido desde una terminal, con tu URL:\n   ```\n   curl -X POST \"TU_TEST_URL\" \\\n     -H \"Content-Type: application/json\" \\\n     -d '{\"nombre\":\"Ada\"}'\n   ```\n   En PowerShell:\n   ```\n   Invoke-RestMethod -Method Post `\n     -Uri \"TU_TEST_URL\" `\n     -ContentType \"application/json\" `\n     -Body '{\"nombre\":\"Ada\"}'\n   ```\n4. Mirá la respuesta en la terminal y el camino del pedido en el canvas. Probá también sin nombre (`-d '{}'`): responde 400.",
+        "height": 780,
+        "width": 640,
+        "color": 3
+      },
+      "id": "703df6f6-fbd2-451d-8a00-35ceb87093e0",
+      "name": "Nota de inicio",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -740,
+        -360
+      ]
+    },
+    {
+      "parameters": {
+        "content": "### 1. La puerta de entrada\n**Webhook** crea la URL. Está configurado con:\n- **HTTP Method**: `POST`\n- **Path**: `hola-n8n`\n- **Respond**: Using 'Respond to Webhook' Node, para que la respuesta la arme un nodo de más adelante.\n\nLo que mandás llega en `$json.body`; los parámetros de la URL, en `$json.query`, y los encabezados, en `$json.headers`.",
+        "height": 520,
+        "width": 300,
+        "color": 7
+      },
+      "id": "d8a9b196-b6a1-44de-a3d7-1cb340de16b6",
+      "name": "Nota: webhook",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -60,
+        -360
+      ]
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "hola-n8n",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "7d02e053-92f1-4dc4-83d3-f2b71c3cd992",
+      "name": "Recibir el pedido",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.2,
+      "position": [
+        40,
+        0
+      ],
+      "webhookId": "90cb9459-2a7c-4888-b597-5b3a8887c96c"
+    },
+    {
+      "parameters": {
+        "content": "### 2. Validar antes de responder\nUna API prolija avisa cuando el pedido viene mal.\n\nLa condición mira `body.nombre` (sin espacios de más). Si viene vacío o no vino, el pedido sale por **false** y recibe un error claro en vez de un saludo raro.",
+        "height": 520,
+        "width": 300,
+        "color": 7
+      },
+      "id": "7d2d87f1-5f2b-46de-b782-978ad1b211a1",
+      "name": "Nota: validar",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        280,
+        -360
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 4
+          },
+          "conditions": [
+            {
+              "id": "ded458d5-d32e-432f-92ea-2f6cba99ef78",
+              "leftValue": "={{ String($json.body.nombre ?? '').trim() }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": false,
+        "options": {}
+      },
+      "id": "4580e5e7-2225-47ab-a315-2e9c1ad91f80",
+      "name": "¿Llegó un nombre?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.4,
+      "position": [
+        380,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "content": "### 3. Armar la respuesta\nTres campos con expresiones:\n- `saludo`: texto fijo y el nombre que llegó.\n- `hora`: `$now` es la hora del servidor de n8n; `.setZone('America/La_Paz')` la pasa a la hora de Bolivia y `.toFormat('HH:mm')` la escribe como 10:30.\n- `fecha`: lo mismo, con el formato año, mes y día.",
+        "height": 520,
+        "width": 300,
+        "color": 7
+      },
+      "id": "564a4ba9-5938-4dcc-942f-b53959a64228",
+      "name": "Nota: armar",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        620,
+        -360
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "manual",
+        "assignments": {
+          "assignments": [
+            {
+              "id": "1640d744-c89f-437a-91e8-5499bc79f740",
+              "name": "saludo",
+              "value": "=Hola, {{ String($json.body.nombre).trim() }}. Te damos la bienvenida a Nodo Cero.",
+              "type": "string"
+            },
+            {
+              "id": "d73a3fef-e6d6-42c1-9eb9-f11260e22819",
+              "name": "hora",
+              "value": "={{ $now.setZone('America/La_Paz').toFormat('HH:mm') }}",
+              "type": "string"
+            },
+            {
+              "id": "45bfecf6-5397-473c-a84d-d1a2f83845b0",
+              "name": "fecha",
+              "value": "={{ $now.setZone('America/La_Paz').toFormat('yyyy-MM-dd') }}",
+              "type": "string"
+            },
+            {
+              "id": "00002149-24b7-44d3-ac11-65c798d6202a",
+              "name": "zona_horaria",
+              "value": "America/La_Paz",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "0a6935d0-1a00-4812-8840-e8a17d28c139",
+      "name": "Armar el saludo",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        720,
+        -80
+      ]
+    },
+    {
+      "parameters": {
+        "content": "### 4. Contestar\n**Respond to Webhook** devuelve la respuesta a quien llamó.\n- Arriba: responde con el ítem tal como llega (**First Incoming Item**) y el código **200**.\n- Abajo: responde un JSON fijo con el código **400**, que quiere decir «el pedido tiene un problema».\n\nLos códigos HTTP cuentan qué pasó: **2xx** salió bien, **4xx** el pedido tiene un problema, **5xx** falló el servidor.",
+        "height": 760,
+        "width": 340,
+        "color": 7
+      },
+      "id": "52637c2c-2b34-4e01-8ff6-d5dbefc7678b",
+      "name": "Nota: contestar",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        960,
+        -360
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "firstIncomingItem",
+        "options": {
+          "responseCode": 200
+        }
+      },
+      "id": "60d28d22-db36-4f9a-80aa-52c635f9f90f",
+      "name": "Responder con el saludo",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        1080,
+        -80
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "{\n  \"error\": \"Falta el nombre.\",\n  \"como_usarlo\": \"Mandá un POST con un JSON como este: {\\\"nombre\\\": \\\"Ada\\\"}\"\n}",
+        "options": {
+          "responseCode": 400
+        }
+      },
+      "id": "fe864357-88fc-4518-b443-e601416f36be",
+      "name": "Responder que falta el nombre",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        1080,
+        180
+      ]
+    },
+    {
+      "parameters": {
+        "content": "### URL de prueba y URL de producción\n**Test URL** (`/webhook-test/hola-n8n`): anda mientras el editor está escuchando, después de tocar **Execute** o **Listen for test event**, y atiende un pedido por vez. Ves el recorrido en vivo en el canvas.\n\n**Production URL** (`/webhook/hola-n8n`): anda cuando **publicás** el workflow con el botón **Publish**. Atiende todos los pedidos, aunque cierres el editor, y cada uno queda en la pestaña **Executions**. Es la que compartís con tu app, tu página o tu equipo.",
+        "height": 200,
+        "width": 980,
+        "color": 5
+      },
+      "id": "0d92b9c8-dce8-4bf1-9896-c39366be09dd",
+      "name": "Nota: prueba y producción",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -60,
+        200
+      ]
+    }
+  ],
+  "connections": {
+    "Recibir el pedido": {
+      "main": [
+        [
+          {
+            "node": "¿Llegó un nombre?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "¿Llegó un nombre?": {
+      "main": [
+        [
+          {
+            "node": "Armar el saludo",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Responder que falta el nombre",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Armar el saludo": {
+      "main": [
+        [
+          {
+            "node": "Responder con el saludo",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "pinData": {},
+  "meta": {
+    "templateCredsSetupCompleted": false
+  }
+}

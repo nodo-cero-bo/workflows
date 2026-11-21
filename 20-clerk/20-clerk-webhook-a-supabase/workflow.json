@@ -1,0 +1,608 @@
+{
+  "name": "Nodo Cero · De Clerk a Supabase con un webhook",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## De Clerk a Supabase con un webhook\n\n### Qué hace\nCada vez que alguien se registra, cambia sus datos o borra su cuenta en tu aplicación de Clerk, Clerk le avisa a este webhook. El workflow comprueba que el aviso lo firmó Clerk (firma **Svix**) y mantiene al día la tabla `perfiles` de Supabase. Si la firma no coincide, responde **401** y no toca nada.\n\n### Qué necesitás\n- Una aplicación de Clerk con un endpoint de webhook suscripto a `user.created`, `user.updated` y `user.deleted`.\n- El **Signing Secret** de ese endpoint (`whsec_...`), en el nodo **Configuración**.\n- La tabla `perfiles` en Supabase (el SQL está en `supabase/sql/` del repo).\n- Una credencial **Supabase API** (`supabaseApi`) en los tres nodos de Supabase: Host (la URL del proyecto) y Secret Key.\n\n### Cómo probarlo\n1. Publicá el workflow (**Publish**) y copiá la **Production URL** del nodo **Recibir aviso de Clerk**.\n2. En Clerk: **Webhooks** → **Add Endpoint**, pegá la URL y marcá los tres eventos.\n3. Copiá el **Signing Secret**, pegalo en **Configuración** y volvé a publicar.\n4. En la pestaña **Testing** del endpoint mandá un `user.created` de ejemplo. En **Executions** vas a ver la ejecución, y en Supabase, la fila nueva.",
+        "height": 760,
+        "width": 520,
+        "color": 7
+      },
+      "id": "9a08d92e-df1b-4508-bc13-2660412c7a96",
+      "name": "Nota de inicio",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -620,
+        -420
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## 1. ¿Lo mandó Clerk de verdad?\nLa URL de un webhook es pública: cualquiera puede mandarle un pedido. Por eso Clerk (con Svix) firma cada aviso con el **Signing Secret** de tu endpoint.\n\n- **Raw Body** está activado en el Webhook: la firma se calcula sobre el cuerpo exacto, byte por byte, y n8n lo guarda aparte en el binario `data`. Si se verificara el JSON ya interpretado, un espacio de diferencia rompería la firma.\n- **Configuración** guarda el secreto y la tolerancia de tiempo (300 segundos).\n- **Verificar firma de Svix** arma `svix-id.svix-timestamp.cuerpo`, calcula un HMAC SHA-256 con la clave (lo que sigue a `whsec_`, decodificado de base64) y lo compara con las firmas `v1,...` de `svix-signature`. También rechaza avisos viejos, para que nadie pueda reenviar uno capturado.",
+        "height": 380,
+        "width": 700,
+        "color": 5
+      },
+      "id": "ba7baa2f-fa4c-4840-a5a4-6bc5f893da9e",
+      "name": "Nota firma",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -20,
+        -420
+      ]
+    },
+    {
+      "parameters": {
+        "content": "### Dónde va el secreto\nPegá el **Signing Secret** en **Configuración** → `secreto_firma`.\n\nSi tu plan de n8n tiene **Variables** (Pro o Enterprise), mejor: creá `CLERK_WEBHOOK_SIGNING_SECRET` y en ese campo poné `{{ $vars.CLERK_WEBHOOK_SIGNING_SECRET }}`. Así el secreto no viaja cuando exportás o compartís el workflow.\n\nSi lo pegaste en el nodo, borralo antes de compartir el JSON.",
+        "height": 300,
+        "width": 460,
+        "color": 3
+      },
+      "id": "59c3049c-5d9c-4307-8fa9-5b827b7b1331",
+      "name": "Nota secreto",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -20,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## 2. Un perfil por persona, aunque los avisos lleguen dos veces\nClerk puede mandar el mismo evento más de una vez y no garantiza el orden: un `user.updated` puede llegar antes que su `user.created`. Por eso altas y cambios van por el mismo camino:\n\n1. **Actualizar perfil** intenta cambiar la fila con ese `clerk_id`.\n2. **¿Ya existía?** mira si se actualizó alguna fila.\n3. Si no existía, **Crear perfil** la inserta.\n\nEs un *upsert* (insertar o actualizar) armado con nodos. Las bajas borran la fila. Los eventos que no son de usuarias responden 200 sin hacer nada, para que Clerk no los reintente.",
+        "height": 340,
+        "width": 760,
+        "color": 5
+      },
+      "id": "e4ae7d84-a7fc-4407-974a-0d4695c660af",
+      "name": "Nota upsert",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        920,
+        -560
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## 3. Qué le contesta n8n a Clerk\n- **200**: listo, Clerk marca el aviso como entregado (`Succeeded` en **Message Attempts**).\n- **401**: la firma no coincide o falta el secreto. Clerk lo reintenta más tarde: si corregís el secreto, los avisos pendientes vuelven a llegar.\n- Si Supabase falla (tabla o credencial mal), n8n responde con un error y Clerk también reintenta. Desde Clerk podés reenviar un aviso con **Replay**.",
+        "height": 260,
+        "width": 700,
+        "color": 5
+      },
+      "id": "04bbd2f3-9ab9-4485-8857-3aaeb5df80fa",
+      "name": "Nota respuestas",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1180,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "clerk-usuarias",
+        "responseMode": "responseNode",
+        "options": {
+          "rawBody": true
+        }
+      },
+      "id": "5e46fee1-a6aa-47ab-83c0-2fa13abfb05c",
+      "name": "Recibir aviso de Clerk",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.2,
+      "position": [
+        0,
+        0
+      ],
+      "webhookId": "bf5c9edc-b2a6-4ef9-b0ff-f0083a0651f8"
+    },
+    {
+      "parameters": {
+        "mode": "manual",
+        "assignments": {
+          "assignments": [
+            {
+              "id": "75287132-91a2-42dd-826d-6268e27a9146",
+              "name": "secreto_firma",
+              "value": "whsec_COMPLETAR_CON_TU_SIGNING_SECRET",
+              "type": "string"
+            },
+            {
+              "id": "447d4f63-660c-47e4-a838-38e5cdf314c6",
+              "name": "tolerancia_segundos",
+              "value": 300,
+              "type": "number"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "include": "all",
+        "options": {
+          "stripBinary": false
+        }
+      },
+      "id": "9f66f444-8ae7-47b2-b5b6-0f5e1a9ba6b5",
+      "name": "Configuración",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        220,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "// Comprueba que el aviso lo mandó Clerk (a través de Svix) y que nadie lo cambió en el camino.\n// Pasos de la verificación manual de Svix: https://docs.svix.com/receiving/verifying-payloads/how-manual\nconst crypto = require('crypto');\n\nconst config = $('Configuración').first().json;\nconst pedido = $input.first();\nconst h = pedido.json.headers ?? {};\n\n// Clerk manda los encabezados svix-*; el estándar Standard Webhooks usa webhook-* (se aceptan los dos).\nconst id = h['svix-id'] ?? h['webhook-id'];\nconst timestamp = h['svix-timestamp'] ?? h['webhook-timestamp'];\nconst firmas = h['svix-signature'] ?? h['webhook-signature'];\n\nconst rechazar = (motivo) => [{ json: { firma_valida: false, motivo } }];\n\nif (!id || !timestamp || !firmas) {\n  return rechazar('faltan los encabezados svix-id, svix-timestamp o svix-signature');\n}\n\nconst secreto = String(config.secreto_firma ?? '').trim();\nif (!/^whsec_[A-Za-z0-9+/=]{16,}$/.test(secreto)) {\n  return rechazar('falta el Signing Secret de Clerk (whsec_...) en el nodo Configuración');\n}\n\n// 1. La hora: un aviso viejo puede ser alguien reenviando un pedido que capturó.\nconst ahora = Math.floor(Date.now() / 1000);\nconst enviado = Number(timestamp);\nconst tolerancia = Number(config.tolerancia_segundos ?? 300);\nif (!Number.isFinite(enviado) || Math.abs(ahora - enviado) > tolerancia) {\n  return rechazar('svix-timestamp está fuera de la tolerancia: el aviso es viejo o la hora no coincide');\n}\n\n// 2. El cuerpo tal cual llegó, byte por byte (opción Raw Body del Webhook, binario «data»).\nif (!pedido.binary?.data) {\n  return rechazar('no llegó el cuerpo crudo: activá Raw Body en las opciones del Webhook');\n}\nconst cuerpo = await this.helpers.getBinaryDataBuffer(0, 'data');\n\n// 3. La firma esperada: HMAC SHA-256 de «id.timestamp.cuerpo».\n//    La clave es lo que sigue a whsec_, decodificado de base64.\nconst clave = Buffer.from(secreto.slice('whsec_'.length), 'base64');\nconst esperada = crypto.createHmac('sha256', clave).update(`${id}.${timestamp}.`).update(cuerpo).digest();\n\n// 4. svix-signature puede traer varias firmas separadas por espacios («v1,AAA v1,BBB»):\n//    alcanza con que una coincida. timingSafeEqual compara sin dar pistas por el tiempo que tarda.\nconst coincide = String(firmas)\n  .split(' ')\n  .some((parte) => {\n    const [version, firma] = parte.split(',');\n    if (version !== 'v1' || !firma) return false;\n    const recibida = Buffer.from(firma, 'base64');\n    return recibida.length === esperada.length && crypto.timingSafeEqual(recibida, esperada);\n  });\nif (!coincide) return rechazar('la firma no coincide con el Signing Secret');\n\n// 5. Firma válida: recién ahora se lee el contenido.\nlet evento;\ntry {\n  evento = JSON.parse(cuerpo.toString('utf8'));\n} catch (e) {\n  return rechazar('el cuerpo no es JSON');\n}\n\n// 6. El perfil con las columnas de la tabla perfiles.\nconst d = evento.data ?? {};\nconst correos = Array.isArray(d.email_addresses) ? d.email_addresses : [];\nconst principal = correos.find((c) => c.id === d.primary_email_address_id) ?? correos[0];\nconst fecha = (ms) => (typeof ms === 'number' ? new Date(ms).toISOString() : null);\n\nreturn [\n  {\n    json: {\n      firma_valida: true,\n      svix_id: id,\n      tipo: evento.type,\n      perfil: {\n        clerk_id: d.id ?? null,\n        email: principal?.email_address ?? null,\n        nombre: [d.first_name, d.last_name].filter(Boolean).join(' ') || d.username || null,\n        avatar_url: d.image_url ?? null,\n        // creado_en y actualizado_en no pueden quedar vacías en la tabla: si faltan, va la hora del evento.\n        creado_en: fecha(d.created_at) ?? fecha(evento.timestamp) ?? new Date().toISOString(),\n        actualizado_en: fecha(d.updated_at) ?? fecha(evento.timestamp) ?? new Date().toISOString(),\n      },\n    },\n  },\n];"
+      },
+      "id": "578da0e7-d118-4723-b417-d501a6871d7b",
+      "name": "Verificar firma de Svix",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        440,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 4
+          },
+          "conditions": [
+            {
+              "id": "9010aee1-b298-44f9-acfe-1f6afdd79b0a",
+              "leftValue": "={{ $json.firma_valida }}",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": false,
+        "options": {}
+      },
+      "id": "e4c4dd3e-53c9-43c2-8be3-2117630f4f7c",
+      "name": "¿Firma válida?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.4,
+      "position": [
+        660,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "rules",
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 4
+                },
+                "conditions": [
+                  {
+                    "id": "c86b3844-3918-4438-be29-25144bd1de5c",
+                    "leftValue": "={{ $json.tipo }}",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "rightValue": "user.created"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "user.created"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 4
+                },
+                "conditions": [
+                  {
+                    "id": "517ac5b3-9757-4d7c-a9c8-eabd93dacdf9",
+                    "leftValue": "={{ $json.tipo }}",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "rightValue": "user.updated"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "user.updated"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 4
+                },
+                "conditions": [
+                  {
+                    "id": "a54d061b-fb6e-477c-ab9a-6e2fd7828b27",
+                    "leftValue": "={{ $json.tipo }}",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "rightValue": "user.deleted"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "user.deleted"
+            }
+          ]
+        },
+        "looseTypeValidation": false,
+        "options": {
+          "fallbackOutput": "extra",
+          "renameFallbackOutput": "otro evento"
+        }
+      },
+      "id": "a7c85d66-0c90-4974-a60e-d2ba9412eb17",
+      "name": "¿Qué evento llegó?",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.5,
+      "position": [
+        900,
+        -20
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "tableId": "perfiles",
+        "filterType": "manual",
+        "matchType": "allFilters",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "clerk_id",
+              "condition": "eq",
+              "keyValue": "={{ $json.perfil.clerk_id }}"
+            }
+          ]
+        },
+        "dataToSend": "defineBelow",
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "email",
+              "fieldValue": "={{ $json.perfil.email }}"
+            },
+            {
+              "fieldId": "nombre",
+              "fieldValue": "={{ $json.perfil.nombre }}"
+            },
+            {
+              "fieldId": "avatar_url",
+              "fieldValue": "={{ $json.perfil.avatar_url }}"
+            },
+            {
+              "fieldId": "actualizado_en",
+              "fieldValue": "={{ $json.perfil.actualizado_en }}"
+            }
+          ]
+        }
+      },
+      "id": "c94ea3c2-f0df-460b-9660-815393c5619c",
+      "name": "Actualizar perfil",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        1180,
+        -160
+      ],
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 4
+          },
+          "conditions": [
+            {
+              "id": "e45dbbb6-c125-4ad6-8578-451ebc4a80f1",
+              "leftValue": "={{ $json.clerk_id }}",
+              "operator": {
+                "type": "string",
+                "operation": "exists",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": false,
+        "options": {}
+      },
+      "id": "b301f4b1-cdfc-4888-a0b8-2c226b5403e8",
+      "name": "¿Ya existía?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.4,
+      "position": [
+        1400,
+        -160
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "create",
+        "tableId": "perfiles",
+        "dataToSend": "defineBelow",
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "clerk_id",
+              "fieldValue": "={{ $('Verificar firma de Svix').first().json.perfil.clerk_id }}"
+            },
+            {
+              "fieldId": "email",
+              "fieldValue": "={{ $('Verificar firma de Svix').first().json.perfil.email }}"
+            },
+            {
+              "fieldId": "nombre",
+              "fieldValue": "={{ $('Verificar firma de Svix').first().json.perfil.nombre }}"
+            },
+            {
+              "fieldId": "avatar_url",
+              "fieldValue": "={{ $('Verificar firma de Svix').first().json.perfil.avatar_url }}"
+            },
+            {
+              "fieldId": "creado_en",
+              "fieldValue": "={{ $('Verificar firma de Svix').first().json.perfil.creado_en }}"
+            },
+            {
+              "fieldId": "actualizado_en",
+              "fieldValue": "={{ $('Verificar firma de Svix').first().json.perfil.actualizado_en }}"
+            }
+          ]
+        }
+      },
+      "id": "e8a9e1e3-167b-49f5-9ccf-3da91c3a282b",
+      "name": "Crear perfil",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        1620,
+        -60
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "delete",
+        "tableId": "perfiles",
+        "filterType": "manual",
+        "matchType": "allFilters",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "clerk_id",
+              "condition": "eq",
+              "keyValue": "={{ $json.perfil.clerk_id }}"
+            }
+          ]
+        }
+      },
+      "id": "22560acc-7347-454c-a7a4-f00e1c56d941",
+      "name": "Borrar perfil",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        1180,
+        120
+      ],
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ ok: true, evento: $('Verificar firma de Svix').first().json.tipo, clerk_id: $('Verificar firma de Svix').first().json.perfil?.clerk_id ?? null }) }}",
+        "options": {
+          "responseCode": 200
+        }
+      },
+      "id": "dff24138-5c0d-44d0-b1c6-b20d005a70b3",
+      "name": "Responder 200",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        1860,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ ok: false, error: 'firma inválida', motivo: $json.motivo }) }}",
+        "options": {
+          "responseCode": 401
+        }
+      },
+      "id": "206c13c7-303c-4d14-8088-edf32e081e70",
+      "name": "Responder 401",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        900,
+        200
+      ]
+    }
+  ],
+  "connections": {
+    "Recibir aviso de Clerk": {
+      "main": [
+        [
+          {
+            "node": "Configuración",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Configuración": {
+      "main": [
+        [
+          {
+            "node": "Verificar firma de Svix",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Verificar firma de Svix": {
+      "main": [
+        [
+          {
+            "node": "¿Firma válida?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "¿Firma válida?": {
+      "main": [
+        [
+          {
+            "node": "¿Qué evento llegó?",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Responder 401",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "¿Qué evento llegó?": {
+      "main": [
+        [
+          {
+            "node": "Actualizar perfil",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Actualizar perfil",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Borrar perfil",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Responder 200",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Actualizar perfil": {
+      "main": [
+        [
+          {
+            "node": "¿Ya existía?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "¿Ya existía?": {
+      "main": [
+        [
+          {
+            "node": "Responder 200",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Crear perfil",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Crear perfil": {
+      "main": [
+        [
+          {
+            "node": "Responder 200",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Borrar perfil": {
+      "main": [
+        [
+          {
+            "node": "Responder 200",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "pinData": {},
+  "meta": {
+    "templateCredsSetupCompleted": false
+  }
+}

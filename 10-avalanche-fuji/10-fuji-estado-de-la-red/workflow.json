@@ -1,0 +1,195 @@
+{
+  "name": "Nodo Cero · Estado de la red Fuji",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## Estado de la red Fuji\n\n### Qué hace\nLe pregunta al RPC público de Avalanche Fuji en qué red está (chainId), cuál es el último bloque y cuánto cuesta el gas. Las respuestas llegan en hexadecimal: el último nodo las pasa a números que se leen.\n\n### Qué necesitás\nNada más que tu n8n. No usa credenciales ni wallet: el RPC público de Fuji se lee sin clave.\n\n### Cómo probarlo\n1. Hacé clic en **Execute**.\n2. Abrí **Pasar a números legibles**: `chainId` tiene que ser 43113 y `ultimoBloque`, un número que crece cada uno o dos segundos.\n3. Abrí el enlace de `explorador` y compará con el bloque que muestra el explorador de Fuji.\n\n**Red:** Avalanche Fuji C-Chain · chainId 43113 (0xa869)\n**RPC público:** `https://api.avax-test.network/ext/bc/C/rpc`",
+        "height": 440,
+        "width": 500,
+        "color": 7
+      },
+      "id": "84553859-0658-4c71-9451-6d03242324e9",
+      "name": "Nota de inicio",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -600,
+        -300
+      ]
+    },
+    {
+      "parameters": {
+        "content": "### JSON-RPC: preguntas en un POST\nCada HTTP Request manda un POST al RPC con un JSON. `method` es la pregunta y `params`, sus datos:\n- `eth_chainId`: qué red es.\n- `eth_getBlockByNumber` con `\"latest\"`: el último bloque. El `false` pide los hashes de las transacciones y no las transacciones enteras.\n- `eth_gasPrice`: el precio de una unidad de gas, en wei.\n\nLa respuesta llega en `result`. Los tres nodos van en fila: cada uno se ejecuta una vez por ítem que recibe, y acá llega uno.",
+        "height": 260,
+        "width": 620,
+        "color": 5
+      },
+      "id": "afbbd22e-8343-49ec-a974-9945967833b1",
+      "name": "Nota JSON-RPC",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        180,
+        -300
+      ]
+    },
+    {
+      "parameters": {
+        "content": "### Del hexadecimal a algo legible\nLos números llegan como texto en hexadecimal (`0xa869`). `BigInt('0xa869')` los convierte sin perder precisión, aunque sean enormes, como los montos en wei.\n- 1 AVAX = 10^18 wei\n- 1 nAVAX (o gwei) = 10^9 wei\n\nLa hora del bloque viene en hora Unix (segundos desde 1970) y Luxon (`DateTime`) la pasa a la hora de Bolivia.",
+        "height": 220,
+        "width": 400,
+        "color": 5
+      },
+      "id": "018fc54f-da4c-4ec2-892e-3ae508648175",
+      "name": "Nota legible",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        840,
+        -260
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "aa84b4db-5f27-41a0-900a-7689ccea048a",
+      "name": "Al hacer clic en Probar",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.avax-test.network/ext/bc/C/rpc",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "{\n  \"jsonrpc\": \"2.0\",\n  \"id\": 1,\n  \"method\": \"eth_chainId\",\n  \"params\": []\n}",
+        "options": {}
+      },
+      "id": "a6a3ca01-fb51-4b68-91c6-dcc72d1f7f6b",
+      "name": "Pedir el chainId",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        240,
+        0
+      ],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.avax-test.network/ext/bc/C/rpc",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "{\n  \"jsonrpc\": \"2.0\",\n  \"id\": 1,\n  \"method\": \"eth_getBlockByNumber\",\n  \"params\": [\"latest\", false]\n}",
+        "options": {}
+      },
+      "id": "1f980da0-1135-4f36-bdc5-9fdaaba0ff43",
+      "name": "Pedir el último bloque",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        480,
+        0
+      ],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.avax-test.network/ext/bc/C/rpc",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "{\n  \"jsonrpc\": \"2.0\",\n  \"id\": 1,\n  \"method\": \"eth_gasPrice\",\n  \"params\": []\n}",
+        "options": {}
+      },
+      "id": "a4be280f-a022-43ce-ac40-9d76db184ded",
+      "name": "Pedir el precio del gas",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        720,
+        0
+      ],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "// Junta las tres respuestas del RPC y las pasa de hexadecimal a números que se leen.\n// Cada nodo anterior se lee por su nombre, por ejemplo $('Pedir el chainId').first().json\n\nfunction resultado(nodo) {\n  const r = $(nodo).first().json;\n  if (r.error || r.result === undefined || r.result === null) {\n    throw new Error(`«${nodo}» no trajo un resultado: ${JSON.stringify(r.error ?? r)}`);\n  }\n  return r.result;\n}\n\n// Pasa un entero en wei a otra unidad, como texto y sin redondear.\n// decimales = 9 para nAVAX (también llamado gwei) y 18 para AVAX.\nfunction enUnidad(wei, decimales) {\n  const base = 10n ** BigInt(decimales);\n  const entero = wei / base;\n  const resto = (wei % base).toString().padStart(decimales, '0').replace(/0+$/, '');\n  return resto ? `${entero}.${resto}` : `${entero}`;\n}\n\nconst chainIdHex = resultado('Pedir el chainId');\nconst bloque = resultado('Pedir el último bloque');\nconst precioGas = BigInt(resultado('Pedir el precio del gas'));\n\nconst chainId = Number(BigInt(chainIdHex)); // 0xa869 → 43113\nconst numero = Number(BigInt(bloque.number));\nconst segundos = Number(BigInt(bloque.timestamp)); // hora Unix: segundos desde 1970\nconst hora = DateTime.fromSeconds(segundos, { zone: 'America/La_Paz' });\nconst tarifaBase = BigInt(bloque.baseFeePerGas ?? '0x0');\nconst GAS_TRANSFERENCIA = 21000n; // lo que gasta mandar AVAX de una wallet a otra, sin contrato\n\nreturn [\n  {\n    json: {\n      red: chainId === 43113 ? 'Avalanche Fuji C-Chain' : `otra red (chainId ${chainId})`,\n      esFuji: chainId === 43113,\n      chainId,\n      chainIdHex,\n      ultimoBloque: numero,\n      ultimoBloqueHex: bloque.number,\n      horaDelBloque: hora.toFormat('dd/MM/yyyy HH:mm:ss'),\n      zonaHoraria: 'America/La_Paz',\n      haceSegundos: Math.max(0, Math.round($now.toSeconds() - segundos)),\n      transaccionesEnElBloque: bloque.transactions.length,\n      gasUsadoEnElBloque: Number(BigInt(bloque.gasUsed)),\n      precioDelGas: { wei: precioGas.toString(), nAVAX: enUnidad(precioGas, 9) },\n      tarifaBaseDelBloque: { wei: tarifaBase.toString(), nAVAX: enUnidad(tarifaBase, 9) },\n      costoDeUnaTransferencia: { gas: Number(GAS_TRANSFERENCIA), AVAX: enUnidad(GAS_TRANSFERENCIA * precioGas, 18) },\n      explorador: `https://build.avax.network/explorer/fuji/c-chain/block/${numero}`,\n    },\n  },\n];"
+      },
+      "id": "b908f03f-d1f2-4826-84e7-bf1eb7a585c1",
+      "name": "Pasar a números legibles",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        960,
+        0
+      ]
+    }
+  ],
+  "connections": {
+    "Al hacer clic en Probar": {
+      "main": [
+        [
+          {
+            "node": "Pedir el chainId",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Pedir el chainId": {
+      "main": [
+        [
+          {
+            "node": "Pedir el último bloque",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Pedir el último bloque": {
+      "main": [
+        [
+          {
+            "node": "Pedir el precio del gas",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Pedir el precio del gas": {
+      "main": [
+        [
+          {
+            "node": "Pasar a números legibles",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "pinData": {},
+  "meta": {
+    "templateCredsSetupCompleted": false
+  }
+}

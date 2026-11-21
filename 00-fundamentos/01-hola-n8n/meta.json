@@ -1,0 +1,21 @@
+{
+  "id": "01-hola-n8n",
+  "titulo": "Hola n8n: datos, expresiones y decisiones",
+  "resumen": "Tu primer workflow: armá datos, transformalos con JavaScript y tomá una decisión con IF.",
+  "categoria": "fundamentos",
+  "nivel": "inicial",
+  "minutos": 10,
+  "tecnologias": [
+    "n8n"
+  ],
+  "credenciales": [],
+  "aprendes": [
+    "Qué es un ítem y cómo viaja de nodo en nodo",
+    "Expresiones con {{ }} y $json",
+    "Edit Fields (Set) con campos de distintos tipos",
+    "Code node en JavaScript que transforma ítems",
+    "IF con dos ramas"
+  ],
+  "probado": "ejecutado",
+  "orden": 1
+}

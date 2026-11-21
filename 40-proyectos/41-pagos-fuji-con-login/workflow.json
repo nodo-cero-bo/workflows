@@ -1,0 +1,608 @@
+{
+  "name": "Nodo Cero · Pagos en Fuji con login",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## Pagos en Fuji con login\n\n### Qué hace\nUna API para tu página: la persona inicia sesión con **Clerk**, manda el hash de su pago y n8n:\n1. verifica su sesión (el token de Clerk, firmado con RS256);\n2. lee el pago en **Avalanche Fuji** y revisa estado, destino, monto y confirmaciones;\n3. si está todo bien, lo registra en **Supabase** (`pagos_fuji`) a nombre de esa persona (`clerk_id`);\n4. responde JSON: verificado o no, con el motivo.\n\n### Qué necesitás\n- Una credencial **Supabase API** (`supabaseApi`): Host (la URL del proyecto) y la Secret Key. Elegila en **Registrar en Supabase**.\n- La tabla `pagos_fuji`: corré el SQL de `supabase/sql` del repo.\n- La **JWKS Public Key** de Clerk en formato PEM (Clerk, página API keys). No es una credencial de n8n: se pega en **Configuración**.\n- La dirección de Fuji que cobra (la «tienda»), el monto mínimo y las confirmaciones, también en **Configuración**.\n\n### Cómo probarlo\n1. Completá **Configuración** y elegí la credencial de Supabase.\n2. En **Pedido de ejemplo** pegá un token de sesión y el hash de un pago tuyo, y tocá **Execute**.\n3. Para usarlo desde tu página: **Publish**, copiá la Production URL de **Recibir pago** y llamala con `POST`, la cabecera `Authorization: Bearer <token>` y el cuerpo `{\"txHash\": \"0x...\"}`.\n\nRespuestas: 200 (verificado o no, con los motivos), 400 (falta el hash), 401 (sesión inválida), 409 (ese pago ya estaba registrado) y 502 (Fuji o Supabase no respondieron).",
+        "height": 1000,
+        "width": 640,
+        "color": 7
+      },
+      "id": "e979307c-cc1b-4e94-b60d-4364e725b697",
+      "name": "Nota de inicio",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -760,
+        -420
+      ]
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "nc-pagos-fuji-con-login",
+        "responseMode": "responseNode",
+        "options": {
+          "allowedOrigins": "*"
+        }
+      },
+      "id": "72e67077-4bbf-4d1c-afb2-bff9503e6900",
+      "name": "Recibir pago",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.2,
+      "position": [
+        0,
+        0
+      ],
+      "webhookId": "ce062136-1b41-4f0e-ab76-da5ca3e62cb8"
+    },
+    {
+      "parameters": {},
+      "id": "614f4f50-c6d9-4f9e-8096-0137aa1946ce",
+      "name": "Probar sin la página",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        260
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "raw",
+        "jsonOutput": "{\n  \"headers\": { \"authorization\": \"Bearer PEGÁ_ACÁ_UN_TOKEN_DE_SESIÓN_DE_CLERK\" },\n  \"body\": { \"txHash\": \"PEGÁ_ACÁ_EL_HASH_DE_TU_PAGO\" }\n}",
+        "options": {}
+      },
+      "id": "8ee82f9d-8749-4f80-917a-e695632665e8",
+      "name": "Pedido de ejemplo",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        220,
+        260
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "manual",
+        "assignments": {
+          "assignments": [
+            {
+              "id": "9a661783-0158-4295-9abe-c806ea09f8ef",
+              "name": "clerk_clave_publica",
+              "value": "-----BEGIN PUBLIC KEY-----\nPEGÁ_ACÁ_LA_JWKS_PUBLIC_KEY_DE_CLERK\n-----END PUBLIC KEY-----",
+              "type": "string"
+            },
+            {
+              "id": "b0176426-dbd2-4939-afb3-396fa1429894",
+              "name": "origenes_permitidos",
+              "value": "http://localhost:5500",
+              "type": "string"
+            },
+            {
+              "id": "3e0d1118-25b7-415a-a969-99706f00a039",
+              "name": "direccion_tienda",
+              "value": "PEGÁ_ACÁ_LA_DIRECCIÓN_0x_QUE_COBRA",
+              "type": "string"
+            },
+            {
+              "id": "55d53804-3378-4359-bd4a-d2cd7f97c57f",
+              "name": "monto_minimo_avax",
+              "value": "0.01",
+              "type": "string"
+            },
+            {
+              "id": "da99ef1e-ea49-4051-9449-880b014dcce7",
+              "name": "confirmaciones_minimas",
+              "value": 1,
+              "type": "number"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "include": "all",
+        "options": {}
+      },
+      "id": "e1dc1ec3-0174-4afc-b23e-f4f025e06357",
+      "name": "Configuración",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        440,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "// Revisa la configuración, la sesión de Clerk y el hash, y deja pasar el pedido nada más si todo está en orden.\nconst crypto = require('crypto');\nconst item = $input.first().json;\nconst rechazo = (codigo, motivo) => [{ json: { valido: false, codigo, motivo } }];\n\n// 1. Configuración: la clave pública de Clerk (PEM) y la dirección que cobra\nlet clave;\ntry {\n  clave = crypto.createPublicKey(String(item.clerk_clave_publica ?? '').trim());\n} catch (e) {\n  return rechazo(500, 'Falta configurar clerk_clave_publica: pegá la JWKS Public Key de Clerk en formato PEM en el nodo Configuración.');\n}\nconst tienda = String(item.direccion_tienda ?? '').trim().toLowerCase();\nif (!/^0x[0-9a-f]{40}$/.test(tienda)) {\n  return rechazo(500, 'Falta configurar direccion_tienda: la dirección 0x de Fuji que cobra, en el nodo Configuración.');\n}\n// El monto mínimo va en AVAX, como texto: «0.01» (también se acepta «0,01»). Se pasa a wei en Verificar el pago.\nconst montoMinimo = String(item.monto_minimo_avax ?? '').trim().replace(',', '.');\nif (!/^\\d+(\\.\\d{1,18})?$/.test(montoMinimo)) {\n  return rechazo(500, 'Revisá monto_minimo_avax en el nodo Configuración: un monto en AVAX, por ejemplo 0.01 (hasta 18 decimales).');\n}\nconst confirmacionesMinimas = Number(item.confirmaciones_minimas ?? 1);\nif (!Number.isInteger(confirmacionesMinimas) || confirmacionesMinimas < 0) {\n  return rechazo(500, 'Revisá confirmaciones_minimas en el nodo Configuración: un número entero, 0 o más.');\n}\n\n// 2. El token de sesión llega en la cabecera «Authorization: Bearer <token>»\nconst token = String(item.headers?.authorization ?? '').match(/^Bearer\\s+(\\S+)$/i)?.[1];\nif (!token) return rechazo(401, 'Falta el token de sesión: mandalo en la cabecera Authorization: Bearer <token>.');\nconst partes = token.split('.');\nif (partes.length !== 3) return rechazo(401, 'El token no tiene la forma de un JWT.');\nlet cabecera, datos;\ntry {\n  cabecera = JSON.parse(Buffer.from(partes[0], 'base64url').toString('utf8'));\n  datos = JSON.parse(Buffer.from(partes[1], 'base64url').toString('utf8'));\n} catch (e) {\n  return rechazo(401, 'No se pudo leer el token.');\n}\nif (cabecera.alg !== 'RS256') return rechazo(401, 'El token no está firmado con RS256.');\n\n// 3. La firma: prueba que el token lo emitió tu aplicación de Clerk y que nadie lo cambió\nconst firmaOk = crypto.createVerify('RSA-SHA256').update(`${partes[0]}.${partes[1]}`).verify(clave, Buffer.from(partes[2], 'base64url'));\nif (!firmaOk) return rechazo(401, 'La firma del token no es válida para esta aplicación de Clerk.');\n\n// 4. Vigencia (exp y nbf), con 5 segundos de margen por diferencias de reloj\nconst ahora = Math.floor(Date.now() / 1000);\nif (typeof datos.exp !== 'number' || datos.exp < ahora - 5) return rechazo(401, 'El token venció: pedí uno nuevo con getToken() justo antes de llamar.');\nif (typeof datos.nbf === 'number' && datos.nbf > ahora + 5) return rechazo(401, 'El token todavía no es válido.');\n\n// 5. Origen (azp): que el token salga de tu página. Si dejás origenes_permitidos vacío, no se revisa.\nconst origenes = String(item.origenes_permitidos ?? '').split(',').map((o) => o.trim()).filter(Boolean);\nif (origenes.length && datos.azp && !origenes.includes(datos.azp)) {\n  return rechazo(401, `El token salió de ${datos.azp}, que no está en origenes_permitidos.`);\n}\nif (!datos.sub) return rechazo(401, 'El token no trae el id de la persona (sub).');\n\n// 6. El hash del pago\nconst txHash = String(item.body?.txHash ?? '').trim().toLowerCase();\nif (!/^0x[0-9a-f]{64}$/.test(txHash)) {\n  return rechazo(400, 'Falta txHash o no tiene la forma de un hash de Fuji: 0x y 64 caracteres hexadecimales.');\n}\n\nreturn [{\n  json: {\n    valido: true,\n    codigo: 200,\n    clerk_id: datos.sub,\n    txHash,\n    direccion_tienda: tienda,\n    monto_minimo_avax: montoMinimo,\n    confirmaciones_minimas: confirmacionesMinimas,\n  },\n}];"
+      },
+      "id": "295492de-e0f4-44f5-b3b1-3729fbaeeae2",
+      "name": "Verificar sesión de Clerk",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        660,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 4
+          },
+          "conditions": [
+            {
+              "id": "5b3c1e0a-41aa-4c0e-9b1d-0f2a6c7d8e01",
+              "leftValue": "={{ $json.valido }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": false,
+        "options": {}
+      },
+      "id": "f76cadf4-ed59-4d30-b7bf-c4886947c901",
+      "name": "¿Sesión y datos válidos?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.4,
+      "position": [
+        880,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ ok: false, verificado: false, motivo: $json.motivo }) }}",
+        "options": {
+          "responseCode": "={{ $json.codigo }}"
+        }
+      },
+      "id": "56d9c268-55a3-49b9-aa95-71458050aa76",
+      "name": "Responder error",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        1100,
+        220
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.avax-test.network/ext/bc/C/rpc",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "=[\n  { \"jsonrpc\": \"2.0\", \"id\": 1, \"method\": \"eth_getTransactionByHash\", \"params\": [\"{{ $json.txHash }}\"] },\n  { \"jsonrpc\": \"2.0\", \"id\": 2, \"method\": \"eth_getTransactionReceipt\", \"params\": [\"{{ $json.txHash }}\"] },\n  { \"jsonrpc\": \"2.0\", \"id\": 3, \"method\": \"eth_blockNumber\", \"params\": [] }\n]",
+        "options": {
+          "timeout": 20000
+        }
+      },
+      "id": "13c1e6d8-aced-43ca-9c2b-e9df86df5e18",
+      "name": "Leer el pago en Fuji",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        1100,
+        0
+      ],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 1500,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "// Aplica las reglas del pago a lo que respondió Fuji: estado, destino, monto y confirmaciones.\nconst pedido = $('Verificar sesión de Clerk').first().json;\n// El lote JSON-RPC devuelve una respuesta por pedido; se ordenan por id (1 transacción, 2 recibo, 3 último bloque).\nconst respuestas = $input.all().map((i) => i.json);\nconst r = Object.fromEntries(respuestas.map((x) => [x.id, x]));\nconst tx = r[1]?.result ?? null;\nconst recibo = r[2]?.result ?? null;\nconst ultimo = r[3]?.result ? BigInt(r[3].result) : null;\n\n// 1 AVAX = 10^18 wei. Se pasa con texto y BigInt para no perder precisión con decimales.\nconst aWei = (avax) => {\n  const [entero, decimales = ''] = String(avax).trim().split('.');\n  return BigInt(entero || '0') * 10n ** 18n + BigInt((decimales + '0'.repeat(18)).slice(0, 18) || '0');\n};\nconst aAvax = (wei) => {\n  const base = 10n ** 18n;\n  const resto = (wei % base).toString().padStart(18, '0').replace(/0+$/, '');\n  return resto ? `${wei / base}.${resto}` : `${wei / base}`;\n};\n\nconst motivos = [];\n// Si falla el pedido entero (la red, o el RPC limita los pedidos), llega un único ítem con «error» y sin id:\n// Leer el pago en Fuji tiene On Error: Continue para que la API responda igual, con 502.\nconst errorRpc = respuestas.find((x) => x?.error)?.error ?? (!r[1] || !r[2] || !r[3] ? { message: 'la respuesta llegó incompleta' } : null);\nif (errorRpc) motivos.push(`El RPC de Fuji respondió un error: ${errorRpc.message ?? JSON.stringify(errorRpc)}. Probá de nuevo en un momento.`);\n\nconst pago = {\n  txHash: pedido.txHash,\n  explorador: `https://build.avax.network/explorer/fuji/c-chain/tx/${pedido.txHash}`,\n  clerk_id: pedido.clerk_id,\n};\nif (!tx) {\n  if (!errorRpc) motivos.push('La transacción no existe en Fuji: revisá el hash y que sea de la red de prueba.');\n} else {\n  const valor = BigInt(tx.value);\n  const bloque = tx.blockNumber ? BigInt(tx.blockNumber) : null;\n  // Si ya está en un bloque, tiene por lo menos 1 confirmación: el «último bloque» del RPC público a veces llega uno atrasado.\n  const confirmaciones = bloque !== null && ultimo !== null ? Math.max(1, Number(ultimo - bloque + 1n)) : 0;\n  Object.assign(pago, {\n    desde: tx.from.toLowerCase(),\n    hacia: String(tx.to ?? '').toLowerCase(),\n    monto_wei: valor.toString(),\n    monto_avax: aAvax(valor),\n    bloque: bloque === null ? null : Number(bloque),\n    confirmaciones,\n  });\n  if (!recibo) motivos.push('La transacción todavía no tiene recibo: esperá unos segundos y volvé a probar.');\n  else if (recibo.status !== '0x1') motivos.push('La transacción falló en la red (status 0x0).');\n  if (pago.hacia !== pedido.direccion_tienda) {\n    motivos.push(`El pago fue a ${pago.hacia || 'ninguna dirección (creó un contrato)'} y no a la dirección que cobra.`);\n  }\n  if (valor < aWei(pedido.monto_minimo_avax)) {\n    motivos.push(`El monto (${pago.monto_avax} AVAX) es menor que el mínimo (${pedido.monto_minimo_avax} AVAX).`);\n  }\n  if (confirmaciones < pedido.confirmaciones_minimas) {\n    motivos.push(`Tiene ${confirmaciones} confirmaciones y se piden ${pedido.confirmaciones_minimas}.`);\n  }\n}\n\nreturn [{ json: { verificado: motivos.length === 0, error_rpc: Boolean(errorRpc), motivos, minimo_avax: pedido.monto_minimo_avax, pago } }];"
+      },
+      "id": "2b8c5f04-cf0f-44ad-9f30-611e27a70c02",
+      "name": "Verificar el pago",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1320,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 4
+          },
+          "conditions": [
+            {
+              "id": "7d2e9f14-0b6c-4c55-a1e3-2f4b8c9d0e02",
+              "leftValue": "={{ $json.verificado }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": false,
+        "options": {}
+      },
+      "id": "7e2f9192-ed2f-4e5b-b8b7-1a0dd64c97ed",
+      "name": "¿Pago verificado?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.4,
+      "position": [
+        1540,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ ok: !$json.error_rpc, verificado: false, motivos: $json.motivos, pago: $json.pago }) }}",
+        "options": {
+          "responseCode": "={{ $json.error_rpc ? 502 : 200 }}"
+        }
+      },
+      "id": "396baa51-1e75-4e93-b1e1-56b918311c56",
+      "name": "Responder no verificado",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        1760,
+        220
+      ]
+    },
+    {
+      "parameters": {
+        "tableId": "pagos_fuji",
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "tx_hash",
+              "fieldValue": "={{ $json.pago.txHash }}"
+            },
+            {
+              "fieldId": "clerk_id",
+              "fieldValue": "={{ $json.pago.clerk_id }}"
+            },
+            {
+              "fieldId": "desde",
+              "fieldValue": "={{ $json.pago.desde }}"
+            },
+            {
+              "fieldId": "hacia",
+              "fieldValue": "={{ $json.pago.hacia }}"
+            },
+            {
+              "fieldId": "monto_wei",
+              "fieldValue": "={{ $json.pago.monto_wei }}"
+            },
+            {
+              "fieldId": "monto_avax",
+              "fieldValue": "={{ $json.pago.monto_avax }}"
+            },
+            {
+              "fieldId": "bloque",
+              "fieldValue": "={{ $json.pago.bloque }}"
+            },
+            {
+              "fieldId": "verificado",
+              "fieldValue": "={{ true }}"
+            }
+          ]
+        }
+      },
+      "id": "cd4ef238-6509-49e9-8a63-c017dc3fc610",
+      "name": "Registrar en Supabase",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        1760,
+        0
+      ],
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 4
+          },
+          "conditions": [
+            {
+              "id": "9a4f2c36-1d7e-4b88-b5f0-3e6a9d1c2f03",
+              "leftValue": "={{ $json.tx_hash }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": false,
+        "options": {}
+      },
+      "id": "fe72d590-d510-4274-a7ac-47d5418acd26",
+      "name": "¿Quedó registrado?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.4,
+      "position": [
+        1980,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ ok: true, verificado: true, registrado: true, pago: $('Verificar el pago').first().json.pago }) }}",
+        "options": {
+          "responseCode": 200
+        }
+      },
+      "id": "2a7441b9-2e2c-4b6e-9b79-03ec0293ab1c",
+      "name": "Responder verificado",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        2200,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ ok: false, verificado: true, registrado: false, motivo: /duplicate|23505|already exists/i.test(String($json.error)) ? 'Ese pago ya estaba registrado: un mismo pago no sirve para dos pedidos.' : 'El pago es válido, pero Supabase no lo pudo guardar: ' + String($json.error ?? 'revisá la credencial y la tabla pagos_fuji'), pago: $('Verificar el pago').first().json.pago }) }}",
+        "options": {
+          "responseCode": "={{ /duplicate|23505|already exists/i.test(String($json.error)) ? 409 : 502 }}"
+        }
+      },
+      "id": "9d32bd2d-8e68-4090-8ba7-04cdd48cdc9c",
+      "name": "Responder sin registrar",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        2200,
+        220
+      ]
+    },
+    {
+      "parameters": {
+        "content": "### Configuración y sesión\n**Configuración** junta todo lo que cambia de un proyecto a otro. Pegá la JWKS Public Key completa, con las líneas BEGIN y END. En `origenes_permitidos` va la dirección de tu página (separadas por coma si son varias; vacío para no revisarlo).\n\n**Verificar sesión de Clerk** comprueba con esa clave que el token lo firmó tu aplicación (RS256), que no venció y de qué página salió. Del token sale `clerk_id` (`sub`): quién pagó, sin pedirle nada más.",
+        "height": 380,
+        "width": 480,
+        "color": 5
+      },
+      "id": "2aaa2b77-2e1b-45b8-be77-4526bd8fe809",
+      "name": "Nota de la configuración",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        380,
+        -440
+      ]
+    },
+    {
+      "parameters": {
+        "content": "### El pago, leído en la red\nUn pedido al RPC público de Fuji con un lote de tres consultas: la transacción, su recibo y el último bloque.\n\n**Verificar el pago** aplica las reglas: el recibo dice si salió bien (status 0x1), el destino tiene que ser tu dirección, el monto (en wei, comparado con BigInt) tiene que llegar al mínimo, y las confirmaciones son los bloques que pasaron desde el pago.",
+        "height": 380,
+        "width": 440,
+        "color": 5
+      },
+      "id": "a2e7cdb4-7a9d-4a5f-809e-8bb97b939e3a",
+      "name": "Nota de Fuji",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1060,
+        -440
+      ]
+    },
+    {
+      "parameters": {
+        "content": "### Registro sin duplicados\nGuarda el pago en `pagos_fuji` con el `clerk_id` de quien lo mandó. Si `tx_hash` es único en la tabla, Supabase rechaza un hash repetido: el nodo sigue de largo (Settings, On Error) y **¿Quedó registrado?** responde 409.\n\nSi tu tabla tiene otros nombres de columna, cambialos en **Registrar en Supabase**.",
+        "height": 380,
+        "width": 440,
+        "color": 5
+      },
+      "id": "ccc4482c-842f-460a-8d0a-e6a89386677e",
+      "name": "Nota de Supabase",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1720,
+        -440
+      ]
+    },
+    {
+      "parameters": {
+        "content": "### Probalo desde la terminal\nCon el workflow publicado (en Windows, `curl.exe`):\n```\ncurl -X POST <Production URL> \\\n  -H \"Authorization: Bearer <token>\" \\\n  -H \"Content-Type: application/json\" \\\n  -d \"{\\\"txHash\\\": \\\"0x...\\\"}\"\n```\nEl token lo da tu página con `await Clerk.session.getToken()` y dura poco: pedí uno nuevo antes de cada prueba.",
+        "height": 360,
+        "width": 520,
+        "color": 6
+      },
+      "id": "e778bdbe-54fb-46f3-80b7-08ca43b4eec1",
+      "name": "Nota de la prueba",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -60,
+        420
+      ]
+    }
+  ],
+  "connections": {
+    "Recibir pago": {
+      "main": [
+        [
+          {
+            "node": "Configuración",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Probar sin la página": {
+      "main": [
+        [
+          {
+            "node": "Pedido de ejemplo",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Pedido de ejemplo": {
+      "main": [
+        [
+          {
+            "node": "Configuración",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Configuración": {
+      "main": [
+        [
+          {
+            "node": "Verificar sesión de Clerk",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Verificar sesión de Clerk": {
+      "main": [
+        [
+          {
+            "node": "¿Sesión y datos válidos?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "¿Sesión y datos válidos?": {
+      "main": [
+        [
+          {
+            "node": "Leer el pago en Fuji",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Responder error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Leer el pago en Fuji": {
+      "main": [
+        [
+          {
+            "node": "Verificar el pago",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Verificar el pago": {
+      "main": [
+        [
+          {
+            "node": "¿Pago verificado?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "¿Pago verificado?": {
+      "main": [
+        [
+          {
+            "node": "Registrar en Supabase",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Responder no verificado",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Registrar en Supabase": {
+      "main": [
+        [
+          {
+            "node": "¿Quedó registrado?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "¿Quedó registrado?": {
+      "main": [
+        [
+          {
+            "node": "Responder verificado",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Responder sin registrar",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "pinData": {},
+  "meta": {
+    "templateCredsSetupCompleted": false
+  }
+}

@@ -1,0 +1,28 @@
+{
+  "id": "42-reporte-kpis",
+  "titulo": "Reporte de KPIs del evento",
+  "resumen": "Cuenta los proyectos por tecnología, trae el tráfico de los repos y verifica los hashes en Fuji: un informe listo para los aliados.",
+  "categoria": "proyectos",
+  "nivel": "intermedio",
+  "minutos": 20,
+  "tecnologias": [
+    "n8n",
+    "avalanche"
+  ],
+  "credenciales": [
+    {
+      "nombre": "GitHub API",
+      "tipo_n8n": "githubApi",
+      "como": "GitHub → Settings → Developer settings → Personal access tokens: un token fine-grained con acceso a los repos y permisos Administration e Issues en Read-only. Pegalo en Access Token."
+    }
+  ],
+  "aprendes": [
+    "HTTP Request con credencial y paginación",
+    "Leer formularios de issues de GitHub con JavaScript",
+    "La API de tráfico de GitHub: visitas y clones",
+    "Verificar hashes en Fuji por lotes",
+    "IF para saltear un paso y Schedule Trigger semanal"
+  ],
+  "probado": "auditado",
+  "orden": 42
+}

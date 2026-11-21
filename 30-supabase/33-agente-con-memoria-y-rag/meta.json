@@ -1,0 +1,38 @@
+{
+  "id": "33-agente-con-memoria-y-rag",
+  "titulo": "Agente con memoria y tus documentos",
+  "resumen": "Un agente que recuerda la conversación y busca en tus documentos.",
+  "categoria": "supabase",
+  "nivel": "avanzado",
+  "minutos": 30,
+  "tecnologias": [
+    "n8n",
+    "ia",
+    "supabase"
+  ],
+  "credenciales": [
+    {
+      "nombre": "Google Gemini(PaLM) Api",
+      "tipo_n8n": "googlePalmApi",
+      "como": "Una clave gratis de Google AI Studio (Get API key), en la credencial Google Gemini(PaLM) Api."
+    },
+    {
+      "nombre": "Postgres (Supabase)",
+      "tipo_n8n": "postgres",
+      "como": "En Supabase, Connect → Session pooler: host del pooler, puerto 5432, base postgres, usuario postgres.<id-del-proyecto> y la contraseña de la base."
+    },
+    {
+      "nombre": "Supabase API",
+      "tipo_n8n": "supabaseApi",
+      "como": "En Supabase, Project Settings → API Keys: la URL del proyecto va en Host y una clave secreta (sb_secret_...) en Secret Key."
+    }
+  ],
+  "aprendes": [
+    "AI Agent con herramientas",
+    "Memoria de chat en Postgres",
+    "Un Vector Store como herramienta (RAG)",
+    "Conectarse a Supabase por el pooler en modo sesión"
+  ],
+  "probado": "auditado",
+  "orden": 33
+}

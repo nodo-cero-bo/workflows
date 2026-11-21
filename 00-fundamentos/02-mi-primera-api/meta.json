@@ -1,0 +1,21 @@
+{
+  "id": "02-mi-primera-api",
+  "titulo": "Tu primera API",
+  "resumen": "Un Webhook que recibe tu nombre y responde un saludo en JSON: tu propia API en cinco nodos.",
+  "categoria": "fundamentos",
+  "nivel": "inicial",
+  "minutos": 10,
+  "tecnologias": [
+    "n8n"
+  ],
+  "credenciales": [],
+  "aprendes": [
+    "Webhook con método POST y path propio",
+    "URL de prueba y URL de producción",
+    "Validar el pedido con IF",
+    "Respond to Webhook con JSON y códigos 200 y 400",
+    "La hora de Bolivia con $now"
+  ],
+  "probado": "ejecutado",
+  "orden": 2
+}

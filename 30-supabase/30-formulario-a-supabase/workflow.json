@@ -1,0 +1,222 @@
+{
+  "name": "Nodo Cero · Formulario a Supabase",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## Formulario a Supabase\n\n### Qué hace\nPublica un formulario para que cualquiera mande su idea de proyecto. Cada respuesta se guarda como una **fila nueva** en la tabla `ideas` de Supabase, y la persona ve una página de gracias con el número de su idea.\n\n### Qué necesitás\n- El esquema de `supabase/sql/00_esquema.sql` corrido en el **SQL Editor** de tu proyecto (crea las tablas, la búsqueda y la seguridad).\n- Una credencial **Supabase API** (`supabaseApi`). En Supabase: **Project Settings → API Keys**. Host = la URL del proyecto (`https://<tu-proyecto>.supabase.co`, sin `/rest/v1`). Secret Key = una clave secreta `sb_secret_...` (o la `service_role` de antes).\n\n### Cómo probarlo\n1. Abrí **Guardar la idea** y elegí tu credencial de Supabase.\n2. Tocá **Execute**: se abre el formulario de prueba. Completalo y envialo.\n3. En Supabase, abrí **Table Editor → ideas**: ahí está la fila nueva.\n4. Para compartirlo, **publicá** el workflow y usá la URL de producción del formulario (la ves al abrir **Formulario de ideas**).\n\nSi además armaste el workflow 34, la IA completa la columna `categoria` de cada idea nueva.",
+        "height": 660,
+        "width": 560,
+        "color": 7
+      },
+      "id": "e7ec3045-369f-4e41-8430-b52f6449f26a",
+      "name": "Nota de inicio",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -640,
+        -320
+      ]
+    },
+    {
+      "parameters": {
+        "content": "### Los campos\nCada campo tiene un **Field Name** (`nombre`, `idea`, `nivel`): es la clave con la que llega al nodo siguiente, por ejemplo `{{ $json.nombre }}`.\n\nUsar los mismos nombres que las columnas de la tabla hace que el mapeo se lea de un vistazo.",
+        "height": 280,
+        "width": 260,
+        "color": 5
+      },
+      "id": "0ab31631-9ec9-482d-965d-1cc88fc69754",
+      "name": "Nota: los campos",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -40,
+        -320
+      ]
+    },
+    {
+      "parameters": {
+        "content": "### Guardar en Supabase\nOperación **Create** en la tabla `ideas`: cada campo va a su columna. `.trim()` saca los espacios de más.\n\n`id` y `creado_en` los completa Postgres por su cuenta. La salida es la fila tal como quedó guardada.",
+        "height": 280,
+        "width": 260,
+        "color": 5
+      },
+      "id": "2b5fca6d-ec84-4841-91e3-ceb740634356",
+      "name": "Nota: guardar",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        240,
+        -320
+      ]
+    },
+    {
+      "parameters": {
+        "content": "### La página final\nEl formulario está en **Respond When: Workflow Finishes**: la persona espera a que la fila quede guardada y recién ahí ve esta página.\n\nEl mensaje usa el `id` que devolvió Supabase.",
+        "height": 280,
+        "width": 260,
+        "color": 5
+      },
+      "id": "ee792824-c600-4bab-a479-99d780906fd9",
+      "name": "Nota: página final",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        520,
+        -320
+      ]
+    },
+    {
+      "parameters": {
+        "content": "### Ojo con la clave secreta\nLa clave secreta de Supabase saltea la seguridad por filas (RLS): con ella se lee y se escribe todo. Guardala nada más en la credencial de n8n, nunca en una página web, una app o un repo.",
+        "height": 160,
+        "width": 540,
+        "color": 3
+      },
+      "id": "66f2bd1b-515f-49f2-83c3-948b54418e91",
+      "name": "Nota: la clave",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        240,
+        160
+      ]
+    },
+    {
+      "parameters": {
+        "formTitle": "Contanos tu idea",
+        "formDescription": "Tu idea queda guardada en Supabase. Nodo Cero · Hackathon n8n Bolivia.",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "Tu nombre o el de tu equipo",
+              "fieldName": "nombre",
+              "fieldType": "text",
+              "placeholder": "Por ejemplo: Las Automatizadoras",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Tu idea",
+              "fieldName": "idea",
+              "fieldType": "textarea",
+              "placeholder": "Contala en dos o tres frases: qué problema resuelve y para quién.",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Nivel",
+              "fieldName": "nivel",
+              "fieldType": "dropdown",
+              "fieldOptions": {
+                "values": [
+                  {
+                    "option": "inicial"
+                  },
+                  {
+                    "option": "intermedio"
+                  },
+                  {
+                    "option": "avanzado"
+                  }
+                ]
+              },
+              "requiredField": true
+            }
+          ]
+        },
+        "responseMode": "lastNode",
+        "options": {
+          "path": "nodo-cero-ideas",
+          "buttonLabel": "Enviar idea"
+        }
+      },
+      "id": "a00ce068-d4a0-43c7-b9c1-94ff01f6975d",
+      "name": "Formulario de ideas",
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.6,
+      "position": [
+        0,
+        0
+      ],
+      "webhookId": "63693b3e-ab83-4a36-bfd1-f15148a66f69"
+    },
+    {
+      "parameters": {
+        "operation": "create",
+        "tableId": "ideas",
+        "dataToSend": "defineBelow",
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "nombre",
+              "fieldValue": "={{ $json.nombre.trim() }}"
+            },
+            {
+              "fieldId": "idea",
+              "fieldValue": "={{ $json.idea.trim() }}"
+            },
+            {
+              "fieldId": "nivel",
+              "fieldValue": "={{ $json.nivel }}"
+            }
+          ]
+        }
+      },
+      "id": "f5e5d2ab-6397-4da6-9024-6ee54ae5c43c",
+      "name": "Guardar la idea",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        280,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "completion",
+        "respondWith": "text",
+        "completionTitle": "Gracias, tu idea quedó guardada",
+        "completionMessage": "=La guardamos con el número {{ $json.id }}, {{ $json.nombre }}. Ahora, a construirla.",
+        "options": {}
+      },
+      "id": "a58a58cd-9f84-49c2-9b1b-ffdb1b83eb16",
+      "name": "Página de gracias",
+      "type": "n8n-nodes-base.form",
+      "typeVersion": 2.5,
+      "position": [
+        560,
+        0
+      ],
+      "webhookId": "01b7e350-2718-49c8-ad85-2c96e9774fb9"
+    }
+  ],
+  "connections": {
+    "Formulario de ideas": {
+      "main": [
+        [
+          {
+            "node": "Guardar la idea",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Guardar la idea": {
+      "main": [
+        [
+          {
+            "node": "Página de gracias",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "pinData": {},
+  "meta": {
+    "templateCredsSetupCompleted": false
+  }
+}

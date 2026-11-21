@@ -1,0 +1,37 @@
+name: Auditar workflows
+
+# Revisa cada workflow.json contra los nodos de n8n 2.48.7 (la versión de n8n Cloud del evento)
+# y contra las reglas de la especificación. Si algo falla, el check queda en rojo.
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  auditar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Traer el repo
+        uses: actions/checkout@v5
+
+      - name: Preparar Node 24
+        uses: actions/setup-node@v5
+        with:
+          node-version: 24
+
+      - name: Guardar en caché la descarga de n8n
+        uses: actions/cache@v4
+        with:
+          path: ~/.npm
+          key: npm-n8n-2.48.7-${{ runner.os }}
+
+      - name: Instalar n8n 2.48.7 (los paquetes de nodos contra los que se audita)
+        run: npm i --no-audit --no-fund --ignore-scripts
+
+      - name: Auditar
+        run: npm run auditar

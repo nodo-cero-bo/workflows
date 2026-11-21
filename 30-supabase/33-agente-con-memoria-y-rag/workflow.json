@@ -1,0 +1,228 @@
+{
+  "name": "Nodo Cero · Agente con memoria y tus documentos",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## Agente con memoria y tus documentos\n\n### Qué hace\nUn agente de IA para chatear que **recuerda la conversación** (la guarda en Postgres, en tu Supabase) y **busca en tus documentos** (los que cargaste con el workflow 32) antes de responder. Si le preguntás algo que está en un PDF, lo encuentra y te dice de qué archivo salió.\n\n### Qué necesitás\n- El esquema de `supabase/sql/00_esquema.sql` corrido en el **SQL Editor** de tu proyecto (crea las tablas, la búsqueda y la seguridad). Y al menos un documento cargado con el workflow 32.\n- **Google Gemini(PaLM) Api** (`googlePalmApi`). La clave es gratis: creala en Google AI Studio → **Get API key** y pegala en API Key. El Host queda como viene.\n- **Postgres** (`postgres`). En Supabase tocá **Connect** y elegí **Session pooler**. Host `aws-<n>-<región>.pooler.supabase.com`, Port `5432`, Database `postgres`, User `postgres.<id-del-proyecto>` y Password = la contraseña de la base (si no la tenés, la cambiás en **Database Settings**). SSL: mirá la nota de la memoria.\n- **Supabase API** (`supabaseApi`). En Supabase: **Project Settings → API Keys**. Host = la URL del proyecto (`https://<tu-proyecto>.supabase.co`, sin `/rest/v1`). Secret Key = una clave secreta `sb_secret_...` (o la `service_role` de antes).\n\n### Cómo probarlo\n1. Elegí las credenciales: Gemini en **Modelo Gemini** y **Embeddings Gemini**, Postgres en **Memoria en Postgres** y Supabase en **Buscar en documentos**.\n2. Tocá **Open chat** (abajo del canvas) y preguntá algo que esté en tu documento.\n3. Abrí el nodo **Agente** para ver cuándo llamó a la herramienta y qué le devolvió.\n4. Decile tu nombre, preguntale otra cosa y después «¿cómo me llamo?»: lo recuerda. En Supabase, **Table Editor → n8n_chat_histories** muestra los mensajes.",
+        "height": 820,
+        "width": 580,
+        "color": 7
+      },
+      "id": "67c0c558-ff88-45ca-bdd6-041554e5db41",
+      "name": "Nota de inicio",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -680,
+        -360
+      ]
+    },
+    {
+      "parameters": {
+        "content": "### El agente\nLee el mensaje del chat (`chatInput`), decide si necesita buscar, llama a la herramienta y responde. El **System Message** (en Options) le dice cómo comportarse: cambialo para tu proyecto.\n\nGemini es el modelo que piensa; la temperatura baja (0.2) lo hace más fiel a lo que encuentra.",
+        "height": 260,
+        "width": 380,
+        "color": 5
+      },
+      "id": "bae3b938-d59d-4ab1-92d4-766f2f9af7df",
+      "name": "Nota: el agente",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        240,
+        -300
+      ]
+    },
+    {
+      "parameters": {
+        "content": "### La memoria en Postgres\nCada conversación tiene un `sessionId` (lo pone el chat) y sus mensajes van a la tabla `n8n_chat_histories`. Con **Context Window Length** en 10, el agente relee los últimos 10 intercambios. En la tabla, `session_id` queda como `<sessionId>__Memoria_en_Postgres`: n8n le suma el nombre del nodo para que dos memorias no se mezclen.\n\n**Por qué el pooler en modo sesión:** la conexión directa de Supabase es por IPv6 y muchas redes, y servicios en la nube, salen nada más por IPv4. El pooler en modo sesión (puerto 5432) es IPv4 y mantiene la sesión como una conexión normal. El modo transacción (6543) no acepta sentencias preparadas.\n\n**SSL:** el certificado de Supabase lo firma su propia autoridad. Poné SSL en **Require** y pegá en **CA Certificate** el certificado que bajás en **Database Settings → SSL Configuration**. Para una prueba rápida, **Ignore SSL Issues** también conecta, pero sin verificar.",
+        "height": 500,
+        "width": 400,
+        "color": 5
+      },
+      "id": "84db91dc-3a04-4e31-bb57-a484163bd8f4",
+      "name": "Nota: la memoria",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        100,
+        420
+      ]
+    },
+    {
+      "parameters": {
+        "content": "### La herramienta de búsqueda\nEl Vector Store en modo **Retrieve Documents (As Tool for AI Agent)**: el agente le pasa la pregunta, **Embeddings Gemini** la convierte en un vector y la función `match_documents` de Supabase trae los 4 pedazos más parecidos (**Limit**).\n\nEl nombre de la herramienta sale del nombre del nodo (`Buscar_en_documentos`), y la **Description** le cuenta al agente cuándo usarla: escribila bien, es lo que lee para decidir.\n\nTiene que usar **el mismo modelo de embeddings** que el workflow 32.",
+        "height": 500,
+        "width": 400,
+        "color": 5
+      },
+      "id": "2ed2683d-b17a-45d9-b0cf-260551c9409c",
+      "name": "Nota: la búsqueda",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        520,
+        420
+      ]
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "fe4edaad-e198-4f90-b4cf-54f32689297d",
+      "name": "Chat",
+      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+      "typeVersion": 1.5,
+      "position": [
+        0,
+        0
+      ],
+      "webhookId": "3e9a304c-e045-4f4d-be64-c7730fbb696b"
+    },
+    {
+      "parameters": {
+        "promptType": "auto",
+        "options": {
+          "systemMessage": "Sos la asistente de Nodo Cero, la hackathon de la comunidad n8n en Bolivia. Respondé en español, con voseo, en forma clara y breve.\n\nPara cualquier pregunta sobre el evento, sus reglas, su agenda o los documentos que te cargaron, usá primero la herramienta Buscar_en_documentos y basá tu respuesta en lo que devuelve. Al final, contá de qué archivo sacaste la información (está en metadata.archivo).\n\nSi la herramienta no trae nada útil, decilo con honestidad y sugerí cargar el documento con el workflow 32. No inventes datos, fechas ni nombres.\n\nAcordate de lo que la persona te contó antes en esta conversación."
+        }
+      },
+      "id": "193cd134-79d2-4a78-9f76-46b3e2d9b1a0",
+      "name": "Agente",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        300,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "options": {
+          "temperature": 0.2
+        }
+      },
+      "id": "b1859882-10cc-45c5-a5cd-d92677e24431",
+      "name": "Modelo Gemini",
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1.2,
+      "position": [
+        140,
+        240
+      ]
+    },
+    {
+      "parameters": {
+        "tableName": "n8n_chat_histories",
+        "contextWindowLength": 10
+      },
+      "id": "588d889f-25db-4eec-91bb-0617b5e595e4",
+      "name": "Memoria en Postgres",
+      "type": "@n8n/n8n-nodes-langchain.memoryPostgresChat",
+      "typeVersion": 1.4,
+      "position": [
+        320,
+        240
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "retrieve-as-tool",
+        "toolDescription": "Busca en los documentos de la hackathon que se cargaron en Supabase (agenda, reglas, guías y cualquier archivo subido con el workflow 32). Pasale la pregunta completa de la persona. Devuelve los pedazos de texto más parecidos, con el nombre del archivo en metadata.archivo.",
+        "tableName": {
+          "__rl": true,
+          "mode": "id",
+          "value": "documentos"
+        },
+        "topK": 4,
+        "options": {
+          "queryName": "match_documents"
+        }
+      },
+      "id": "f94cf8a8-71bc-4e28-9894-13379c7c09c3",
+      "name": "Buscar en documentos",
+      "type": "@n8n/n8n-nodes-langchain.vectorStoreSupabase",
+      "typeVersion": 1.4,
+      "position": [
+        560,
+        240
+      ]
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-embedding-001"
+      },
+      "id": "cf348fab-132c-4e31-a9ed-c4d0a741a20b",
+      "name": "Embeddings Gemini",
+      "type": "@n8n/n8n-nodes-langchain.embeddingsGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        740,
+        240
+      ]
+    }
+  ],
+  "connections": {
+    "Chat": {
+      "main": [
+        [
+          {
+            "node": "Agente",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Modelo Gemini": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Agente",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Memoria en Postgres": {
+      "ai_memory": [
+        [
+          {
+            "node": "Agente",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Buscar en documentos": {
+      "ai_tool": [
+        [
+          {
+            "node": "Agente",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Embeddings Gemini": {
+      "ai_embedding": [
+        [
+          {
+            "node": "Buscar en documentos",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "pinData": {},
+  "meta": {
+    "templateCredsSetupCompleted": false
+  }
+}

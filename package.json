@@ -1,0 +1,19 @@
+{
+  "name": "nodo-cero-workflows",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Workflows de n8n listos para importar, con su auditor y sus pruebas locales.",
+  "license": "MIT",
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "auditar": "node tools/auditar.mjs",
+    "probar": "node tools/probar_local.mjs",
+    "referencia": "node tools/referencia_nodos.mjs"
+  },
+  "devDependencies": {
+    "n8n": "2.48.7"
+  }
+}

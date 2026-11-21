@@ -1,0 +1,21 @@
+{
+  "id": "10-fuji-estado-de-la-red",
+  "titulo": "Estado de la red Fuji",
+  "resumen": "chainId, último bloque y precio del gas de Fuji, en números legibles.",
+  "categoria": "avalanche",
+  "nivel": "inicial",
+  "minutos": 10,
+  "tecnologias": [
+    "n8n",
+    "avalanche"
+  ],
+  "credenciales": [],
+  "aprendes": [
+    "HTTP Request con JSON-RPC",
+    "Leer la salida de otro nodo por su nombre",
+    "Convertir hexadecimal a número con BigInt",
+    "Pasar wei a nAVAX y la hora Unix a la hora de Bolivia"
+  ],
+  "probado": "ejecutado",
+  "orden": 10
+}

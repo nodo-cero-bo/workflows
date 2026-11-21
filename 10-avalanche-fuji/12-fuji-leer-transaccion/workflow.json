@@ -1,0 +1,246 @@
+{
+  "name": "Nodo Cero · Leer una transacción en Fuji",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## Leer una transacción en Fuji: el desafío del día\n\n### Qué hace\nDado el hash de una transacción, te dice quién la envió, a quién, cuánto (en AVAX), el gas que usó y lo que costó, si salió bien, en qué bloque quedó, cuántas confirmaciones tiene y el enlace para verla en el explorador.\n\n### Qué necesitás\nNada más que tu n8n y un hash de Fuji. Para tener uno tuyo: Core Wallet en modo testnet, AVAX de prueba del faucet y una transferencia chica a alguien de tu equipo.\n\n### Cómo probarlo\n1. Hacé clic en **Execute**: lee una transacción real de ejemplo, de 0.5 AVAX.\n2. Abrí **Armar el resumen** y mirá la salida.\n3. Pegá tu hash en **Tu hash** y ejecutalo de nuevo.\n4. Abrí el enlace de `explorador` y compará: son los mismos datos, leídos por n8n.\n\n**Red:** Avalanche Fuji C-Chain · chainId 43113 (0xa869)\n**RPC público:** `https://api.avax-test.network/ext/bc/C/rpc`",
+        "height": 520,
+        "width": 500,
+        "color": 7
+      },
+      "id": "c08d9b2b-e0dc-4ad5-8d4c-3aaffabfbc08",
+      "name": "Nota de inicio",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -620,
+        -240
+      ]
+    },
+    {
+      "parameters": {
+        "content": "### Pegá tu hash acá\nEmpieza con `0x` y tiene 64 caracteres más. Lo copiás desde la actividad de Core o desde el explorador de Fuji.",
+        "height": 140,
+        "width": 300,
+        "color": 4
+      },
+      "id": "c1227fb2-5c07-4207-84c2-c74696f8fe2d",
+      "name": "Nota hash",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        140,
+        -180
+      ]
+    },
+    {
+      "parameters": {
+        "content": "### Transacción, recibo y último bloque\n- `eth_getTransactionByHash`: lo que se pidió (de, para, monto en wei, precio del gas).\n- `eth_getTransactionReceipt`: lo que pasó (estado `0x1` si salió bien o `0x0` si falló, gas usado y eventos).\n- `eth_blockNumber`: el último bloque, para contar las confirmaciones.\n\nSi el hash no existe en Fuji, `result` llega vacío (`null`).",
+        "height": 200,
+        "width": 600,
+        "color": 5
+      },
+      "id": "b74fef2b-a60f-4c75-a71b-1c9c8f350d1a",
+      "name": "Nota lecturas",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        460,
+        -240
+      ]
+    },
+    {
+      "parameters": {
+        "content": "### Las cuentas\n- Monto: `value` en wei ÷ 10^18.\n- Costo: gas usado × `effectiveGasPrice`, lo que se pagó por cada unidad de gas.\n- Confirmaciones: último bloque − bloque de la transacción + 1.\n\nTodo con `BigInt`, que no redondea.",
+        "height": 200,
+        "width": 380,
+        "color": 5
+      },
+      "id": "6e4e99f1-e40b-4235-a697-9306a0eb233f",
+      "name": "Nota cuentas",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1100,
+        -240
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "e36df464-8df1-4055-8947-e9ce1900e599",
+      "name": "Al hacer clic en Probar",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "manual",
+        "assignments": {
+          "assignments": [
+            {
+              "id": "c7e79286-0c68-4977-b03b-aef4ce415bc1",
+              "name": "hash",
+              "value": "0xe3f00c7d004c3219b867f2349e528be962712ea328b9e7007b233b58af655150",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "169cfa8c-3b64-4397-9a00-948dbf30e678",
+      "name": "Tu hash",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        240,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.avax-test.network/ext/bc/C/rpc",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"jsonrpc\": \"2.0\",\n  \"id\": 1,\n  \"method\": \"eth_getTransactionByHash\",\n  \"params\": [{{ JSON.stringify(String($json.hash || '').trim()) }}]\n}",
+        "options": {}
+      },
+      "id": "33a4569b-521a-43a4-9147-de3257991448",
+      "name": "Leer la transacción",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        480,
+        0
+      ],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.avax-test.network/ext/bc/C/rpc",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"jsonrpc\": \"2.0\",\n  \"id\": 1,\n  \"method\": \"eth_getTransactionReceipt\",\n  \"params\": [{{ JSON.stringify(String($('Tu hash').first().json.hash || '').trim()) }}]\n}",
+        "options": {}
+      },
+      "id": "a016d6ef-f9c0-4eda-8e7a-b0fd4520fa8d",
+      "name": "Leer el recibo",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        720,
+        0
+      ],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.avax-test.network/ext/bc/C/rpc",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "{\n  \"jsonrpc\": \"2.0\",\n  \"id\": 1,\n  \"method\": \"eth_blockNumber\",\n  \"params\": []\n}",
+        "options": {}
+      },
+      "id": "b992bc8f-92db-4833-a581-8612852cb5ba",
+      "name": "Leer el último bloque",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        960,
+        0
+      ],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "// Junta la transacción, su recibo y el último bloque, y arma un resumen que se lee de un vistazo.\nconst hash = String($('Tu hash').first().json.hash || '').trim();\nconst tx = $('Leer la transacción').first().json;\nconst recibo = $('Leer el recibo').first().json;\nconst ultimo = $('Leer el último bloque').first().json;\nconst explorador = `https://build.avax.network/explorer/fuji/c-chain/tx/${hash}`;\n\n// Pasa un entero en wei a texto, sin redondear. decimales: 18 para AVAX, 9 para nAVAX.\nfunction enUnidad(wei, decimales = 18) {\n  const base = 10n ** BigInt(decimales);\n  const resto = (wei % base).toString().padStart(decimales, '0').replace(/0+$/, '');\n  return resto ? `${wei / base}.${resto}` : `${wei / base}`;\n}\n\n// Si el hash está mal escrito, el RPC no devuelve «result» sino «error».\nfor (const r of [tx, recibo, ultimo]) {\n  if (r.error) {\n    return [{ json: { encontrada: false, hash, mensaje: `El RPC respondió un error: ${r.error.message ?? JSON.stringify(r.error)}. Un hash tiene 66 caracteres: 0x y 64 más.` } }];\n  }\n}\n\nconst t = tx.result;\nif (!t) {\n  return [{ json: { encontrada: false, hash, mensaje: 'No hay ninguna transacción con ese hash en Fuji. Revisá que esté completo y que sea de Fuji, no de la red principal.' } }];\n}\n\nconst r = recibo.result; // null mientras la transacción espera entrar en un bloque\nconst valor = BigInt(t.value);\nconst enBloque = Boolean(r && t.blockNumber);\nconst bloque = enBloque ? BigInt(t.blockNumber) : null;\nconst gasUsado = enBloque ? BigInt(r.gasUsed) : null;\n// effectiveGasPrice es lo que se pagó de verdad por cada unidad de gas.\nconst precio = BigInt((enBloque && r.effectiveGasPrice) || t.gasPrice);\nconst costo = enBloque ? gasUsado * precio : null;\n// Confirmaciones: cuántos bloques hay desde el de la transacción (incluido) hasta el último.\n// Si ya está en un bloque, tiene por lo menos 1: el RPC público reparte los pedidos entre varios\n// servidores y el «último bloque» a veces llega uno atrasado.\nlet confirmaciones = 0n;\nif (bloque !== null) {\n  confirmaciones = BigInt(ultimo.result) - bloque + 1n;\n  if (confirmaciones < 1n) confirmaciones = 1n;\n}\n\nlet tipo = 'transferencia de AVAX';\nif (!t.to) tipo = 'creación de un contrato';\nelse if (t.input && t.input !== '0x') tipo = 'llamada a un contrato';\n\nreturn [\n  {\n    json: {\n      encontrada: true,\n      hash,\n      estado: !enBloque ? 'pendiente' : r.status === '0x1' ? 'exitosa' : 'fallida',\n      tipo,\n      de: t.from,\n      para: t.to ?? r?.contractAddress ?? null,\n      montoAVAX: enUnidad(valor),\n      montoWei: valor.toString(),\n      gasUsado: gasUsado === null ? null : Number(gasUsado),\n      precioGas: { wei: precio.toString(), nAVAX: enUnidad(precio, 9) },\n      costoAVAX: costo === null ? null : enUnidad(costo),\n      costoWei: costo === null ? null : costo.toString(),\n      bloque: bloque === null ? null : Number(bloque),\n      confirmaciones: Number(confirmaciones),\n      eventos: enBloque ? r.logs.length : 0,\n      explorador,\n    },\n  },\n];"
+      },
+      "id": "d06a4231-6ba2-4e70-b06d-92baabcb34ab",
+      "name": "Armar el resumen",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1200,
+        0
+      ]
+    }
+  ],
+  "connections": {
+    "Al hacer clic en Probar": {
+      "main": [
+        [
+          {
+            "node": "Tu hash",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Tu hash": {
+      "main": [
+        [
+          {
+            "node": "Leer la transacción",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Leer la transacción": {
+      "main": [
+        [
+          {
+            "node": "Leer el recibo",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Leer el recibo": {
+      "main": [
+        [
+          {
+            "node": "Leer el último bloque",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Leer el último bloque": {
+      "main": [
+        [
+          {
+            "node": "Armar el resumen",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "pinData": {},
+  "meta": {
+    "templateCredsSetupCompleted": false
+  }
+}

@@ -1,0 +1,428 @@
+{
+  "name": "Nodo Cero · Una API protegida con Clerk",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## Una API protegida con Clerk\n\n### Qué hace\nEs una API de n8n (`GET /mi-perfil`) que exige la sesión de Clerk. Tu página manda el token de sesión en el encabezado `Authorization: Bearer <token>`; n8n verifica que lo firmó tu aplicación de Clerk (RS256), que no venció y que salió de tu página, y devuelve el perfil de esa persona desde Supabase. Sin sesión válida responde **401**.\n\n### Qué necesitás\n- Una credencial **JWT Auth** (`jwtAuth`) con **Key Type**: PEM Key y, en **Public Key**, la **JWKS Public Key** de Clerk (página **API keys**, formato PEM). La clave pública no es secreta.\n- Una credencial **Supabase API** (`supabaseApi`) y la tabla `perfiles` (la llena el workflow 20).\n- En **Leer el pedido**, la dirección de tu página en `origenes_permitidos`.\n\n### Cómo probarlo\n1. Publicá el workflow y copiá la **Production URL** del nodo **Pedido a /mi-perfil**.\n2. Abrí la página de `clerk/app-ejemplo` del repo, pegá esa URL y tu Publishable Key, e iniciá sesión.\n3. Tocá **Ver mi perfil**: con sesión, 200 y tu perfil; sin sesión o con un token viejo, 401.\n4. Sin navegador: `curl -H \"Authorization: Bearer <token>\" <URL>`.",
+        "height": 800,
+        "width": 520,
+        "color": 7
+      },
+      "id": "5c63c17f-dd99-4a59-920b-d34ff28b2672",
+      "name": "Nota de inicio",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -620,
+        -440
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## 1. ¿Es una sesión de Clerk de verdad?\nEl token de sesión es un **JWT**: tres partes en base64 separadas por puntos (encabezado, datos y firma). Clerk lo firma con su clave privada y cualquiera puede comprobarlo con la clave pública.\n\n- **Leer el pedido** saca el token de `Authorization: Bearer ...`.\n- **Verificar sesión de Clerk** (nodo JWT, operación Verify, algoritmo **RS256**) comprueba la firma y las fechas `exp` (vence) y `nbf` (no antes de). Tolera 5 segundos de diferencia de reloj.\n- Fijar RS256 importa: así nadie puede mandar un token firmado de otra forma.\n- Si algo no cierra (falta el token, venció o lo firmó otra clave), el nodo no corta el workflow: en **Settings** tiene **On Error: Continue**, así que sigue sin `payload` y **¿Sesión válida?** lo manda al **401**. El detalle del error queda en la ejecución.",
+        "height": 400,
+        "width": 700,
+        "color": 5
+      },
+      "id": "b9b05e00-691a-472f-b6c6-3ad00c51de61",
+      "name": "Nota token",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -20,
+        -460
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## 2. ¿Salió de tu página? ¿Quién es?\nDel token verificado salen dos datos clave:\n- `azp`: la página que pidió el token (por ejemplo `http://localhost:5500`). Clerk recomienda aceptar nada más los orígenes que conocés: así otra página no puede usar sesiones ajenas contra tu API. Si el token no trae `azp`, se acepta.\n- `sub`: el id de la usuaria en Clerk (`user_...`). Con ese id, **Buscar perfil** trae su fila de `perfiles` (`clerk_id = sub`).\n\nSi la sesión es válida pero todavía no hay fila (el workflow 20 no corrió), responde **404**.",
+        "height": 340,
+        "width": 700,
+        "color": 5
+      },
+      "id": "ccc18595-fc2d-46a1-a8a3-50cf83750c6e",
+      "name": "Nota azp",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        860,
+        -560
+      ]
+    },
+    {
+      "parameters": {
+        "content": "### CORS: que el navegador te deje llamar\nTu página y n8n están en dominios distintos, así que el navegador primero pregunta (pedido `OPTIONS`) si puede mandar `Authorization`. n8n contesta por su cuenta con la opción **Allowed Origins (CORS)** del Webhook: poné ahí la misma dirección que en `origenes_permitidos`, sin barra al final. Varias van separadas por comas y sin espacios: `http://localhost:5500,https://mi-app.com`.\n\nCon `*` acepta cualquier página; la que protege los datos igual es la verificación del token.",
+        "height": 300,
+        "width": 700,
+        "color": 3
+      },
+      "id": "7fbb5af9-585e-49d9-93d3-1fd3aa54b82c",
+      "name": "Nota CORS",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -20,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "httpMethod": "GET",
+        "path": "mi-perfil",
+        "responseMode": "responseNode",
+        "options": {
+          "allowedOrigins": "http://localhost:5500"
+        }
+      },
+      "id": "30557df2-9dbc-406a-9556-4f54b8b3ff0e",
+      "name": "Pedido a /mi-perfil",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.2,
+      "position": [
+        0,
+        0
+      ],
+      "webhookId": "69922037-34fa-4d56-a019-2a963379ba8d"
+    },
+    {
+      "parameters": {
+        "mode": "manual",
+        "assignments": {
+          "assignments": [
+            {
+              "id": "3099be56-cb2d-4eff-a518-dd4afaa6b6a8",
+              "name": "token",
+              "value": "={{ ($json.headers.authorization ?? '').replace(/^Bearer\\s+/i, '').trim() }}",
+              "type": "string"
+            },
+            {
+              "id": "3bad269b-dc4c-4e54-94ae-b78ddd25232d",
+              "name": "origenes_permitidos",
+              "value": "http://localhost:5500",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "46cc720f-801e-4def-8fff-cbf486632ce7",
+      "name": "Leer el pedido",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        220,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "verify",
+        "token": "={{ $json.token }}",
+        "options": {
+          "algorithm": "RS256",
+          "clockTolerance": 5
+        }
+      },
+      "id": "f7e594ee-ae61-43eb-8ce2-50ceb1e4da5a",
+      "name": "Verificar sesión de Clerk",
+      "type": "n8n-nodes-base.jwt",
+      "typeVersion": 1,
+      "position": [
+        440,
+        0
+      ],
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 4
+          },
+          "conditions": [
+            {
+              "id": "16b28b2b-854a-487f-ad19-22ee6e7bd970",
+              "leftValue": "={{ $json.payload }}",
+              "operator": {
+                "type": "object",
+                "operation": "exists",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": false,
+        "options": {}
+      },
+      "id": "4509950a-6d18-4ee0-b459-8a2fadea5209",
+      "name": "¿Sesión válida?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.4,
+      "position": [
+        660,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 4
+          },
+          "conditions": [
+            {
+              "id": "7a6369d3-fd24-4b9f-a5d6-884d7df81baa",
+              "leftValue": "={{ !$json.payload.azp || $('Leer el pedido').first().json.origenes_permitidos.split(',').map((o) => o.trim()).includes($json.payload.azp) }}",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": false,
+        "options": {}
+      },
+      "id": "8f69ffed-9735-4ba8-b4dc-08cad85fdeac",
+      "name": "¿Viene de tu página?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.4,
+      "position": [
+        880,
+        -100
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "tableId": "perfiles",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "clerk_id",
+              "keyValue": "={{ $json.payload.sub }}"
+            }
+          ]
+        }
+      },
+      "id": "01d680ec-f28e-494c-9e72-af73e35800d5",
+      "name": "Buscar perfil",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        1100,
+        -100
+      ],
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 4
+          },
+          "conditions": [
+            {
+              "id": "889e0ad5-8aef-403c-91cf-ecbc70a1839b",
+              "leftValue": "={{ $json.clerk_id }}",
+              "operator": {
+                "type": "string",
+                "operation": "exists",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": false,
+        "options": {}
+      },
+      "id": "1c332d98-437b-487a-b221-5e99c8771c29",
+      "name": "¿Tiene perfil?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.4,
+      "position": [
+        1320,
+        -100
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ ok: true, perfil: { clerk_id: $json.clerk_id, email: $json.email, nombre: $json.nombre, avatar_url: $json.avatar_url, creado_en: $json.creado_en, actualizado_en: $json.actualizado_en }, sesion: { sub: $('Verificar sesión de Clerk').first().json.payload.sub, vence: new Date($('Verificar sesión de Clerk').first().json.payload.exp * 1000).toISOString() } }) }}",
+        "options": {
+          "responseCode": 200
+        }
+      },
+      "id": "71c4310f-5da4-45d1-8216-6efa8b0bef05",
+      "name": "Responder perfil",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        1560,
+        -200
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ ok: false, error: 'la sesión es válida, pero todavía no hay un perfil para esta cuenta', clerk_id: $('Verificar sesión de Clerk').first().json.payload.sub }) }}",
+        "options": {
+          "responseCode": 404
+        }
+      },
+      "id": "ca2ca14f-ce31-4e44-8611-fc8e2879eea9",
+      "name": "Responder 404",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        1560,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ ok: false, error: 'no autorizado', motivo: $json.payload ? 'el token no salió de una página permitida (azp: ' + $json.payload.azp + ')' : 'falta el token de sesión, venció o no lo firmó tu aplicación de Clerk' }) }}",
+        "options": {
+          "responseCode": 401,
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "WWW-Authenticate",
+                "value": "Bearer"
+              }
+            ]
+          }
+        }
+      },
+      "id": "86e13cdb-47f6-4634-89b3-837db1a36f8a",
+      "name": "Responder 401",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        1100,
+        160
+      ]
+    }
+  ],
+  "connections": {
+    "Pedido a /mi-perfil": {
+      "main": [
+        [
+          {
+            "node": "Leer el pedido",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Leer el pedido": {
+      "main": [
+        [
+          {
+            "node": "Verificar sesión de Clerk",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Verificar sesión de Clerk": {
+      "main": [
+        [
+          {
+            "node": "¿Sesión válida?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "¿Sesión válida?": {
+      "main": [
+        [
+          {
+            "node": "¿Viene de tu página?",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Responder 401",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "¿Viene de tu página?": {
+      "main": [
+        [
+          {
+            "node": "Buscar perfil",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Responder 401",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Buscar perfil": {
+      "main": [
+        [
+          {
+            "node": "¿Tiene perfil?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "¿Tiene perfil?": {
+      "main": [
+        [
+          {
+            "node": "Responder perfil",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Responder 404",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "pinData": {},
+  "meta": {
+    "templateCredsSetupCompleted": false
+  }
+}

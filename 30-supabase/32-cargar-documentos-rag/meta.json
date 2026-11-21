@@ -1,0 +1,33 @@
+{
+  "id": "32-cargar-documentos-rag",
+  "titulo": "Cargar documentos para RAG",
+  "resumen": "Subí un archivo, partilo en trozos y guardá sus embeddings en Supabase.",
+  "categoria": "supabase",
+  "nivel": "intermedio",
+  "minutos": 25,
+  "tecnologias": [
+    "n8n",
+    "ia",
+    "supabase"
+  ],
+  "credenciales": [
+    {
+      "nombre": "Supabase API",
+      "tipo_n8n": "supabaseApi",
+      "como": "En Supabase, Project Settings → API Keys: la URL del proyecto va en Host y una clave secreta (sb_secret_...) en Secret Key."
+    },
+    {
+      "nombre": "Google Gemini(PaLM) Api",
+      "tipo_n8n": "googlePalmApi",
+      "como": "Una clave gratis de Google AI Studio (Get API key), en la credencial Google Gemini(PaLM) Api."
+    }
+  ],
+  "aprendes": [
+    "Subir archivos con un formulario",
+    "Partir texto en pedazos",
+    "Embeddings con Gemini",
+    "pgvector y el Supabase Vector Store"
+  ],
+  "probado": "auditado",
+  "orden": 32
+}

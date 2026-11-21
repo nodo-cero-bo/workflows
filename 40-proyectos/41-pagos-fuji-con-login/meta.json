@@ -1,0 +1,30 @@
+{
+  "id": "41-pagos-fuji-con-login",
+  "titulo": "Pagos en Fuji con login",
+  "resumen": "Login con Clerk, la persona manda el hash de su pago, n8n lo verifica en Fuji y lo registra en Supabase a su nombre.",
+  "categoria": "proyectos",
+  "nivel": "avanzado",
+  "minutos": 40,
+  "tecnologias": [
+    "n8n",
+    "avalanche",
+    "clerk",
+    "supabase"
+  ],
+  "credenciales": [
+    {
+      "nombre": "Supabase API",
+      "tipo_n8n": "supabaseApi",
+      "como": "Supabase, Project Settings → API Keys: la URL del proyecto va en Host y la Secret key (sb_secret_...) o la service_role en Secret Key."
+    }
+  ],
+  "aprendes": [
+    "Verificar el token de Clerk (JWT RS256) con la clave PEM",
+    "Una API con códigos HTTP claros: 200, 400, 401 y 409",
+    "Lote JSON-RPC: transacción, recibo y último bloque",
+    "Reglas de pago con BigInt: estado, destino, monto y confirmaciones",
+    "Supabase sin pagos duplicados con On Error"
+  ],
+  "probado": "auditado",
+  "orden": 41
+}

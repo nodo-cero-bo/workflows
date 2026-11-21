@@ -1,0 +1,26 @@
+{
+  "id": "30-formulario-a-supabase",
+  "titulo": "Formulario a Supabase",
+  "resumen": "Lo que llega por un formulario queda guardado como fila en Supabase.",
+  "categoria": "supabase",
+  "nivel": "inicial",
+  "minutos": 15,
+  "tecnologias": [
+    "n8n",
+    "supabase"
+  ],
+  "credenciales": [
+    {
+      "nombre": "Supabase API",
+      "tipo_n8n": "supabaseApi",
+      "como": "En Supabase, Project Settings → API Keys: la URL del proyecto va en Host y una clave secreta (sb_secret_...) en Secret Key."
+    }
+  ],
+  "aprendes": [
+    "Form Trigger con campos y página final",
+    "Crear filas en Supabase",
+    "Qué hace la clave secreta y por qué no se comparte"
+  ],
+  "probado": "auditado",
+  "orden": 30
+}

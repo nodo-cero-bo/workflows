@@ -1,0 +1,342 @@
+{
+  "name": "Nodo Cero · Invitaciones con Clerk",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## Invitaciones con Clerk\n\n### Qué hace\nUn formulario donde pegás una lista de correos. n8n la limpia (saca repetidos y los que no tienen formato de correo) y, por cada uno, le pide a la **Backend API** de Clerk que cree una invitación. Clerk le manda el correo a cada persona con su enlace para registrarse. Al final ves un resumen: a quién se invitó y qué falló.\n\n### Qué necesitás\n- Tu aplicación de Clerk y su **Secret key** (`sk_test_...`, página **API keys**).\n- Una credencial **Header Auth** (`httpHeaderAuth`) en el nodo **Invitar en Clerk**: **Name** `Authorization` y **Value** `Bearer sk_test_...` (la palabra Bearer, un espacio y tu clave).\n\n### Cómo probarlo\n1. Conectá la credencial y publicá el workflow (**Publish**).\n2. Abrí la **Production URL** del formulario.\n3. Pegá uno o dos correos tuyos y mandalo.\n4. Revisá la página final, tu bandeja de entrada y la página **Users** → **Invitations** de Clerk.\n\nClerk permite hasta 100 invitaciones por hora en cada aplicación.",
+        "height": 780,
+        "width": 520,
+        "color": 7
+      },
+      "id": "173041de-d035-49bf-bf4c-b2181145e7a9",
+      "name": "Nota de inicio",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -620,
+        -440
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## 1. De un texto a una lista\nEl formulario recibe un texto libre: correos separados por líneas, comas o espacios.\n\n- **Limpiar la lista** (Code) los pasa a minúscula, saca los repetidos y aparta los que no tienen forma de correo, para no gastar pedidos en algo que Clerk va a rechazar.\n- **¿Hay correos para invitar?** corta acá si no quedó ninguno.\n- **Un ítem por correo** (Split Out) convierte la lista en un ítem por persona. Desde ahí, cada nodo corre una vez por ítem: así funciona n8n.",
+        "height": 360,
+        "width": 680,
+        "color": 5
+      },
+      "id": "ddbbb5d4-77df-4a2f-bda5-a4405cde3fd0",
+      "name": "Nota lista",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -20,
+        -440
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## 2. Un pedido a Clerk por persona\n**Invitar en Clerk** hace `POST https://api.clerk.com/v1/invitations` con el cuerpo `{ \"email_address\": \"...\", \"notify\": true }` (y `redirect_url` si lo completaste).\n\n- La **Secret key** viaja en el encabezado `Authorization: Bearer ...` desde la credencial Header Auth: nunca la escribas en el nodo.\n- En **Options** → **Response** están activados **Include Response Headers and Status** y **Never Error**: si Clerk rechaza un correo (por ejemplo, ya estaba invitado), el workflow sigue y el resumen te dice por qué.\n- **Batching** manda de a 5 por segundo, para no chocar con el límite de Clerk.",
+        "height": 400,
+        "width": 700,
+        "color": 5
+      },
+      "id": "85a83ed0-ea6f-460f-99cd-7f183039adec",
+      "name": "Nota clerk",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        700,
+        -500
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## 3. El resumen\n**Armar resumen** junta las respuestas: `200` es una invitación creada (estado `pending` hasta que la persona se registre). Cualquier otro código es un error con su motivo, por ejemplo `422` si el correo ya tenía una invitación o una cuenta. La **Página final** lo muestra en el formulario.",
+        "height": 280,
+        "width": 520,
+        "color": 5
+      },
+      "id": "a4bb40ee-d7b5-493b-a4e2-99cfdf6f34d7",
+      "name": "Nota resumen",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1180,
+        140
+      ]
+    },
+    {
+      "parameters": {
+        "formTitle": "Invitar participantes",
+        "formDescription": "Pegá los correos de las personas que querés invitar a tu aplicación. Clerk le manda a cada una su enlace para registrarse.",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "Correos",
+              "fieldName": "correos",
+              "fieldType": "textarea",
+              "placeholder": "ada@example.com, grace@example.com (uno por línea o separados por comas)",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Página a la que llegan al aceptar (opcional)",
+              "fieldName": "redirect_url",
+              "fieldType": "text",
+              "placeholder": "https://tu-app.com/registro",
+              "requiredField": false
+            }
+          ]
+        },
+        "responseMode": "lastNode",
+        "options": {
+          "path": "clerk-invitaciones",
+          "buttonLabel": "Mandar invitaciones"
+        }
+      },
+      "id": "f227d562-f13c-4a42-bced-b284cfc093c6",
+      "name": "Formulario de invitaciones",
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.6,
+      "position": [
+        0,
+        0
+      ],
+      "webhookId": "48ba5721-6c34-4e64-ab3d-37d7b89cad8a"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "// Convierte lo que escribiste en el formulario en una lista prolija de correos.\nconst form = $input.first().json;\nconst texto = String(form.correos ?? '');\nconst formato = /^[^\\s@,;]+@[^\\s@,;]+\\.[^\\s@,;]{2,}$/;\n\nconst vistos = new Set();\nconst correos = [];\nconst descartados = [];\nfor (const parte of texto.split(/[\\s,;]+/)) {\n  const correo = parte.trim().toLowerCase();\n  if (!correo || vistos.has(correo)) continue; // vacíos y repetidos afuera\n  vistos.add(correo);\n  if (formato.test(correo)) correos.push(correo);\n  else descartados.push(correo);\n}\n\nconst redirect = String(form.redirect_url ?? '').trim();\nreturn [\n  {\n    json: {\n      correos,\n      descartados,\n      redirect_url: /^https?:\\/\\//.test(redirect) ? redirect : '',\n    },\n  },\n];"
+      },
+      "id": "a2a0106a-db09-48cc-b419-2e6bd72269fd",
+      "name": "Limpiar la lista",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        220,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 4
+          },
+          "conditions": [
+            {
+              "id": "0bec68e9-f1ee-4061-b0b4-615e02989393",
+              "leftValue": "={{ $json.correos }}",
+              "operator": {
+                "type": "array",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": false,
+        "options": {}
+      },
+      "id": "117e8ebc-7f27-4f34-8256-44c84eb7bf72",
+      "name": "¿Hay correos para invitar?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.4,
+      "position": [
+        440,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "correos",
+        "include": "selectedOtherFields",
+        "fieldsToInclude": "redirect_url",
+        "options": {
+          "destinationFieldName": "email"
+        }
+      },
+      "id": "383e4e1e-b0ac-47bb-9723-74c5ab57c099",
+      "name": "Un ítem por correo",
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1.1,
+      "position": [
+        700,
+        -60
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.clerk.com/v1/invitations",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "contentType": "json",
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify(Object.assign({ email_address: $json.email, notify: true }, $json.redirect_url ? { redirect_url: $json.redirect_url } : {})) }}",
+        "options": {
+          "batching": {
+            "batch": {
+              "batchSize": 5,
+              "batchInterval": 1000
+            }
+          },
+          "response": {
+            "response": {
+              "fullResponse": true,
+              "neverError": true,
+              "responseFormat": "json"
+            }
+          }
+        }
+      },
+      "id": "c20470c0-102a-459d-837a-ae31158baaba",
+      "name": "Invitar en Clerk",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        940,
+        -60
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "// Junta cada respuesta de Clerk con su correo y arma el texto de la página final.\nconst enviados = $('Un ítem por correo').all();\nconst respuestas = $input.all();\nconst descartados = $('Limpiar la lista').first().json.descartados;\n\nconst invitadas = [];\nconst conError = [];\nrespuestas.forEach((r, i) => {\n  const correo = enviados[i]?.json.email ?? '(sin correo)';\n  const status = r.json.statusCode;\n  const cuerpo = r.json.body ?? {};\n  if (status >= 200 && status < 300) {\n    invitadas.push({ correo, id: cuerpo.id, estado: cuerpo.status, vence: cuerpo.expires_at ? new Date(cuerpo.expires_at).toISOString().slice(0, 10) : null });\n  } else {\n    const e = Array.isArray(cuerpo.errors) ? cuerpo.errors[0] : null;\n    conError.push({ correo, status, codigo: e?.code ?? null, motivo: e?.long_message ?? e?.message ?? r.json.error?.message ?? 'Clerk no respondió' });\n  }\n});\n\nconst lineas = [];\nif (invitadas.length) lineas.push('Invitadas: ' + invitadas.map((x) => x.correo).join(', ') + '.');\nif (conError.length) lineas.push('No se pudo invitar: ' + conError.map((x) => `${x.correo} (${x.status}: ${x.motivo})`).join('; ') + '.');\nif (descartados.length) lineas.push('Descartados por el formato: ' + descartados.join(', ') + '.');\n\nreturn [\n  {\n    json: {\n      titulo: conError.length ? `Listo, con ${conError.length} para revisar` : 'Invitaciones enviadas',\n      mensaje: lineas.join(' '),\n      invitadas,\n      con_error: conError,\n      descartados,\n    },\n  },\n];"
+      },
+      "id": "d762929b-8bb9-4ede-97f7-154f11589d22",
+      "name": "Armar resumen",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1180,
+        -60
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "completion",
+        "respondWith": "text",
+        "completionTitle": "={{ $json.titulo }}",
+        "completionMessage": "={{ $json.mensaje }}",
+        "options": {}
+      },
+      "id": "2bcb49d5-766a-4d31-941d-4193cc1657ed",
+      "name": "Página final",
+      "type": "n8n-nodes-base.form",
+      "typeVersion": 2.5,
+      "position": [
+        1420,
+        -60
+      ],
+      "webhookId": "06184d76-5efe-4d40-89e1-ccbd49296fb6"
+    },
+    {
+      "parameters": {
+        "operation": "completion",
+        "respondWith": "text",
+        "completionTitle": "No había correos para invitar",
+        "completionMessage": "={{ $json.descartados.length ? 'Ninguno tenía formato de correo: ' + $json.descartados.join(', ') + '. Revisalos y probá de nuevo.' : 'El formulario llegó vacío. Volvé a abrirlo y pegá al menos un correo.' }}",
+        "options": {}
+      },
+      "id": "fd19729e-3fde-4b7a-ab32-d2a6e7ec5de2",
+      "name": "Página sin correos",
+      "type": "n8n-nodes-base.form",
+      "typeVersion": 2.5,
+      "position": [
+        700,
+        160
+      ],
+      "webhookId": "3bb0313f-eb7d-4142-b255-5de8905ca08d"
+    }
+  ],
+  "connections": {
+    "Formulario de invitaciones": {
+      "main": [
+        [
+          {
+            "node": "Limpiar la lista",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Limpiar la lista": {
+      "main": [
+        [
+          {
+            "node": "¿Hay correos para invitar?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "¿Hay correos para invitar?": {
+      "main": [
+        [
+          {
+            "node": "Un ítem por correo",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Página sin correos",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Un ítem por correo": {
+      "main": [
+        [
+          {
+            "node": "Invitar en Clerk",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Invitar en Clerk": {
+      "main": [
+        [
+          {
+            "node": "Armar resumen",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Armar resumen": {
+      "main": [
+        [
+          {
+            "node": "Página final",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "pinData": {},
+  "meta": {
+    "templateCredsSetupCompleted": false
+  }
+}

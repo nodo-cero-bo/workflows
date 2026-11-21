@@ -1,0 +1,271 @@
+{
+  "name": "Nodo Cero · Leer eventos de un contrato en Fuji",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## Leer eventos de un contrato en Fuji\n\n### Qué hace\nPide los eventos (logs) de los últimos bloques de Fuji con `eth_getLogs` y los decodifica: las transferencias `Transfer` de un token (de, para y monto) y los `ProyectoRegistrado` del contrato de ejemplo de este repo. El ejemplo lee las transferencias del USDC de prueba.\n\n### Qué necesitás\nNada más que tu n8n. Para leer un contrato tuyo: desplegalo en Fuji con Remix y Core siguiendo la guía de `avalanche/contratos` de este repo.\n\n### Cómo probarlo\n1. Hacé clic en **Execute** y abrí **Decodificar los eventos**: un ítem por transferencia de USDC en los últimos 300 bloques.\n2. Vaciá `contrato` en **Qué buscar** para ver las transferencias de cualquier token, también de NFT.\n3. Con tu contrato: poné su dirección, el topic0 de tu evento y, en `desdeBloque`, el bloque del despliegue.\n\n**Red:** Avalanche Fuji C-Chain · chainId 43113 (0xa869)\n**RPC público:** `https://api.avax-test.network/ext/bc/C/rpc`",
+        "height": 480,
+        "width": 500,
+        "color": 7
+      },
+      "id": "74d85a67-390d-408c-84f0-3f4a66249e93",
+      "name": "Nota de inicio",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -640,
+        -320
+      ]
+    },
+    {
+      "parameters": {
+        "content": "### Qué buscar\n- `contrato`: la dirección que emite los eventos (vacío: cualquiera).\n- `topic0`: qué evento. Transfer es 0xddf252ad... y ProyectoRegistrado, 0xa349a1d3... (vacío: todos).\n- `bloquesHaciaAtras`: cuántos bloques mirar, hasta 1000.\n- `desdeBloque`: si lo completás, busca desde ese bloque hacia adelante.\n- `decimales`: los del token, para mostrar el monto legible (USDC: 6).",
+        "height": 280,
+        "width": 420,
+        "color": 4
+      },
+      "id": "ef0d11bf-6c2c-4a68-aeee-0e411a99bf5a",
+      "name": "Nota filtro",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        80,
+        -320
+      ]
+    },
+    {
+      "parameters": {
+        "content": "### El límite del RPC público: 100 bloques por pedido\nSi le pedís más, `eth_getLogs` responde «block range too large». **Partir en tramos de 100 bloques** devuelve un ítem por tramo y el HTTP Request hace un pedido por ítem, de a uno (**Options → Batching**). Como mucho, 10 tramos por ejecución.\n\nEl cuerpo del pedido sale entero de una expresión: `JSON.stringify` arma el filtro, con o sin contrato.",
+        "height": 180,
+        "width": 560,
+        "color": 5
+      },
+      "id": "a0e818e4-f3e4-4899-b33f-0d6fb8bd7c6f",
+      "name": "Nota tramos",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        540,
+        -220
+      ]
+    },
+    {
+      "parameters": {
+        "content": "### Cómo se lee un evento\n- `topics[0]`: qué evento es, el keccak256 de su firma. `Transfer(address,address,uint256)` da 0xddf252ad...\n- `topics[1]`, `topics[2]`: los parámetros `indexed` (una dirección ocupa los últimos 20 bytes).\n- `data`: el resto, codificado con la ABI. En un ERC-20, el monto.\n\nSi un Transfer trae 4 topics, es un NFT (ERC-721): el tercero es el tokenId.",
+        "height": 240,
+        "width": 440,
+        "color": 5
+      },
+      "id": "6004850c-3ee1-4dfb-8840-67dcf68e6e0c",
+      "name": "Nota evento",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1140,
+        -280
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "0042f6e8-a91a-42dc-9882-fa8aedf1d60d",
+      "name": "Al hacer clic en Probar",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "manual",
+        "assignments": {
+          "assignments": [
+            {
+              "id": "e89b89c1-a3a8-4d3a-b9aa-99122b21095d",
+              "name": "contrato",
+              "value": "0x5425890298aed601595a70ab815c96711a31bc65",
+              "type": "string"
+            },
+            {
+              "id": "97d6778c-1ee5-44d2-b27e-bfcfb1710437",
+              "name": "topic0",
+              "value": "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef",
+              "type": "string"
+            },
+            {
+              "id": "3c8f7bda-3fbb-47e1-9302-c9570046bced",
+              "name": "bloquesHaciaAtras",
+              "value": 300,
+              "type": "number"
+            },
+            {
+              "id": "0f3a7617-cc97-497d-b11e-ff7961ba750e",
+              "name": "desdeBloque",
+              "value": "",
+              "type": "string"
+            },
+            {
+              "id": "1b73c1c2-ca58-4a34-9003-c22627669f00",
+              "name": "decimales",
+              "value": "6",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "d08fce75-f07d-4986-b340-6664655a05c6",
+      "name": "Qué buscar",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        240,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.avax-test.network/ext/bc/C/rpc",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "{\n  \"jsonrpc\": \"2.0\",\n  \"id\": 1,\n  \"method\": \"eth_blockNumber\",\n  \"params\": []\n}",
+        "options": {}
+      },
+      "id": "b65f9d5d-c227-4e2f-9aca-6f827d3e7208",
+      "name": "Pedir el último bloque",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        480,
+        0
+      ],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "// El RPC público de Fuji acepta hasta 100 bloques por pedido de eth_getLogs (si pedís más,\n// responde «block range too large»). Por eso partimos el rango en tramos de 100: cada tramo es un\n// ítem y el HTTP Request siguiente hace un pedido por ítem.\nconst config = $('Qué buscar').first().json;\nconst ultimo = BigInt($input.first().json.result);\n\nconst POR_PEDIDO = 100n; // límite del RPC público\nconst TRAMOS_MAXIMOS = 10n; // como mucho 10 pedidos (1000 bloques) por ejecución, para cuidar el RPC\nconst tope = POR_PEDIDO * TRAMOS_MAXIMOS;\nconst menor = (a, b) => (a < b ? a : b);\n\nlet desde;\nlet hasta;\nconst desdeBloque = String(config.desdeBloque ?? '').trim();\nif (desdeBloque) {\n  // Desde un bloque fijo (por ejemplo, el del despliegue de tu contrato) hacia adelante.\n  desde = BigInt(desdeBloque);\n  if (desde > ultimo) throw new Error(`desdeBloque (${desde}) es mayor que el último bloque de Fuji (${ultimo}).`);\n  hasta = menor(desde + tope - 1n, ultimo);\n} else {\n  // Los últimos N bloques.\n  const n = menor(BigInt(config.bloquesHaciaAtras || 100), tope);\n  hasta = ultimo;\n  desde = ultimo - n + 1n;\n}\n\n// El filtro de eth_getLogs: rango, topics (topic0 = qué evento) y, si lo pusiste, el contrato.\nconst topic0 = String(config.topic0 ?? '').trim().toLowerCase();\nconst contrato = String(config.contrato ?? '').trim().toLowerCase();\nconst tramos = [];\nfor (let a = desde; a <= hasta; a += POR_PEDIDO) {\n  const b = menor(a + POR_PEDIDO - 1n, hasta);\n  const filtro = { fromBlock: '0x' + a.toString(16), toBlock: '0x' + b.toString(16) };\n  if (topic0) filtro.topics = [topic0];\n  if (contrato) filtro.address = contrato;\n  tramos.push({ json: { desdeBloque: Number(a), hastaBloque: Number(b), filtro } });\n}\nreturn tramos;"
+      },
+      "id": "b6eda44c-440c-4148-bfae-6be38d5ebf61",
+      "name": "Partir en tramos de 100 bloques",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        720,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.avax-test.network/ext/bc/C/rpc",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'eth_getLogs', params: [$json.filtro] }) }}",
+        "options": {
+          "batching": {
+            "batch": {
+              "batchSize": 1,
+              "batchInterval": 250
+            }
+          }
+        }
+      },
+      "id": "57a9ca31-f6fb-4425-99f4-b0f19d9ad66f",
+      "name": "Pedir los eventos (eth_getLogs)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        960,
+        0
+      ],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "// Decodifica cada evento (log). Un log trae:\n//   topics[0]  qué evento es: el keccak256 de su firma, por ejemplo Transfer(address,address,uint256)\n//   topics[1+] los parámetros «indexed», cada uno en 32 bytes\n//   data       el resto de los parámetros, codificados con la ABI\nconst config = $('Qué buscar').first().json;\nconst tramos = $('Partir en tramos de 100 bloques').all();\n\nconst TRANSFER = '0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef';\n// ProyectoRegistrado(address,string,string,uint256), del contrato de ejemplo en avalanche/contratos\nconst PROYECTO_REGISTRADO = '0xa349a1d38906b94dcd1cbd81cc94738a389a4deaf16ae3d301bc1617cc04df77';\n\nconst palabra = (data, i) => '0x' + data.slice(2 + i * 64, 2 + (i + 1) * 64); // la palabra i de 32 bytes\nconst direccion = (topic) => '0x' + topic.slice(26); // una dirección ocupa los últimos 20 bytes\nfunction texto(data, i) {\n  // Un string de la ABI: en la palabra i está dónde empieza (en bytes); ahí, su largo y después sus bytes.\n  const d = data.slice(2);\n  const inicio = Number(BigInt(palabra(data, i))) * 2;\n  const largo = Number(BigInt('0x' + d.slice(inicio, inicio + 64)));\n  return Buffer.from(d.slice(inicio + 64, inicio + 64 + largo * 2), 'hex').toString('utf8');\n}\nfunction conDecimales(valor, decimales) {\n  if (!decimales) return valor.toString();\n  const base = 10n ** BigInt(decimales);\n  const resto = (valor % base).toString().padStart(decimales, '0').replace(/0+$/, '');\n  return resto ? `${valor / base}.${resto}` : `${valor / base}`;\n}\nconst decimales = String(config.decimales ?? '').trim() === '' ? null : Number(config.decimales);\nconst contrato = String(config.contrato ?? '').trim().toLowerCase();\n\nconst eventos = [];\n$input.all().forEach((item, i) => {\n  const tramo = tramos[i].json;\n  if (item.json.error) {\n    throw new Error(`eth_getLogs falló en los bloques ${tramo.desdeBloque} a ${tramo.hastaBloque}: ${item.json.error.message ?? JSON.stringify(item.json.error)}`);\n  }\n  for (const log of item.json.result || []) {\n    const e = {\n      bloque: Number(BigInt(log.blockNumber)),\n      transaccion: log.transactionHash,\n      contrato: log.address,\n    };\n    const t0 = log.topics[0];\n    if (t0 === TRANSFER && log.topics.length === 3) {\n      // ERC-20: de y para son indexed (topics 1 y 2); el monto viaja en data.\n      const valor = BigInt(palabra(log.data, 0));\n      Object.assign(e, { evento: 'Transfer (ERC-20)', de: direccion(log.topics[1]), para: direccion(log.topics[2]), valorCrudo: valor.toString() });\n      if (decimales !== null && contrato && log.address.toLowerCase() === contrato) e.valor = conDecimales(valor, decimales);\n    } else if (t0 === TRANSFER && log.topics.length === 4) {\n      // ERC-721 (NFT): la misma firma, pero el tercer parámetro (tokenId) también es indexed.\n      Object.assign(e, { evento: 'Transfer (ERC-721)', de: direccion(log.topics[1]), para: direccion(log.topics[2]), tokenId: BigInt(log.topics[3]).toString() });\n    } else if (t0 === PROYECTO_REGISTRADO) {\n      // autora es indexed (topic 1). En data: dónde empieza nombre, dónde empieza enlace y cuando.\n      const cuando = Number(BigInt(palabra(log.data, 2)));\n      Object.assign(e, {\n        evento: 'ProyectoRegistrado',\n        autora: direccion(log.topics[1]),\n        nombre: texto(log.data, 0),\n        enlace: texto(log.data, 1),\n        cuando: DateTime.fromSeconds(cuando, { zone: 'America/La_Paz' }).toFormat('dd/MM/yyyy HH:mm:ss'),\n      });\n    } else {\n      // Un evento que este nodo no conoce: lo dejamos crudo para que lo decodifiques vos.\n      Object.assign(e, { evento: 'otro', topics: log.topics, data: log.data });\n    }\n    e.explorador = `https://build.avax.network/explorer/fuji/c-chain/tx/${log.transactionHash}`;\n    eventos.push(e);\n  }\n});\n\nif (!eventos.length) {\n  const primero = tramos[0].json.desdeBloque;\n  const ultimo = tramos[tramos.length - 1].json.hastaBloque;\n  return [{ json: { eventos: 0, mensaje: `No hubo eventos con ese filtro entre los bloques ${primero} y ${ultimo}. Probá con más bloques, otro contrato o sin contrato.` } }];\n}\nreturn eventos.map((json) => ({ json }));"
+      },
+      "id": "6940d20d-ed33-4733-8021-c15caf286009",
+      "name": "Decodificar los eventos",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1200,
+        0
+      ]
+    }
+  ],
+  "connections": {
+    "Al hacer clic en Probar": {
+      "main": [
+        [
+          {
+            "node": "Qué buscar",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Qué buscar": {
+      "main": [
+        [
+          {
+            "node": "Pedir el último bloque",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Pedir el último bloque": {
+      "main": [
+        [
+          {
+            "node": "Partir en tramos de 100 bloques",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Partir en tramos de 100 bloques": {
+      "main": [
+        [
+          {
+            "node": "Pedir los eventos (eth_getLogs)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Pedir los eventos (eth_getLogs)": {
+      "main": [
+        [
+          {
+            "node": "Decodificar los eventos",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "pinData": {},
+  "meta": {
+    "templateCredsSetupCompleted": false
+  }
+}

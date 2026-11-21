@@ -1,0 +1,378 @@
+{
+  "name": "Nodo Cero · La IA clasifica cada fila nueva",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## La IA clasifica cada fila nueva\n\n### Qué hace\nCada vez que entra una idea nueva en la tabla `ideas` (por el formulario del 30, la API del 31 o a mano), Supabase avisa a n8n con un **Database Webhook**. n8n le pide a Gemini que elija una categoría y la guarda en la misma fila.\n\n### Qué necesitás\n- El esquema de `supabase/sql/00_esquema.sql` corrido en el **SQL Editor** de tu proyecto (crea las tablas, la búsqueda y la seguridad).\n- **Supabase API** (`supabaseApi`). En Supabase: **Project Settings → API Keys**. Host = la URL del proyecto (`https://<tu-proyecto>.supabase.co`, sin `/rest/v1`). Secret Key = una clave secreta `sb_secret_...` (o la `service_role` de antes).\n- **Google Gemini(PaLM) Api** (`googlePalmApi`). La clave es gratis: creala en Google AI Studio → **Get API key** y pegala en API Key. El Host queda como viene.\n- **Header Auth** (`httpHeaderAuth`) para el webhook: Name `x-webhook-secreto` y Value un secreto largo (en el SQL Editor, `select replace(gen_random_uuid()::text || gen_random_uuid()::text, '-', '');` te da uno de 64 caracteres).\n\n### Cómo probarlo\n1. Elegí las credenciales en **Evento de Supabase**, **Modelo Gemini** y **Guardar la categoría**, y **publicá** el workflow.\n2. En Supabase: **Integrations → Database Webhooks → Create a new hook**. Tabla `ideas`, evento **Insert**, tipo **HTTP Request**, método **POST**, URL de producción de **Evento de Supabase**, timeout 5000 ms y en **HTTP Headers** sumá `x-webhook-secreto` con tu secreto.\n3. Mandá una idea con el formulario del 30 (o insertá una fila en el Table Editor) y mirá cómo se completa `categoria`.\n\nSin Supabase todavía: abrí **Evento de Supabase**, tocá **Listen for test event** y mandá el ejemplo del README con curl a la URL de prueba.",
+        "height": 880,
+        "width": 600,
+        "color": 7
+      },
+      "id": "ad93d2c2-f893-4681-a651-96ad9359d192",
+      "name": "Nota de inicio",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -700,
+        -360
+      ]
+    },
+    {
+      "parameters": {
+        "content": "### Protegido con un secreto\nLa URL del webhook es pública: cualquiera que la conozca podría mandarle datos. Con **Authentication: Header Auth**, n8n rechaza (403) todo pedido que no traiga el encabezado `x-webhook-secreto` con el valor exacto de tu credencial.\n\nSupabase lo manda en cada aviso porque lo cargaste en **HTTP Headers** del Database Webhook.",
+        "height": 340,
+        "width": 300,
+        "color": 3
+      },
+      "id": "3e96f99d-815e-4ced-ad7f-69144d0b2a39",
+      "name": "Nota: el secreto",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -60,
+        -300
+      ]
+    },
+    {
+      "parameters": {
+        "content": "### Qué manda Supabase\n```\n{ \"type\": \"INSERT\", \"table\": \"ideas\",\n  \"schema\": \"public\",\n  \"record\": { \"id\": 7, \"idea\": \"...\" },\n  \"old_record\": null }\n```\n**Leer el evento** revisa que sea un INSERT en `public.ideas`. Si no, responde 400 y no toca nada: así, aunque alguien active también el evento UPDATE, el cambio que hace este workflow no vuelve a dispararlo.",
+        "height": 340,
+        "width": 500,
+        "color": 5
+      },
+      "id": "2045a0ae-69c4-4e11-aac4-3220997ae86c",
+      "name": "Nota: el evento",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        260,
+        -300
+      ]
+    },
+    {
+      "parameters": {
+        "content": "### Clasificar con IA\n**Information Extractor** le pide a Gemini dos datos con forma fija: `categoria` (una de la lista) y `motivo`. La descripción de cada atributo es la instrucción: cambiá la lista de categorías por las de tu proyecto.\n\n**Elegir la categoría** se asegura de que lo que llega a la base sea siempre un valor de la lista.",
+        "height": 260,
+        "width": 520,
+        "color": 5
+      },
+      "id": "455a9a10-9dfa-48d5-9b21-850408fd9d7e",
+      "name": "Nota: la IA",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        780,
+        -300
+      ]
+    },
+    {
+      "parameters": {
+        "content": "### Guardar y responder\n**Update** en `ideas` con el filtro `id` = `eq` el id del evento: cambia nada más esa fila y nada más la columna `categoria`.\n\nSupabase no espera una respuesta en particular, pero el 200 con el resultado sirve para revisar en **Executions** o en la tabla `net._http_response` de Supabase.",
+        "height": 260,
+        "width": 460,
+        "color": 5
+      },
+      "id": "8c53aed6-b128-4297-976d-056121b0bdab",
+      "name": "Nota: guardar",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1320,
+        -300
+      ]
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "supabase-ideas",
+        "authentication": "headerAuth",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "acf6e232-794d-4b34-a104-5c10319c2539",
+      "name": "Evento de Supabase",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.2,
+      "position": [
+        0,
+        100
+      ],
+      "webhookId": "4ba6fe61-e998-49df-a7d1-7c3f83d1e59b"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "// Supabase manda { type, table, schema, record, old_record }. Seguimos nada más si es un\n// INSERT en public.ideas con texto para clasificar. Cualquier otra cosa (por ejemplo un\n// UPDATE, si alguien activó ese evento) recibe un 400 y no toca la base: así no hay bucles.\nconst evento = $input.first().json.body ?? {};\nconst fila = evento.record ?? {};\n\nconst motivos = [];\nif (evento.type !== 'INSERT') motivos.push(`el evento es ${evento.type ?? 'desconocido'} y se espera INSERT`);\nif (evento.table !== 'ideas' || evento.schema !== 'public') motivos.push(`la tabla es ${evento.schema}.${evento.table} y se espera public.ideas`);\nif (fila.id === undefined || fila.id === null) motivos.push('la fila no trae id');\nif (typeof fila.idea !== 'string' || !fila.idea.trim()) motivos.push('la fila no trae texto en «idea»');\n\nreturn [{\n  json: {\n    valido: motivos.length === 0,\n    motivos,\n    id: fila.id ?? null,\n    idea: typeof fila.idea === 'string' ? fila.idea.trim() : '',\n  },\n}];"
+      },
+      "id": "33afccdc-400b-4037-b771-2c60d814839e",
+      "name": "Leer el evento",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        240,
+        100
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 4
+          },
+          "conditions": [
+            {
+              "id": "14bc2988-6115-483c-9437-3302c863c574",
+              "leftValue": "={{ $json.valido }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": false,
+        "options": {}
+      },
+      "id": "e61b3baa-d377-4215-9787-ee2223b4e1ec",
+      "name": "¿Es una idea nueva?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.4,
+      "position": [
+        480,
+        100
+      ]
+    },
+    {
+      "parameters": {
+        "text": "={{ $json.idea }}",
+        "schemaType": "fromAttributes",
+        "attributes": {
+          "attributes": [
+            {
+              "name": "categoria",
+              "type": "string",
+              "description": "La categoría de la idea. Una sola de estas, en minúsculas y sin tildes: ia (agentes, chat, modelos de lenguaje, clasificar o resumir con IA), web3 (Avalanche Fuji, wallets, pagos, contratos, blockchain), automatizacion (procesos de trabajo, formularios, integraciones, reportes), impacto-social (comunidad, salud, ambiente, inclusión, seguridad), educacion (aprender, enseñar, cursos, mentoría) u otra (si no encaja en ninguna).",
+              "required": true
+            },
+            {
+              "name": "motivo",
+              "type": "string",
+              "description": "Una frase corta en español que explique por qué elegiste esa categoría.",
+              "required": true
+            }
+          ]
+        },
+        "options": {
+          "systemPromptTemplate": "Sos una experta en clasificar ideas de proyectos de una hackathon de automatización con n8n. Leé la idea y completá los atributos pedidos. Si dudás entre dos categorías, elegí la que mejor describe el problema que resuelve."
+        }
+      },
+      "id": "943ab96a-d022-4546-aa8e-f6fbfb5e71c0",
+      "name": "Clasificar con IA",
+      "type": "@n8n/n8n-nodes-langchain.informationExtractor",
+      "typeVersion": 1.2,
+      "position": [
+        760,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "options": {
+          "temperature": 0.2
+        }
+      },
+      "id": "cd5932cb-1ba1-443a-a102-b54a0566f98f",
+      "name": "Modelo Gemini",
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1.2,
+      "position": [
+        800,
+        220
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "// La IA puede contestar con mayúsculas, tildes o espacios. Normalizamos y, si no es una\n// de la lista, usamos «otra»: así en la base quedan siempre los mismos valores.\nconst VALIDAS = ['ia', 'web3', 'automatizacion', 'impacto-social', 'educacion', 'otra'];\nconst evento = $('Leer el evento').first().json;\nconst salida = $input.first().json.output ?? {};\n\nconst limpia = String(salida.categoria ?? '')\n  .normalize('NFD')\n  .replace(/[\\u0300-\\u036f]/g, '')\n  .toLowerCase()\n  .trim()\n  .replace(/[\\s_]+/g, '-');\nconst categoria = VALIDAS.includes(limpia) ? limpia : 'otra';\n\nreturn [{ json: { id: evento.id, categoria, motivo: String(salida.motivo ?? '').trim() } }];"
+      },
+      "id": "c37d0b20-97f2-479a-8b80-e004d8016b8a",
+      "name": "Elegir la categoría",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1080,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "tableId": "ideas",
+        "filterType": "manual",
+        "matchType": "allFilters",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "id",
+              "condition": "eq",
+              "keyValue": "={{ $json.id }}"
+            }
+          ]
+        },
+        "dataToSend": "defineBelow",
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "categoria",
+              "fieldValue": "={{ $json.categoria }}"
+            }
+          ]
+        }
+      },
+      "id": "24f39716-91e3-4bd2-b35b-51c996a5ad39",
+      "name": "Guardar la categoría",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        1320,
+        0
+      ],
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ ok: true, id: $('Elegir la categoría').first().json.id, categoria: $('Elegir la categoría').first().json.categoria, motivo: $('Elegir la categoría').first().json.motivo, fila_actualizada: $json.id !== undefined }) }}",
+        "options": {
+          "responseCode": 200
+        }
+      },
+      "id": "8754c598-7ef1-469d-a400-4f231b196439",
+      "name": "Responder 200",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        1560,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ ok: false, motivos: $json.motivos }) }}",
+        "options": {
+          "responseCode": 400
+        }
+      },
+      "id": "c933a22d-0f7d-40f9-92b8-936c1035b104",
+      "name": "Responder 400",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        760,
+        380
+      ]
+    }
+  ],
+  "connections": {
+    "Evento de Supabase": {
+      "main": [
+        [
+          {
+            "node": "Leer el evento",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Leer el evento": {
+      "main": [
+        [
+          {
+            "node": "¿Es una idea nueva?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "¿Es una idea nueva?": {
+      "main": [
+        [
+          {
+            "node": "Clasificar con IA",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Responder 400",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Modelo Gemini": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Clasificar con IA",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Clasificar con IA": {
+      "main": [
+        [
+          {
+            "node": "Elegir la categoría",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Elegir la categoría": {
+      "main": [
+        [
+          {
+            "node": "Guardar la categoría",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Guardar la categoría": {
+      "main": [
+        [
+          {
+            "node": "Responder 200",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "pinData": {},
+  "meta": {
+    "templateCredsSetupCompleted": false
+  }
+}

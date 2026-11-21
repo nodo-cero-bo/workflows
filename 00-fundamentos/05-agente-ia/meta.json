@@ -1,0 +1,28 @@
+{
+  "id": "05-agente-ia",
+  "titulo": "Tu primer agente de IA",
+  "resumen": "Un agente que conversa en el chat de n8n con Google Gemini, recuerda la conversación y responde como el asistente de Nodo Cero.",
+  "categoria": "ia",
+  "nivel": "inicial",
+  "minutos": 15,
+  "tecnologias": [
+    "n8n",
+    "ia"
+  ],
+  "credenciales": [
+    {
+      "nombre": "Google Gemini(PaLM) Api",
+      "tipo_n8n": "googlePalmApi",
+      "como": "Creá una clave gratis en Google AI Studio (aistudio.google.com/apikey) y pegala en API Key; el Host queda como viene."
+    }
+  ],
+  "aprendes": [
+    "Chat Trigger y el chat de prueba de n8n",
+    "AI Agent con mensaje de sistema",
+    "Google Gemini Chat Model: elegir y cambiar el modelo",
+    "Simple Memory para recordar la conversación",
+    "Cambiar Gemini por OpenAI"
+  ],
+  "probado": "auditado",
+  "orden": 5
+}

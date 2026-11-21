@@ -1,0 +1,21 @@
+{
+  "id": "14-fuji-monitor-wallet",
+  "titulo": "Monitor de una wallet en Fuji",
+  "resumen": "Revisa un saldo cada 5 minutos y arma un aviso cuando cambia.",
+  "categoria": "avalanche",
+  "nivel": "intermedio",
+  "minutos": 15,
+  "tecnologias": [
+    "n8n",
+    "avalanche"
+  ],
+  "credenciales": [],
+  "aprendes": [
+    "Schedule Trigger",
+    "Recordar datos entre ejecuciones con $getWorkflowStaticData",
+    "Decidir con IF y armar un mensaje con una expresión",
+    "Cómo conectar el aviso a Telegram o Gmail"
+  ],
+  "probado": "ejecutado",
+  "orden": 14
+}

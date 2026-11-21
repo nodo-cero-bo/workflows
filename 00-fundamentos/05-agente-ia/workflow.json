@@ -1,0 +1,186 @@
+{
+  "name": "Nodo Cero · Tu primer agente de IA",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## Tu primer agente de IA\n\nUn asistente que conversa en el chat de n8n, recuerda lo que le dijiste y responde como el asistente de Nodo Cero.\n\n### Qué hace\n**Mensaje en el chat** recibe lo que escribís. **Agente de IA** arma la respuesta con el **Modelo Gemini** y usa la **Memoria simple** para recordar los últimos mensajes de la conversación.\n\n### Qué necesitás\nUna clave gratis de la API de Gemini, de Google AI Studio (`aistudio.google.com/apikey`), cargada en n8n como credencial **Google Gemini(PaLM) Api** (tipo `googlePalmApi`):\n1. Abrí **Modelo Gemini** y, en **Credential**, elegí **Create new credential**.\n2. Pegá tu clave en **API Key** (el **Host** queda como viene) y guardá.\n\n### Cómo probarlo\n1. Tocá **Open chat**, abajo del canvas.\n2. Escribí «Hola, ¿qué podés hacer por mí?».\n3. Seguí con «¿A qué hora es el almuerzo?» y después con «¿Qué te pregunté recién?»: la memoria hace que se acuerde.\n4. Abrí **Agente de IA** y mirá los registros (**Logs**): qué recibió el modelo, qué contestó y cuánto tardó.",
+        "height": 560,
+        "width": 520,
+        "color": 3
+      },
+      "id": "43f65b19-188f-4227-8fc0-82e52b5723b2",
+      "name": "Nota de inicio",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -620,
+        -360
+      ]
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "fc32c5bf-3f9a-44ba-9a13-2911473746d7",
+      "name": "Mensaje en el chat",
+      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+      "typeVersion": 1.5,
+      "position": [
+        0,
+        0
+      ],
+      "webhookId": "da7ff4e0-1714-4eb5-b33a-aedac423152b"
+    },
+    {
+      "parameters": {
+        "content": "### El agente y su mensaje de sistema\n**AI Agent** recibe tu mensaje, le suma el historial de la memoria y le pide la respuesta al modelo.\n\nEn **Options → System Message** está quién es el asistente y cómo responde. Es lo que más cambia el resultado: reescribilo para tu proyecto (tu comunidad, tu negocio, tu materia) y probá de nuevo.\n\nUn buen agente prefiere decir «no sé» antes que inventar: decile qué hacer cuando no sabe algo.",
+        "height": 320,
+        "width": 420,
+        "color": 7
+      },
+      "id": "18a521e3-0d59-4e6a-8036-59822820cedf",
+      "name": "Nota: agente",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        240,
+        -360
+      ]
+    },
+    {
+      "parameters": {
+        "promptType": "auto",
+        "options": {
+          "systemMessage": "Sos el asistente de Nodo Cero – Hackathon n8n Bolivia: la hackathon de la comunidad n8n en Bolivia, enfocada en mujeres, de la mano de Women Techmakers Santa Cruz.\n\nDatos del evento (no agregues otros):\n- Sábado 21 de noviembre de 2026, de 08:00 a 16:00, en el Centro de Educación Ambiental (CEA) del Gobierno Autónomo Departamental de Santa Cruz, en Santa Cruz de la Sierra.\n- Equipos de hasta 4 personas.\n- Agenda: 08:00 acreditación y café; 12:30 almuerzo; 14:30 refrigerio; 15:00 presentaciones; 15:45 cierre, menciones y foto grupal; 16:00 fin.\n- Presenta n8n, en colaboración con Women Techmakers Santa Cruz y con el apoyo de Supabase, Clerk, Team1 y Aspire Institute. Hay un track de Avalanche Fuji.\n- Los workflows para importar están en github.com/nodo-cero-bo/workflows y las guías en github.com/nodo-cero-bo/guias.\n\nCómo respondés:\n- En español, con voseo, claro y cálido, en frases cortas. Sin signos de exclamación y sin emojis.\n- Ayudás a pensar ideas de proyecto y a armarlas con n8n: qué nodos usar, en qué orden y por qué.\n- Si algo no está en estos datos o no lo sabés, decilo y sugerí preguntarle a una mentora o a la organización. No inventes horarios, lugares, nombres ni reglas.\n- No pidas datos personales."
+        }
+      },
+      "id": "c12f7d26-8a9b-4956-b3af-bf95c6b6d6ce",
+      "name": "Agente de IA",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        320,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "content": "### El modelo\nViene elegido `models/gemini-3.5-flash-lite`: estable, rápido y con nivel gratuito en la API de Gemini (noviembre de 2026).\n\nPara cambiarlo, abrí el nodo y elegí otro en **Model**: la lista se carga desde tu cuenta cuando la credencial está lista. Si un modelo deja de existir, el nodo avisa que no lo encuentra: elegí otro de la lista.\n\n**Con OpenAI**: borrá este nodo, conectá un **OpenAI Chat Model** en la entrada **Chat Model** del agente y creá la credencial **OpenAI** (`openAiApi`) con tu clave de platform.openai.com. Se paga por uso.",
+        "height": 360,
+        "width": 420,
+        "color": 7
+      },
+      "id": "d04403c4-5746-4630-b469-4a5ee37e19dd",
+      "name": "Nota: modelo",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        0,
+        360
+      ]
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-3.5-flash-lite",
+        "options": {
+          "temperature": 0.4
+        }
+      },
+      "id": "6bd6e425-e876-46d2-a750-102e44a4c9bd",
+      "name": "Modelo Gemini",
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1.2,
+      "position": [
+        260,
+        220
+      ]
+    },
+    {
+      "parameters": {
+        "content": "### La memoria\n**Simple Memory** guarda los últimos 10 mensajes de cada conversación (**Context Window Length**). Cada chat tiene su propio `sessionId`, así que dos personas no se mezclan.\n\nVive en la memoria de n8n: se borra si n8n se reinicia. Para que dure, usá **Postgres Chat Memory** con Supabase, como en **33-agente-con-memoria-y-rag**.",
+        "height": 360,
+        "width": 400,
+        "color": 7
+      },
+      "id": "10c3db8a-be9a-4325-afc2-d76e3613c0b9",
+      "name": "Nota: memoria",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        440,
+        360
+      ]
+    },
+    {
+      "parameters": {
+        "contextWindowLength": 10
+      },
+      "id": "7a6837f1-9f18-4a1a-8b02-ea109607b197",
+      "name": "Memoria simple",
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.4,
+      "position": [
+        420,
+        220
+      ]
+    },
+    {
+      "parameters": {
+        "content": "### Para llevarlo más lejos\n- **Herramientas**: conectá un **HTTP Request Tool** en la entrada **Tool** del agente y podrá consultar una API cuando lo necesite. Mirá **40-agente-web3-fuji**.\n- **Tus documentos**: con **33-agente-con-memoria-y-rag**, el agente busca en tus PDF y apuntes guardados en Supabase.\n- **Chat público**: en **Mensaje en el chat**, activá **Make Chat Publicly Available**, publicá el workflow con **Publish** y compartí la URL del chat.",
+        "height": 320,
+        "width": 400,
+        "color": 5
+      },
+      "id": "37b0c7ed-c6f8-4251-9d70-2c59e40c3605",
+      "name": "Nota: más lejos",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        700,
+        -360
+      ]
+    }
+  ],
+  "connections": {
+    "Mensaje en el chat": {
+      "main": [
+        [
+          {
+            "node": "Agente de IA",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Modelo Gemini": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Agente de IA",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Memoria simple": {
+      "ai_memory": [
+        [
+          {
+            "node": "Agente de IA",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "pinData": {},
+  "meta": {
+    "templateCredsSetupCompleted": false
+  }
+}

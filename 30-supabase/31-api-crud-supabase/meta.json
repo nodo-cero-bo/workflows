@@ -1,0 +1,27 @@
+{
+  "id": "31-api-crud-supabase",
+  "titulo": "Una API sobre Supabase",
+  "resumen": "Listá y creá filas de Supabase desde tu propia API.",
+  "categoria": "supabase",
+  "nivel": "intermedio",
+  "minutos": 20,
+  "tecnologias": [
+    "n8n",
+    "supabase"
+  ],
+  "credenciales": [
+    {
+      "nombre": "Supabase API",
+      "tipo_n8n": "supabaseApi",
+      "como": "En Supabase, Project Settings → API Keys: la URL del proyecto va en Host y una clave secreta (sb_secret_...) en Secret Key."
+    }
+  ],
+  "aprendes": [
+    "Un Webhook con GET y POST en la misma URL",
+    "Validar un pedido en el Code node",
+    "Responder con 200, 201 y 400",
+    "Get Many con límite y orden"
+  ],
+  "probado": "auditado",
+  "orden": 31
+}

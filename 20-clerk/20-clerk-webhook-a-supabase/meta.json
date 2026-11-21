@@ -1,0 +1,29 @@
+{
+  "id": "20-clerk-webhook-a-supabase",
+  "titulo": "De Clerk a Supabase con un webhook",
+  "resumen": "Cada alta, cambio o baja de usuaria en Clerk llega firmada a n8n, que verifica la firma Svix y mantiene al día la tabla perfiles de Supabase.",
+  "categoria": "clerk",
+  "nivel": "intermedio",
+  "minutos": 20,
+  "tecnologias": [
+    "n8n",
+    "clerk",
+    "supabase"
+  ],
+  "credenciales": [
+    {
+      "nombre": "Supabase API",
+      "tipo_n8n": "supabaseApi",
+      "como": "En Supabase, Project Settings → API Keys: la URL del proyecto va en Host y una clave secreta (sb_secret_...) en Secret Key."
+    }
+  ],
+  "aprendes": [
+    "Webhook con Raw Body para verificar una firma",
+    "Verificar la firma Svix con HMAC SHA-256 en el Code node",
+    "Responder 200 o 401 con Respond to Webhook",
+    "Switch por tipo de evento",
+    "Upsert en Supabase: actualizar y, si no existía, crear"
+  ],
+  "probado": "auditado",
+  "orden": 20
+}

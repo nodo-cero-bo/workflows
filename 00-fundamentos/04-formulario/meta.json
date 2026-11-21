@@ -1,0 +1,21 @@
+{
+  "id": "04-formulario",
+  "titulo": "Un formulario de n8n",
+  "resumen": "Un formulario con los colores de Nodo Cero que procesa la respuesta y muestra una página final para cada persona.",
+  "categoria": "fundamentos",
+  "nivel": "inicial",
+  "minutos": 10,
+  "tecnologias": [
+    "n8n"
+  ],
+  "credenciales": [],
+  "aprendes": [
+    "n8n Form Trigger con campos obligatorios y desplegables",
+    "Procesar la respuesta con un Code node",
+    "Página final con el nodo n8n Form (Form Ending)",
+    "Estilo propio con CSS",
+    "URL de prueba y de producción de un formulario"
+  ],
+  "probado": "ejecutado",
+  "orden": 4
+}

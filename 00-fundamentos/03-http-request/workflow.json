@@ -1,0 +1,280 @@
+{
+  "name": "Nodo Cero · Llamar a cualquier API con HTTP Request",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## Llamar a cualquier API con HTTP Request\n\n**HTTP Request** conecta n8n con cualquier servicio que tenga una API, aunque no tenga un nodo propio. Este workflow hace dos pedidos reales, sin claves ni cuentas.\n\n### Qué hace\n1. **Clima en Santa Cruz**: un `GET` a Open-Meteo con parámetros en la URL. Trae la temperatura, la humedad y el viento de ahora.\n2. **Último bloque de Fuji**: un `POST` con un cuerpo JSON al RPC público de Avalanche Fuji (`eth_blockNumber`). Trae el número del último bloque, en hexadecimal.\n3. **Leer las respuestas**: saca de cada respuesta lo que importa y lo deja en campos claros.\n\n### Qué necesitás\nNada más que tu n8n. Las dos APIs son públicas y no piden clave.\n\n### Cómo probarlo\n1. Tocá **Execute** (Execute), abajo del canvas.\n2. Abrí cada HTTP Request y mirá el OUTPUT en la vista **JSON**: así responde cada API.\n3. Abrí **Leer las respuestas** y arrastrá otro campo del INPUT hasta un valor nuevo.\n4. Cambiá la latitud y la longitud por las de tu ciudad y ejecutá otra vez.",
+        "height": 530,
+        "width": 520,
+        "color": 3
+      },
+      "id": "04daf85c-e013-4ac7-949d-e7458fe50e1e",
+      "name": "Nota de inicio",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -620,
+        -320
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "7b428210-c28f-4ab7-8e87-009a3dc9c4f9",
+      "name": "Al tocar Execute",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "content": "### 1. GET con parámetros\n- **Method**: `GET`, para leer.\n- **URL**: `https://api.open-meteo.com/v1/forecast`\n- **Send Query Parameters**: n8n los suma a la URL por vos, como `?latitude=-17.78&longitude=-63.18...`\n\n`current` dice qué datos de ahora querés y `timezone` pide la hora de Bolivia.\n\nLa respuesta llega como JSON y n8n la convierte en un ítem.",
+        "height": 480,
+        "width": 320,
+        "color": 7
+      },
+      "id": "5c7827a4-958c-4b51-8956-07d53a90e18b",
+      "name": "Nota: GET",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        240,
+        -320
+      ]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "https://api.open-meteo.com/v1/forecast",
+        "sendQuery": true,
+        "specifyQuery": "keypair",
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "latitude",
+              "value": "-17.78"
+            },
+            {
+              "name": "longitude",
+              "value": "-63.18"
+            },
+            {
+              "name": "current",
+              "value": "temperature_2m,relative_humidity_2m,wind_speed_10m"
+            },
+            {
+              "name": "timezone",
+              "value": "America/La_Paz"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "d006b0d6-fc95-4ac8-bb5b-2f8ea536d81d",
+      "name": "Clima en Santa Cruz",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        350,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "content": "### 2. POST con headers y cuerpo JSON\nLos nodos de una blockchain se consultan con **JSON-RPC**: siempre un `POST` a la misma URL, y en el cuerpo, el método que querés llamar.\n\n- **Header** `Content-Type: application/json`: le avisa al RPC que el cuerpo es JSON. Sin él, responde con el código 415.\n- **Body** (JSON): `{\"jsonrpc\": \"2.0\", \"id\": 1, \"method\": \"eth_blockNumber\", \"params\": []}`\n\nResponde `{\"result\": \"0x...\"}`: el número del bloque en hexadecimal.",
+        "height": 480,
+        "width": 340,
+        "color": 7
+      },
+      "id": "a9706be0-391f-4e19-b64a-636d691337db",
+      "name": "Nota: POST",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        600,
+        -320
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.avax-test.network/ext/bc/C/rpc",
+        "sendHeaders": true,
+        "specifyHeaders": "keypair",
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "json",
+        "specifyBody": "json",
+        "jsonBody": "{\n  \"jsonrpc\": \"2.0\",\n  \"id\": 1,\n  \"method\": \"eth_blockNumber\",\n  \"params\": []\n}",
+        "options": {}
+      },
+      "id": "8a5e44d0-bdb2-4a96-9037-e0344a99679c",
+      "name": "Último bloque de Fuji",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        720,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "content": "### 3. Leer la respuesta\n- Para un dato anidado, seguí el camino con puntos: `current.temperature_2m`.\n- Para leer un nodo que no es el anterior: `$('Clima en Santa Cruz').item.json...`\n- `parseInt($json.result, 16)` pasa el hexadecimal a número decimal.\n\nArrastrar un campo del INPUT hasta un valor escribe la expresión por vos.",
+        "height": 480,
+        "width": 340,
+        "color": 7
+      },
+      "id": "555c6c3d-8656-4443-abce-ca6587612875",
+      "name": "Nota: leer",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        980,
+        -320
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "manual",
+        "assignments": {
+          "assignments": [
+            {
+              "id": "741e53e8-a0b2-4c2d-8a38-7c596f19e631",
+              "name": "temperatura_c",
+              "value": "={{ $('Clima en Santa Cruz').item.json.current.temperature_2m }}",
+              "type": "number"
+            },
+            {
+              "id": "9aef4218-e8d1-4e8a-930f-bd35f4ee9a98",
+              "name": "humedad_pct",
+              "value": "={{ $('Clima en Santa Cruz').item.json.current.relative_humidity_2m }}",
+              "type": "number"
+            },
+            {
+              "id": "6c288918-a05c-4327-8d03-ae832722770b",
+              "name": "viento_kmh",
+              "value": "={{ $('Clima en Santa Cruz').item.json.current.wind_speed_10m }}",
+              "type": "number"
+            },
+            {
+              "id": "c0cb1a26-a0e3-4cbd-b140-f71dc5274d03",
+              "name": "hora_del_dato",
+              "value": "={{ $('Clima en Santa Cruz').item.json.current.time }}",
+              "type": "string"
+            },
+            {
+              "id": "948708e4-7cde-4b94-8bcd-ed3ee758f793",
+              "name": "bloque_hex",
+              "value": "={{ $json.result }}",
+              "type": "string"
+            },
+            {
+              "id": "78d5acab-0fd2-4837-8fc6-25f9879219f0",
+              "name": "bloque_fuji",
+              "value": "={{ parseInt($json.result, 16) }}",
+              "type": "number"
+            },
+            {
+              "id": "0874eaf3-9837-4aca-96c3-e3b0c5a41191",
+              "name": "resumen",
+              "value": "=En Santa Cruz hay {{ $('Clima en Santa Cruz').item.json.current.temperature_2m.toLocaleString('es-BO') }} °C y Fuji va por el bloque {{ parseInt($json.result, 16).toLocaleString('es-BO') }}.",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "06814332-fc2d-46ca-ab00-32ce37cda9b9",
+      "name": "Leer las respuestas",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        1100,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "content": "### Las partes de un pedido HTTP\n- **Método**: qué querés hacer. `GET` lee; `POST` manda datos (también hay `PUT`, `PATCH` y `DELETE`).\n- **URL**: a dónde va. Lo que sigue al `?` son los **query parameters**.\n- **Headers**: datos sobre el pedido, como el formato (`Content-Type`) o una clave (`Authorization`).\n- **Body**: lo que mandás, casi siempre en JSON.\n\nLa respuesta trae un **código** (200 salió bien, 4xx el pedido tiene un problema, 5xx falló el servidor) y un **cuerpo**, que n8n convierte en ítems. Un HTTP Request se ejecuta una vez por cada ítem que le llega: con 10 ítems, hace 10 pedidos.",
+        "height": 230,
+        "width": 760,
+        "color": 5
+      },
+      "id": "97b775e5-6b67-42a4-9f12-aeaddd70c556",
+      "name": "Nota: partes de un pedido",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -620,
+        260
+      ]
+    },
+    {
+      "parameters": {
+        "content": "### Trucos para el día a día\n- **Import cURL** (arriba del nodo): pegá el comando `curl` de la documentación de una API y n8n completa método, URL, headers y body.\n- **Options → Response → Include Response Headers and Status**: además del cuerpo, ves el código y los headers de la respuesta.\n- **Settings → Retry On Fail**: si la API no contesta, el nodo reintenta por su cuenta.\n- **Settings → On Error → Continue (using error output)**: el error sale por una rama aparte y el workflow sigue.\n- **Claves**: si una API pide clave, no la pegues en un header. Usá **Authentication → Generic Credential Type** (por ejemplo **Header Auth**) para que quede guardada como credencial.",
+        "height": 230,
+        "width": 760,
+        "color": 5
+      },
+      "id": "f657129e-8b7a-4906-a6b6-bee0e3e93839",
+      "name": "Nota: si algo falla",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        180,
+        260
+      ]
+    }
+  ],
+  "connections": {
+    "Al tocar Execute": {
+      "main": [
+        [
+          {
+            "node": "Clima en Santa Cruz",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Clima en Santa Cruz": {
+      "main": [
+        [
+          {
+            "node": "Último bloque de Fuji",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Último bloque de Fuji": {
+      "main": [
+        [
+          {
+            "node": "Leer las respuestas",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "pinData": {},
+  "meta": {
+    "templateCredsSetupCompleted": false
+  }
+}

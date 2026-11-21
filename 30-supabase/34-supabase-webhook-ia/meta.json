@@ -1,0 +1,38 @@
+{
+  "id": "34-supabase-webhook-ia",
+  "titulo": "La IA clasifica cada fila nueva",
+  "resumen": "Un Database Webhook avisa a n8n y la IA completa la fila.",
+  "categoria": "supabase",
+  "nivel": "intermedio",
+  "minutos": 20,
+  "tecnologias": [
+    "n8n",
+    "ia",
+    "supabase"
+  ],
+  "credenciales": [
+    {
+      "nombre": "Supabase API",
+      "tipo_n8n": "supabaseApi",
+      "como": "En Supabase, Project Settings → API Keys: la URL del proyecto va en Host y una clave secreta (sb_secret_...) en Secret Key."
+    },
+    {
+      "nombre": "Google Gemini(PaLM) Api",
+      "tipo_n8n": "googlePalmApi",
+      "como": "Una clave gratis de Google AI Studio (Get API key), en la credencial Google Gemini(PaLM) Api."
+    },
+    {
+      "nombre": "Header Auth",
+      "tipo_n8n": "httpHeaderAuth",
+      "como": "Name x-webhook-secreto y un secreto largo en Value; el mismo encabezado va en el Database Webhook de Supabase."
+    }
+  ],
+  "aprendes": [
+    "Database Webhooks de Supabase",
+    "Proteger un webhook con Header Auth",
+    "Information Extractor con Gemini",
+    "Actualizar una fila con un filtro"
+  ],
+  "probado": "auditado",
+  "orden": 34
+}
