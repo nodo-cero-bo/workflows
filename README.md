@@ -5,7 +5,7 @@
 <p align="center">
   <a href="https://github.com/nodo-cero-bo/workflows/actions/workflows/auditar.yml"><img src="https://github.com/nodo-cero-bo/workflows/actions/workflows/auditar.yml/badge.svg" alt="Auditor"></a>
   <img src="https://img.shields.io/badge/n8n-2.48.7-FF91AC?style=flat-square" alt="n8n 2.48.7">
-  <img src="https://img.shields.io/badge/workflows-23-FF91AC?style=flat-square" alt="23 workflows">
+  <img src="https://img.shields.io/badge/workflows-36-FF91AC?style=flat-square" alt="36 workflows">
   <a href="LICENSE"><img src="https://img.shields.io/badge/licencia-MIT-5A0026?style=flat-square" alt="Licencia MIT"></a>
 </p>
 
